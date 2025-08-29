@@ -103,45 +103,47 @@ describe('Handicap calculation engine', () => {
 
   describe('calculateHandicaps', () => {
     it('should calculate 10km handicaps correctly', () => {
+      // Target finish time for 10km = 60 minutes (3,600,000ms)
       const runners: Runner[] = [
-        createRunner(1, '10km', '10:00', timeStringToMs('09:00')), // 1st - beat by 1 min, gets +1 min
-        createRunner(2, '10km', '10:00', timeStringToMs('09:45')), // 2nd - beat by 15s, gets +30s (min)  
-        createRunner(3, '10km', '10:00', timeStringToMs('09:50')), // 3rd - beat by 10s, gets +15s (min)
-        createRunner(4, '10km', '10:00', timeStringToMs('10:30')), // 4th - slower than handicap, no change
-        createRunner(5, '10km', '10:00', timeStringToMs('11:00'))  // 5th - slower than handicap, no change (4th-9th)
+        createRunner(1, '10km', '08:00', timeStringToMs('58:00')), // 1st - finished at 58min, beat target by 2min, gets +2min
+        createRunner(2, '10km', '09:00', timeStringToMs('59:45')), // 2nd - finished at 59:45, beat target by 15s, gets +30s (min)  
+        createRunner(3, '10km', '10:00', timeStringToMs('59:50')), // 3rd - finished at 59:50, beat target by 10s, gets +15s (min)
+        createRunner(4, '10km', '05:00', timeStringToMs('61:00')), // 4th - finished at 61min, slower than target, no change
+        createRunner(5, '10km', '06:00', timeStringToMs('62:00'))  // 5th - finished at 62min, slower than target, no change (4th-9th)
       ];
 
       const results = calculateHandicaps(runners);
       
-      expect(results[0].new_handicap).toBe('11:00'); // 10:00 + 1:00 (beat by 1 min)
-      expect(results[1].new_handicap).toBe('10:30'); // 10:00 + 0:30 (minimum for 2nd place)
+      expect(results[0].new_handicap).toBe('10:00'); // 08:00 + 2:00 (beat target by 2 min)
+      expect(results[1].new_handicap).toBe('09:30'); // 09:00 + 0:30 (minimum for 2nd place)
       expect(results[2].new_handicap).toBe('10:15'); // 10:00 + 0:15 (minimum for 3rd place)
-      expect(results[3].new_handicap).toBe('10:00'); // unchanged (4th place)
-      expect(results[4].new_handicap).toBe('10:00'); // unchanged (5th place)
+      expect(results[3].new_handicap).toBe('05:00'); // unchanged (4th place)
+      expect(results[4].new_handicap).toBe('06:00'); // unchanged (5th place)
     });
 
     it('should calculate 5km handicaps correctly', () => {
+      // Target finish time for 5km = 50 minutes (3,000,000ms)
       const runners: Runner[] = [
-        createRunner(1, '5km', '05:00', timeStringToMs('04:00')), // 1st - beat by 1 min, gets +1 min
-        createRunner(2, '5km', '05:00', timeStringToMs('04:50')), // 2nd - beat by 10s, gets +15s (min)
-        createRunner(3, '5km', '05:00', timeStringToMs('04:55')), // 3rd - beat by 5s, gets +15s (min)
-        createRunner(4, '5km', '05:00', timeStringToMs('05:30')), // 4th - slower than handicap, no change
-        createRunner(5, '5km', '05:00', timeStringToMs('06:00'))  // 5th - slower than handicap, no change (4th-9th)
+        createRunner(1, '5km', '04:00', timeStringToMs('49:00')), // 1st - finished at 49min, beat target by 1min, gets +1min
+        createRunner(2, '5km', '05:00', timeStringToMs('49:50')), // 2nd - finished at 49:50, beat target by 10s, gets +15s (min)
+        createRunner(3, '5km', '06:00', timeStringToMs('49:55')), // 3rd - finished at 49:55, beat target by 5s, gets +15s (min)
+        createRunner(4, '5km', '03:00', timeStringToMs('51:00')), // 4th - finished at 51min, slower than target, no change
+        createRunner(5, '5km', '02:00', timeStringToMs('52:00'))  // 5th - finished at 52min, slower than target, no change (4th-9th)
       ];
 
       const results = calculateHandicaps(runners);
       
-      expect(results[0].new_handicap).toBe('06:00'); // 05:00 + 1:00 (beat by 1 min)
+      expect(results[0].new_handicap).toBe('05:00'); // 04:00 + 1:00 (beat target by 1 min)
       expect(results[1].new_handicap).toBe('05:15'); // 05:00 + 0:15 (minimum for 2nd place)
-      expect(results[2].new_handicap).toBe('05:15'); // 05:00 + 0:15 (minimum for 3rd place)
-      expect(results[3].new_handicap).toBe('05:00'); // unchanged (4th place)
-      expect(results[4].new_handicap).toBe('05:00'); // unchanged (5th place)
+      expect(results[2].new_handicap).toBe('06:15'); // 06:00 + 0:15 (minimum for 3rd place)
+      expect(results[3].new_handicap).toBe('03:00'); // unchanged (4th place)
+      expect(results[4].new_handicap).toBe('02:00'); // unchanged (5th place)
     });
 
     it('should handle mixed distances', () => {
       const runners: Runner[] = [
-        createRunner(1, '5km', '05:00', timeStringToMs('04:30')), // Beat by 30s, gets +30s (min)
-        createRunner(2, '10km', '10:00', timeStringToMs('09:30'))  // Beat by 30s, gets +1min (min)
+        createRunner(1, '5km', '05:00', timeStringToMs('49:30')), // 5km: finished at 49:30, beat target (50min) by 30s, gets +30s (min)
+        createRunner(2, '10km', '10:00', timeStringToMs('59:30'))  // 10km: finished at 59:30, beat target (60min) by 30s, gets +1min (min)
       ];
 
       const results = calculateHandicaps(runners);
@@ -155,7 +157,7 @@ describe('Handicap calculation engine', () => {
 
     it('should not modify handicaps for runners without finish times', () => {
       const runners: Runner[] = [
-        createRunner(1, '5km', '05:00', timeStringToMs('04:30')),
+        createRunner(1, '5km', '05:00', timeStringToMs('49:30')), // Beat target by 30s, gets handicap adjustment
         {
           member_number: 2,
           full_name: 'Runner 2',
@@ -169,7 +171,7 @@ describe('Handicap calculation engine', () => {
 
       const results = calculateHandicaps(runners);
       
-      expect(results[0].new_handicap).toBe('05:30'); // Calculated
+      expect(results[0].new_handicap).toBe('05:30'); // 05:00 + 0:30 (calculated)
       expect(results[1].new_handicap).toBeUndefined(); // Not calculated
     });
 

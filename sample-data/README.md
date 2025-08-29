@@ -28,6 +28,14 @@ member_number,full_name,is_financial_member,distance,current_handicap_5k,current
 2. Upload one of these CSV files
 3. Test the complete race workflow
 
+## BBR Handicap System:
+- **Target finish times**: All runners should theoretically finish together
+  - **5K runners**: 50 minutes (8:05am) 
+  - **10K runners**: 60 minutes (8:15am)
+- **Handicap adjustments**: Based on beating/missing target finish time
+  - Faster than target = handicap increase (make next race harder)
+  - Slower than target = handicap stays same or decreases (make next race easier)
+
 ## Handicap Time Ranges (Start Delay Times):
 - **5K Fast runners**: 05:00 - 08:00 (start later - minimal advantage)
 - **5K Average runners**: 02:00 - 05:00 (start in middle)  
