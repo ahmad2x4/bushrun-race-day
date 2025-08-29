@@ -37,9 +37,11 @@ export function formatFinishTime(ms: number): string {
   return `${minutes}:${seconds.padStart(4, '0')}`;
 }
 
-// Handicap calculation engine - follows official handicap adjustment rules:
+// Handicap calculation engine - follows BBR handicap adjustment rules:
+// - Target finish times: 5km = 50 minutes, 10km = 60 minutes (from race start)
+// - "Beating handicap" means finishing before the target time for their distance
 // - Handicaps increase for podium finishers (1st, 2nd, 3rd)
-// - Adjustment is the greater of minimum time OR amount by which they beat their handicap
+// - Adjustment is the greater of minimum time OR amount by which they beat the target
 // - DNF and Early Start runners keep their handicap unchanged
 // - Starters/Timekeepers get -30s (10km only, N/A for 5km)
 // - 4th-9th place: no change
@@ -47,6 +49,10 @@ export function formatFinishTime(ms: number): string {
 export function calculateHandicaps(runners: Runner[]): Runner[] {
   const results = [...runners]; // Create copy to avoid mutation
   const distances = ['5km', '10km'] as const;
+  
+  // BBR target finish times from race start (everyone should finish at these times)
+  const TARGET_5KM_MS = 50 * 60 * 1000; // 50 minutes = 8:05am
+  const TARGET_10KM_MS = 60 * 60 * 1000; // 60 minutes = 8:15am
   
   // First, handle DNF, Early Start, and Starter/Timekeeper runners
   results.forEach(runner => {
@@ -89,7 +95,11 @@ export function calculateHandicaps(runners: Runner[]): Runner[] {
       }
       
       const currentHandicapMs = timeStringToMs(currentHandicap);
-      const timeDifferenceMs = runner.finish_time! - currentHandicapMs; // Positive = slower than handicap, Negative = beat handicap
+      
+      // Calculate how much they beat/missed the target finish time for their distance
+      const targetFinishTimeMs = distance === '5km' ? TARGET_5KM_MS : TARGET_10KM_MS;
+      const timeDifferenceMs = runner.finish_time! - targetFinishTimeMs; 
+      // Negative = beat target (finished early), Positive = slower than target (finished late)
       
       let handicapAdjustmentMs = 0;
       

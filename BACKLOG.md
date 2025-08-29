@@ -97,6 +97,29 @@
 - [ ] Create responsive design documentation
 - [ ] Performance audit and optimization
 
+## Sprint 10: BBR Championship System Implementation
+- [ ] **Phase 1: Data Model**
+  - [ ] Extend database schema for championship tracking
+  - [ ] Add migration system for existing data
+  - [ ] Update Runner type to include official/provisional handicap status
+  - [ ] Add membership verification system
+- [ ] **Phase 2: Points Calculation Engine**
+  - [ ] Implement BBR points system (20pts for 1st, 15pts for 2nd, etc.)
+  - [ ] Add special point rules (1pt for early start/DNF, 4pts for starters/timekeepers)
+  - [ ] Create 8-race maximum championship logic
+  - [ ] Implement tie-breaking system (most wins → most participations → handicap improvement → position breakdown)
+  - [ ] Add comprehensive unit tests for all championship scenarios
+- [ ] **Phase 3: UI Integration**
+  - [ ] Create championship leaderboard with current standings
+  - [ ] Add individual runner profile with race history and points breakdown
+  - [ ] Enhance race results to display points earned alongside positions
+  - [ ] Create annual rollover interface (10km: -30s, 5km: -15s handicap reduction)
+- [ ] **Phase 4: Admin Features**
+  - [ ] Add membership management (official vs provisional handicap marking)
+  - [ ] Create series management (start new championship year, configure races)
+  - [ ] Implement handicap history tracking over time
+  - [ ] Add export functionality for championship data and final standings
+
 ## Testing & Developer Experience
 - ✅ **📈 Add 10x speed testing mode toggle** - For faster race simulation during development/testing (timer runs 10x faster but results remain accurate) - COMPLETED 2025-08-24
 
