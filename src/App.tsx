@@ -1,0 +1,279 @@
+import { useState, useEffect } from 'react'
+import type { AppView, ClubConfig, Race, Runner } from './types'
+import { initializeDatabase, db } from './db'
+import SettingsView from './components/SettingsView'
+import LoadingView from './components/ui/LoadingView'
+import ConfirmDialog from './components/ui/ConfirmDialog'
+import SetupView from './components/views/SetupView'
+import CheckinView from './components/views/CheckinView'
+import RaceDirectorView from './components/views/RaceDirectorView'
+import ResultsView from './components/views/ResultsView'
+
+function App() {
+  const [currentView, setCurrentView] = useState<AppView>('setup')
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Initialize from localStorage or default to false
+    const saved = localStorage.getItem('darkMode')
+    return saved ? JSON.parse(saved) : false
+  })
+
+  // Apply dark mode class to html element and persist preference
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+    localStorage.setItem('darkMode', JSON.stringify(isDarkMode))
+  }, [isDarkMode])
+
+  const defaultClubConfig: ClubConfig = {
+    name: "Berowra Bushrunners",
+    primary_color: "#3b82f6",
+    secondary_color: "#1f2937"
+  }
+
+  const [currentRace, setCurrentRace] = useState<Race | null>(null)
+  const [isDbInitialized, setIsDbInitialized] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [clubConfig, setClubConfig] = useState<ClubConfig>(defaultClubConfig)
+  
+  // Global race timer state
+  const [currentTime, setCurrentTime] = useState<number>(Date.now())
+  const [isRaceRunning, setIsRaceRunning] = useState(false)
+  const [isTestingMode, setIsTestingMode] = useState(() => {
+    // Initialize from localStorage or default to false
+    const saved = localStorage.getItem('testingMode')
+    return saved ? JSON.parse(saved) : false
+  })
+
+  // Persist testing mode preference
+  useEffect(() => {
+    localStorage.setItem('testingMode', JSON.stringify(isTestingMode))
+  }, [isTestingMode])
+
+  // Global timer effect - always running for race persistence
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, isTestingMode ? 10 : 100) // 10x faster in testing mode
+    return () => clearInterval(interval)
+  }, [isTestingMode])
+
+  // Initialize database on app load
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        await initializeDatabase()
+        setIsDbInitialized(true)
+        
+        // Load club configuration
+        const config = await db.getClubConfig()
+        setClubConfig(config)
+        
+        // Try to load current race
+        const race = await db.getCurrentRace()
+        if (race) {
+          setCurrentRace(race)
+          
+          // Initialize race running state from database
+          if (race.start_time && race.status === 'active') {
+            setIsRaceRunning(true)
+          }
+          
+          // Set appropriate view based on race status
+          if (race.status === 'checkin') setCurrentView('checkin')
+          else if (race.status === 'active') setCurrentView('race-director')
+          else if (race.status === 'finished') setCurrentView('results')
+        }
+      } catch (error) {
+        console.error('Failed to initialize database:', error)
+        setIsDbInitialized(true) // Continue anyway
+      }
+    }
+    
+    initDb()
+  }, [])
+
+  // Global race timer functions
+  const startRace = async () => {
+    if (!currentRace || currentRace.start_time) return
+    
+    const now = Date.now()
+    const updatedRace = { 
+      ...currentRace, 
+      start_time: now,
+      status: 'active' as const
+    }
+    
+    await db.saveRace(updatedRace)
+    setCurrentRace(updatedRace)
+    setIsRaceRunning(true)
+  }
+
+  const getElapsedTime = () => {
+    if (!currentRace?.start_time || !isRaceRunning) return 0
+    const realElapsed = Math.max(0, currentTime - currentRace.start_time)
+    return isTestingMode ? realElapsed * 10 : realElapsed // 10x faster in testing mode
+  }
+
+  // Check if all checked-in runners have finished
+  const areAllRunnersFinished = (race: Race) => {
+    const checkedInRunners = race.runners.filter(r => r.checked_in)
+    if (checkedInRunners.length === 0) return false
+    return checkedInRunners.every(r => r.finish_time !== undefined)
+  }
+
+  const recordFinishTime = async (runner: Runner) => {
+    if (!isRaceRunning || !currentRace) return
+    
+    runner.finish_time = getElapsedTime()
+    
+    const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
+    
+    // Check if all runners have finished and auto-complete race
+    if (areAllRunnersFinished(updatedRace)) {
+      updatedRace.status = 'finished'
+      setIsRaceRunning(false)
+      setCurrentView('results')
+    }
+    
+    await db.saveRace(updatedRace)
+    setCurrentRace(updatedRace)
+  }
+
+  const renderView = () => {
+    if (!isDbInitialized) {
+      return <LoadingView />
+    }
+    
+    switch (currentView) {
+      case 'setup':
+        return <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+      case 'checkin':
+        return <CheckinView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+      case 'race-director':
+        return <RaceDirectorView 
+          currentRace={currentRace} 
+          isRaceRunning={isRaceRunning}
+          elapsedTime={getElapsedTime()}
+          startRace={startRace}
+          recordFinishTime={recordFinishTime}
+          isTestingMode={isTestingMode}
+          setIsTestingMode={setIsTestingMode}
+          setCurrentView={setCurrentView}
+          setCurrentRace={setCurrentRace}
+        />
+      case 'results':
+        return <ResultsView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+      case 'settings':
+        return <SettingsView clubConfig={clubConfig} setClubConfig={setClubConfig} />
+      default:
+        return <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white">
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-xl font-bold" style={{color: clubConfig.primary_color}}>
+              {clubConfig.name}
+            </h1>
+            
+            {/* View Navigation */}
+            <nav className="flex space-x-1">
+              <button
+                onClick={() => setCurrentView('setup')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'setup' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Setup
+              </button>
+              <button
+                onClick={() => setCurrentView('checkin')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'checkin' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Check-in
+              </button>
+              <button
+                onClick={() => setCurrentView('race-director')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'race-director' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Race Director
+              </button>
+              <button
+                onClick={() => setCurrentView('results')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'results' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Results
+              </button>
+            </nav>
+
+            {/* Settings and Theme Toggle */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentView('settings')}
+                className={`p-2 rounded-md ${
+                  currentView === 'settings' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-400 hover:text-gray-500 dark:hover:text-gray-300'
+                }`}
+                aria-label="Club settings"
+              >
+                ⚙️
+              </button>
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+              aria-label="Toggle dark mode"
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
+        {renderView()}
+      </main>
+      
+      {/* Global Reset Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={async () => {
+          if (currentRace) {
+            await db.deleteRace(currentRace.id)
+            setCurrentRace(null)
+            setShowResetConfirm(false)
+          }
+        }}
+        title="Reset Race Configuration?"
+        message="This will permanently delete the current race data and return to the CSV upload screen. This action cannot be undone."
+        confirmText="Yes, Reset Race"
+      />
+    </div>
+  )
+}
+
+export default App

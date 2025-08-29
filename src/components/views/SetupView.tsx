@@ -1,0 +1,256 @@
+import { useState } from 'react'
+import type { Race, Runner, AppView } from '../../types'
+import { parseCSV, validateRunnerData } from '../../raceLogic'
+import { db } from '../../db'
+
+interface SetupViewProps {
+  currentRace: Race | null
+  setCurrentRace: (race: Race | null) => void
+  setCurrentView: (view: AppView) => void
+  setShowResetConfirm: (show: boolean) => void
+}
+
+function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetConfirm }: SetupViewProps) {
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string>('')
+  const [, setRunners] = useState<Runner[]>([])
+
+  const handleFileUpload = async (file: File) => {
+    setUploadStatus('processing')
+    setErrorMessage('')
+    
+    try {
+      const text = await file.text()
+      const parsedRunners = parseCSV(text)
+      const validationErrors = validateRunnerData(parsedRunners)
+      
+      if (validationErrors.length > 0) {
+        setErrorMessage(`Validation errors:\n${validationErrors.map(e => e.message).join('\n')}`)
+        setUploadStatus('error')
+        return
+      }
+      
+      // Create new race
+      const newRace: Race = {
+        id: `race-${Date.now()}`,
+        name: `Bushrun ${new Date().toLocaleDateString()}`,
+        date: new Date().toISOString().split('T')[0],
+        status: 'setup',
+        runners: parsedRunners,
+        race_5k_active: false,
+        race_10k_active: false
+      }
+      
+      // Save to database
+      await db.saveRace(newRace)
+      setCurrentRace(newRace)
+      setRunners(parsedRunners)
+      setUploadStatus('success')
+      
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to process CSV file')
+      setUploadStatus('error')
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const file = e.dataTransfer.files[0]
+    if (file && file.type === 'text/csv') {
+      handleFileUpload(file)
+    } else {
+      setErrorMessage('Please upload a CSV file')
+      setUploadStatus('error')
+    }
+  }
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileUpload(file)
+    }
+  }
+
+  const startCheckin = async () => {
+    if (currentRace) {
+      const updatedRace = { ...currentRace, status: 'checkin' as const }
+      await db.saveRace(updatedRace)
+      setCurrentRace(updatedRace)
+      setCurrentView('checkin') // Auto-navigate to check-in view
+    }
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h2 className="text-3xl font-bold mb-6 text-center">Race Setup</h2>
+      
+      {!currentRace ? (
+        <div className="space-y-6">
+          <p className="text-center text-gray-600 dark:text-gray-400">
+            Upload a CSV file with runner data to configure the race.
+          </p>
+          
+          {/* CSV Upload Area */}
+          <div
+            className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              isDragOver 
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                : uploadStatus === 'error'
+                ? 'border-red-300 bg-red-50 dark:bg-red-900/20'
+                : 'border-gray-300 dark:border-gray-600'
+            }`}
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
+            onDragLeave={() => setIsDragOver(false)}
+          >
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileInput}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={uploadStatus === 'processing'}
+            />
+            
+            <div className="space-y-4">
+              <div className="mx-auto w-12 h-12 text-gray-400">
+                📄
+              </div>
+              
+              <div>
+                <p className="text-lg font-medium">
+                  {uploadStatus === 'processing' ? 'Processing...' : 'Drop CSV file here or click to upload'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  CSV file with columns: member_number, full_name, is_financial_member, distance, current_handicap_5k, current_handicap_10k
+                  <br />
+                  <span className="text-xs text-gray-400">Handicap times represent start delays (lower = earlier start)</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Status Messages */}
+          {uploadStatus === 'error' && (
+            <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-4">
+              <h3 className="font-medium text-red-800 dark:text-red-200 mb-2">Upload Error</h3>
+              <pre className="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap">{errorMessage}</pre>
+            </div>
+          )}
+
+          {/* Sample Files */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Sample Files Available:</h3>
+            <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+              <li>• <code>sample-data/bushrun-runners-small.csv</code> - 5 runners for quick testing</li>
+              <li>• <code>sample-data/bushrun-runners-30.csv</code> - 30 runners (realistic race size)</li>
+            </ul>
+          </div>
+        </div>
+      ) : (
+        /* Race Configuration */
+        <div className="space-y-6">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-4">
+              ✅ Race Configured Successfully
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="text-2xl font-bold text-blue-600">{currentRace.runners.length}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Total Runners</div>
+              </div>
+              <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="text-2xl font-bold text-green-600">
+                  {currentRace.runners.filter(r => r.distance === '5km').length}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">5K Runners</div>
+              </div>
+              <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="text-2xl font-bold text-purple-600">
+                  {currentRace.runners.filter(r => r.distance === '10km').length}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">10K Runners</div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={startCheckin}
+                className="btn-primary px-6 py-3 text-lg font-semibold flex-1 sm:flex-none"
+              >
+                Start Runner Check-in →
+              </button>
+              <button
+                onClick={() => {
+                  setUploadStatus('idle')
+                  setErrorMessage('')
+                  setShowResetConfirm(true)
+                }}
+                className="px-6 py-3 text-lg font-semibold border border-red-300 text-red-700 dark:text-red-400 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              >
+                Reset Race
+              </button>
+            </div>
+          </div>
+
+          {/* Runner Preview */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold">Runner Preview</h3>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Number
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Distance
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Start Delay
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {currentRace.runners.slice(0, 10).map((runner) => (
+                    <tr key={runner.member_number} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-4 py-2 text-sm font-medium">{runner.member_number}</td>
+                      <td className="px-4 py-2 text-sm">{runner.full_name}</td>
+                      <td className="px-4 py-2 text-sm">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          runner.distance === '5km' 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                        }`}>
+                          {runner.distance}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-sm">
+                        {runner.distance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {currentRace.runners.length > 10 && (
+                <div className="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">
+                  ... and {currentRace.runners.length - 10} more runners
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default SetupView

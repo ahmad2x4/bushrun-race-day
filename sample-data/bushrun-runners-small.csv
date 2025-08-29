@@ -1,0 +1,6 @@
+member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k
+123,"John Doe",true,5km,03:30,
+456,"Jane Smith",true,10km,,08:15,
+789,"Bob Johnson",false,5km,06:45,
+101,"Alice Brown",true,10km,,05:30,
+234,"Charlie Wilson",true,5km,04:15,
