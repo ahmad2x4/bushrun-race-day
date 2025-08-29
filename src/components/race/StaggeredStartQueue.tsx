@@ -1,0 +1,154 @@
+import type { Race, Runner } from '../../types'
+import { timeStringToMs } from '../../raceLogic'
+
+interface StaggeredStartQueueProps {
+  currentRace: Race
+  elapsedTime: number
+}
+
+function StaggeredStartQueue({ currentRace, elapsedTime }: StaggeredStartQueueProps) {
+
+  // Get checked-in runners with their handicaps
+  const checkedInRunners = currentRace.runners.filter(r => r.checked_in)
+  
+  // Create start groups - runners who start at the same time
+  const startGroups = new Map<number, Runner[]>()
+  
+  checkedInRunners.forEach(runner => {
+    const handicapStr = runner.distance === '5km' 
+      ? runner.current_handicap_5k 
+      : runner.current_handicap_10k
+    
+    if (!handicapStr) return
+    
+    const handicapMs = timeStringToMs(handicapStr)
+    
+    if (!startGroups.has(handicapMs)) {
+      startGroups.set(handicapMs, [])
+    }
+    startGroups.get(handicapMs)!.push(runner)
+  })
+
+  // Sort groups by start time (handicap)
+  const sortedStartTimes = Array.from(startGroups.keys()).sort((a, b) => a - b)
+  
+  // Show groups - filter out those that started more than 2 seconds ago
+  const upcomingGroups = sortedStartTimes
+    .filter(startTime => {
+      const timeUntilStart = startTime - elapsedTime
+      // Show if not started yet OR started within last 2 seconds
+      return timeUntilStart > -2000
+    })
+    .map(startTime => ({
+      startTime,
+      runners: startGroups.get(startTime)!,
+      timeUntilStart: startTime - elapsedTime,
+      hasStarted: startTime <= elapsedTime
+    }))
+    .sort((a, b) => a.startTime - b.startTime)
+
+  const formatCountdown = (milliseconds: number) => {
+    if (milliseconds <= 0) return "STARTED"
+    
+    const totalSeconds = Math.ceil(milliseconds / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    
+    if (minutes > 0) {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`
+    }
+    return `${seconds}s`
+  }
+
+  const msToTimeString = (ms: number): string => {
+    const totalSeconds = Math.floor(ms / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  if (upcomingGroups.length === 0) {
+    return (
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+        <h3 className="font-semibold text-center text-gray-600 dark:text-gray-400">
+          All runners have started
+        </h3>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col flex-1">
+      <h3 className="font-semibold text-lg mb-3 text-center">Staggered Start Queue</h3>
+      
+      <div className="space-y-3 flex-1 overflow-y-auto">
+        {upcomingGroups.map((group, index) => {
+          const isNext = !group.hasStarted && index === upcomingGroups.findIndex(g => !g.hasStarted)
+          const isStarting = group.timeUntilStart <= 3000 && group.timeUntilStart > 0
+          
+          return (
+            <div 
+              key={group.startTime}
+              className={`p-3 rounded-lg border-2 transition-all duration-300 ${
+                group.hasStarted
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 opacity-75'
+                  : isStarting
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600 animate-pulse'
+                  : isNext
+                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600'
+                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+              }`}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${
+                    group.hasStarted ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'
+                  }`}>
+                    Start Delay: {msToTimeString(group.startTime)}
+                  </span>
+                  {isNext && !group.hasStarted && (
+                    <span className="bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-xs px-2 py-1 rounded-full font-bold">
+                      NEXT
+                    </span>
+                  )}
+                  {isStarting && (
+                    <span className="bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 text-xs px-2 py-1 rounded-full font-bold">
+                      STARTING!
+                    </span>
+                  )}
+                </div>
+                
+                <div className={`text-lg font-bold tabular-nums ${
+                  group.hasStarted 
+                    ? 'text-green-600 dark:text-green-400'
+                    : isStarting
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-blue-600 dark:text-blue-400'
+                }`}>
+                  {formatCountdown(group.timeUntilStart)}
+                </div>
+              </div>
+              
+              <div className="grid gap-2" style={{gridTemplateColumns: `repeat(${Math.min(group.runners.length, 3)}, 1fr)`}}>
+                {group.runners.map(runner => (
+                  <div 
+                    key={runner.member_number}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                      runner.distance === '5km'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+                        : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
+                    }`}
+                  >
+                    #{runner.member_number} {runner.full_name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export default StaggeredStartQueue
