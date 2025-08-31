@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { fn } from 'storybook/test';
+// Simple mock function for story actions
+const mockFn = () => {};
 
 import { Button } from './Button';
 
@@ -19,7 +20,7 @@ const meta = {
     backgroundColor: { control: 'color' },
   },
   // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
-  args: { onClick: fn() },
+  args: { onClick: mockFn },
 } satisfies Meta<typeof Button>;
 
 export default meta;
