@@ -97,28 +97,75 @@
 - [ ] Create responsive design documentation
 - [ ] Performance audit and optimization
 
-## Sprint 10: BBR Championship System Implementation
-- [ ] **Phase 1: Data Model**
-  - [ ] Extend database schema for championship tracking
-  - [ ] Add migration system for existing data
-  - [ ] Update Runner type to include official/provisional handicap status
-  - [ ] Add membership verification system
-- [ ] **Phase 2: Points Calculation Engine**
-  - [ ] Implement BBR points system (20pts for 1st, 15pts for 2nd, etc.)
-  - [ ] Add special point rules (1pt for early start/DNF, 4pts for starters/timekeepers)
-  - [ ] Create 8-race maximum championship logic
-  - [ ] Implement tie-breaking system (most wins → most participations → handicap improvement → position breakdown)
-  - [ ] Add comprehensive unit tests for all championship scenarios
-- [ ] **Phase 3: UI Integration**
-  - [ ] Create championship leaderboard with current standings
-  - [ ] Add individual runner profile with race history and points breakdown
-  - [ ] Enhance race results to display points earned alongside positions
-  - [ ] Create annual rollover interface (10km: -30s, 5km: -15s handicap reduction)
-- [ ] **Phase 4: Admin Features**
-  - [ ] Add membership management (official vs provisional handicap marking)
-  - [ ] Create series management (start new championship year, configure races)
-  - [ ] Implement handicap history tracking over time
-  - [ ] Add export functionality for championship data and final standings
+## Sprint 10: BBR Championship System Implementation (CSV-Driven) 📊
+
+### Phase 1: Championship CSV Integration ✨ SIMPLE & EFFECTIVE
+- [ ] **Enhanced CSV Format Support**
+  - [ ] Update Runner type to ChampionshipRunner with points fields
+  - [ ] Add championship_points_5k, championship_points_10k fields
+  - [ ] Add races_participated_5k, races_participated_10k counters
+  - [ ] Add handicap_status: 'official' | 'provisional' | 'casual'
+  - [ ] Update CSV parser to handle championship fields
+
+- [ ] **Championship Points Calculation**
+  - [ ] Implement BBR official points table (20-15-11-8-6-5-4-3-2-1)
+  - [ ] Add special case handling: Early start (1pt), DNF (1pt), Starter/Timekeeper (4pts)
+  - [ ] Calculate points based on finish position and handicap status
+  - [ ] Only award points to 'official' handicap holders
+  - [ ] Update cumulative points after each race
+
+### Phase 2: Championship UI & Results Integration 🎨 
+- [ ] **Championship-Enhanced Results View**
+  - [ ] Display points earned alongside race positions
+  - [ ] Show championship status (official/provisional/casual) for each runner
+  - [ ] Add championship leaderboard section (5km & 10km separate)
+  - [ ] Display current season totals from CSV data
+
+- [ ] **Championship CSV Export**
+  - [ ] Update generateNextRaceCSV() with championship fields
+  - [ ] Include cumulative points and participation counts
+  - [ ] Use year-month naming convention (bbr-runners-2024-03.csv)
+  - [ ] Generate results CSV with points earned per race
+
+### Phase 3: Championship Dashboard View 📈
+- [ ] **Championship Leaderboard**
+  - [ ] Parse championship data from uploaded CSV
+  - [ ] Display current 5km and 10km standings
+  - [ ] Show top 8 race results (max counting races)
+  - [ ] Calculate and display tie-breaking information
+
+- [ ] **Runner Championship Details**
+  - [ ] Individual runner championship summary
+  - [ ] Points breakdown and race participation history
+  - [ ] Handicap status and eligibility information
+  - [ ] Progress towards 8-race maximum
+
+### Phase 4: Championship Logic & Validation 🔧
+- [ ] **8-Race Maximum Logic**
+  - [ ] Track participation count per distance
+  - [ ] Display which races count towards championship
+  - [ ] Handle race selection for best 8 results
+  - [ ] Update CSV exports with participation tracking
+
+- [ ] **Tie-Breaking Implementation**
+  - [ ] Most race wins comparison (from CSV history)
+  - [ ] Most participations including starter/timekeeper
+  - [ ] Display tie-breaking criteria in standings
+  - [ ] Comprehensive testing with various scenarios
+
+### Phase 5: Annual Rollover & New Season Support 🔄
+- [ ] **New Season CSV Generation**
+  - [ ] Annual handicap rollover (10km: -30s, 5km: -15s)
+  - [ ] Reset championship points to zero
+  - [ ] Reset participation counters
+  - [ ] Maintain handicap_status for continuing members
+  - [ ] Generate fresh season starter CSV
+
+- [ ] **Season Archive & History**
+  - [ ] Export final season standings CSV
+  - [ ] Generate championship winner certificates/reports
+  - [ ] Clear interface for season transition
+  - [ ] Preserve final results for record keeping
 
 ## Testing & Developer Experience
 - ✅ **📈 Add 10x speed testing mode toggle** - For faster race simulation during development/testing (timer runs 10x faster but results remain accurate) - COMPLETED 2025-08-24
