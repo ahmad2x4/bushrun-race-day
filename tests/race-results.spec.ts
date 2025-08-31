@@ -4,7 +4,7 @@ test.describe('Race Results Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Navigate to results view
-    await page.click('[role="button"]:has-text("Results")');
+    await page.click('button:has-text("Results")');
   });
 
   test('should display results table after race starts', async ({ page }) => {
