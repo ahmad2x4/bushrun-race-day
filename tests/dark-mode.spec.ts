@@ -117,13 +117,13 @@ test.describe('Dark Mode and Theme Switching', () => {
       await expect(page.locator('body')).toHaveClass(/dark/);
       
       // When I navigate to different views
-      await page.click('[role="button"]:has-text("Check-in")');
+      await page.click('button:has-text("Check-in")');
       await expect(page.locator('body')).toHaveClass(/dark/);
       
-      await page.click('[role="button"]:has-text("Race Director")');
+      await page.click('button:has-text("Race Director")');
       await expect(page.locator('body')).toHaveClass(/dark/);
       
-      await page.click('[role="button"]:has-text("Results")');
+      await page.click('button:has-text("Results")');
       await expect(page.locator('body')).toHaveClass(/dark/);
       
       // Then dark mode should persist across all views
@@ -197,16 +197,16 @@ test.describe('Dark Mode and Theme Switching', () => {
     await context.addInitScript(() => {
       Object.defineProperty(window, 'matchMedia', {
         writable: true,
-        value: jest.fn().mockImplementation(query => ({
+        value: (query) => ({
           matches: query.includes('prefers-color-scheme: dark'),
           media: query,
           onchange: null,
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-          addEventListener: jest.fn(),
-          removeEventListener: jest.fn(),
-          dispatchEvent: jest.fn(),
-        })),
+          addListener: () => {},
+          removeListener: () => {},
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          dispatchEvent: () => {},
+        }),
       });
     });
     

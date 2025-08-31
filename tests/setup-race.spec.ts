@@ -8,7 +8,7 @@ test.describe('Race Setup Workflow', () => {
   test('should upload CSV and configure race', async ({ page }) => {
     // Given I am on the setup page
     await expect(page.locator('h1')).toContainText('Berowra Bushrunners');
-    await expect(page.locator('[role="button"]').filter({ hasText: 'Setup' })).toHaveClass(/bg-blue-100/);
+    await expect(page.locator('button').filter({ hasText: 'Setup' })).toHaveClass(/bg-blue-100/);
 
     // When I upload a valid CSV file
     // Note: We would need to create a test CSV file and upload it
@@ -33,7 +33,7 @@ test.describe('Race Setup Workflow', () => {
     // When the race is configured successfully
     // Then I should be able to navigate to check-in
     
-    await page.click('[role="button"]:has-text("Check-in")');
+    await page.click('button:has-text("Check-in")');
     await expect(page.url()).toContain('check-in'); // Note: might need to be adjusted based on routing
   });
 

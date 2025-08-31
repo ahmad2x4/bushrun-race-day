@@ -4,7 +4,7 @@ test.describe('Race Director Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     // Navigate to race director view
-    await page.click('[role="button"]:has-text("Race Director")');
+    await page.click('button:has-text("Race Director")');
   });
 
   test('should display race director grid after race starts', async ({ page }) => {
