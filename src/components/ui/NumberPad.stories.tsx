@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 // Simple mock function for story actions
 const mockAction = (name: string) => () => console.log(`Action: ${name}`)
 import NumberPad from './NumberPad'
