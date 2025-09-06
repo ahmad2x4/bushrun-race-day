@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 import { ErrorBoundary } from './ErrorBoundary'
 import { ViewErrorFallback } from './ViewErrorFallback'
