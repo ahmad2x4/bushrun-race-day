@@ -4,6 +4,8 @@ import { initializeDatabase, db } from './db'
 import SettingsView from './components/SettingsView'
 import LoadingView from './components/ui/LoadingView'
 import ConfirmDialog from './components/ui/ConfirmDialog'
+import ErrorBoundary from './components/ui/ErrorBoundary'
+import ViewErrorFallback from './components/ui/ViewErrorFallback'
 import SetupView from './components/views/SetupView'
 import CheckinView from './components/views/CheckinView'
 import RaceDirectorView from './components/views/RaceDirectorView'
@@ -167,32 +169,69 @@ function App() {
     
     switch (currentView) {
       case 'setup':
-        return <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+        return (
+          <ErrorBoundary 
+            fallback={<ViewErrorFallback viewName="Setup" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+          </ErrorBoundary>
+        )
       case 'checkin':
-        return <CheckinView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+        return (
+          <ErrorBoundary 
+            fallback={<ViewErrorFallback viewName="Check-in" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <CheckinView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+          </ErrorBoundary>
+        )
       case 'race-director':
-        return <RaceDirectorView 
-          currentRace={currentRace} 
-          isRaceRunning={isRaceRunning}
-          elapsedTime={getElapsedTime()}
-          startRace={startRace}
-          recordFinishTime={recordFinishTime}
-          isTestingMode={isTestingMode}
-          setIsTestingMode={setIsTestingMode}
-          setCurrentView={setCurrentView}
-          setCurrentRace={setCurrentRace}
-        />
+        return (
+          <ErrorBoundary 
+            fallback={<ViewErrorFallback viewName="Race Director" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <RaceDirectorView 
+              currentRace={currentRace} 
+              isRaceRunning={isRaceRunning}
+              elapsedTime={getElapsedTime()}
+              startRace={startRace}
+              recordFinishTime={recordFinishTime}
+              isTestingMode={isTestingMode}
+              setIsTestingMode={setIsTestingMode}
+              setCurrentView={setCurrentView}
+              setCurrentRace={setCurrentRace}
+            />
+          </ErrorBoundary>
+        )
       case 'results':
-        return <ResultsView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+        return (
+          <ErrorBoundary 
+            fallback={<ViewErrorFallback viewName="Results" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <ResultsView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+          </ErrorBoundary>
+        )
       case 'settings':
-        return <SettingsView clubConfig={clubConfig} setClubConfig={setClubConfig} />
+        return (
+          <ErrorBoundary 
+            fallback={<ViewErrorFallback viewName="Settings" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <SettingsView clubConfig={clubConfig} setClubConfig={setClubConfig} />
+          </ErrorBoundary>
+        )
       default:
-        return <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+        return (
+          <ErrorBoundary 
+            fallback={<ViewErrorFallback viewName="Setup" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+          </ErrorBoundary>
+        )
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white">
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -290,7 +329,8 @@ function App() {
         message="This will permanently delete the current race data and return to the CSV upload screen. This action cannot be undone."
         confirmText="Yes, Reset Race"
       />
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }
 
