@@ -63,8 +63,8 @@
 - ✅ Implement club customization system
 - ✅ **Fix dark mode toggle functionality (currently non-functional)**
 - ✅ **Auto-complete race when all participants finish** - Stop timer automatically and show "View Results" button instead of finish buttons when all checked-in runners have finished
-- [ ] **🔧 TECH DEBT: Extract components from App.tsx** - Break down the monolithic App.tsx into separate component files following CLAUDE.md guidelines
-- [ ] **🔧 TECH DEBT: Implement error boundaries** - Add React error boundaries for robust error handling and better user experience
+- ✅ **🔧 TECH DEBT: Extract components from App.tsx** - Break down the monolithic App.tsx into separate component files following CLAUDE.md guidelines
+- ✅ **🔧 TECH DEBT: Implement error boundaries** - Add React error boundaries for robust error handling and better user experience
 - [ ] Final testing, accessibility, and performance optimization
 
 ## Sprint 7: Architecture & Component Refactoring ✅ COMPLETED
@@ -95,9 +95,10 @@
 - ✅ Write BDD scenarios for main user workflows
 - ✅ **🚨 CRITICAL: Fix light mode functionality** - Fixed Tailwind CSS imports and dark mode toggle is now working correctly
 - [ ] Add component unit tests for complex logic
-- [ ] Implement accessibility testing in Storybook
+- ✅ Implement accessibility testing in Storybook - @storybook/addon-a11y is configured and working
 - [ ] Create responsive design documentation
 - [ ] Performance audit and optimization
+- ✅ **Fix Storybook import errors** - Updated all story files to use @storybook/react-vite
 
 ## Sprint 10: BBR Championship System Implementation (CSV-Driven) 📊
 
