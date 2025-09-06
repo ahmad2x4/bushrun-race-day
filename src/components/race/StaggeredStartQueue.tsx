@@ -1,3 +1,4 @@
+import { useMemo, memo } from 'react'
 import type { Race, Runner } from '../../types'
 import { timeStringToMs } from '../../raceLogic'
 
@@ -8,44 +9,50 @@ interface StaggeredStartQueueProps {
 
 function StaggeredStartQueue({ currentRace, elapsedTime }: StaggeredStartQueueProps) {
 
-  // Get checked-in runners with their handicaps
-  const checkedInRunners = currentRace.runners.filter(r => r.checked_in)
+  // Get checked-in runners with their handicaps - memoized
+  const checkedInRunners = useMemo(() => 
+    currentRace.runners.filter(r => r.checked_in), 
+    [currentRace.runners]
+  )
   
-  // Create start groups - runners who start at the same time
-  const startGroups = new Map<number, Runner[]>()
-  
-  checkedInRunners.forEach(runner => {
-    const handicapStr = runner.distance === '5km' 
-      ? runner.current_handicap_5k 
-      : runner.current_handicap_10k
+  // Create start groups and upcoming groups - memoized complex calculations
+  const upcomingGroups = useMemo(() => {
+    // Create start groups - runners who start at the same time
+    const startGroups = new Map<number, Runner[]>()
     
-    if (!handicapStr) return
-    
-    const handicapMs = timeStringToMs(handicapStr)
-    
-    if (!startGroups.has(handicapMs)) {
-      startGroups.set(handicapMs, [])
-    }
-    startGroups.get(handicapMs)!.push(runner)
-  })
-
-  // Sort groups by start time (handicap)
-  const sortedStartTimes = Array.from(startGroups.keys()).sort((a, b) => a - b)
-  
-  // Show groups - filter out those that started more than 2 seconds ago
-  const upcomingGroups = sortedStartTimes
-    .filter(startTime => {
-      const timeUntilStart = startTime - elapsedTime
-      // Show if not started yet OR started within last 2 seconds
-      return timeUntilStart > -2000
+    checkedInRunners.forEach(runner => {
+      const handicapStr = runner.distance === '5km' 
+        ? runner.current_handicap_5k 
+        : runner.current_handicap_10k
+      
+      if (!handicapStr) return
+      
+      const handicapMs = timeStringToMs(handicapStr)
+      
+      if (!startGroups.has(handicapMs)) {
+        startGroups.set(handicapMs, [])
+      }
+      startGroups.get(handicapMs)!.push(runner)
     })
-    .map(startTime => ({
-      startTime,
-      runners: startGroups.get(startTime)!,
-      timeUntilStart: startTime - elapsedTime,
-      hasStarted: startTime <= elapsedTime
-    }))
-    .sort((a, b) => a.startTime - b.startTime)
+
+    // Sort groups by start time (handicap)
+    const sortedStartTimes = Array.from(startGroups.keys()).sort((a, b) => a - b)
+    
+    // Show groups - filter out those that started more than 2 seconds ago
+    return sortedStartTimes
+      .filter(startTime => {
+        const timeUntilStart = startTime - elapsedTime
+        // Show if not started yet OR started within last 2 seconds
+        return timeUntilStart > -2000
+      })
+      .map(startTime => ({
+        startTime,
+        runners: startGroups.get(startTime)!,
+        timeUntilStart: startTime - elapsedTime,
+        hasStarted: startTime <= elapsedTime
+      }))
+      .sort((a, b) => a.startTime - b.startTime)
+  }, [checkedInRunners, elapsedTime])
 
   const formatCountdown = (milliseconds: number) => {
     if (milliseconds <= 0) return "STARTED"
@@ -151,4 +158,4 @@ function StaggeredStartQueue({ currentRace, elapsedTime }: StaggeredStartQueuePr
   )
 }
 
-export default StaggeredStartQueue
+export default memo(StaggeredStartQueue)

@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense, lazy } from 'react'
 import type { AppView, ClubConfig, Race, Runner } from './types'
 import { initializeDatabase, db } from './db'
-import SettingsView from './components/SettingsView'
 import LoadingView from './components/ui/LoadingView'
 import ConfirmDialog from './components/ui/ConfirmDialog'
 import ErrorBoundary from './components/ui/ErrorBoundary'
 import ViewErrorFallback from './components/ui/ViewErrorFallback'
-import SetupView from './components/views/SetupView'
-import CheckinView from './components/views/CheckinView'
-import RaceDirectorView from './components/views/RaceDirectorView'
-import ResultsView from './components/views/ResultsView'
+
+// Lazy load views for code splitting
+const SettingsView = lazy(() => import('./components/SettingsView'))
+const SetupView = lazy(() => import('./components/views/SetupView'))
+const CheckinView = lazy(() => import('./components/views/CheckinView'))
+const RaceDirectorView = lazy(() => import('./components/views/RaceDirectorView'))
+const ResultsView = lazy(() => import('./components/views/ResultsView'))
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('setup')
@@ -173,7 +175,9 @@ function App() {
           <ErrorBoundary 
             fallback={<ViewErrorFallback viewName="Setup" onNavigateHome={() => setCurrentView('setup')} />}
           >
-            <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+            <Suspense fallback={<LoadingView />}>
+              <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+            </Suspense>
           </ErrorBoundary>
         )
       case 'checkin':
@@ -181,7 +185,9 @@ function App() {
           <ErrorBoundary 
             fallback={<ViewErrorFallback viewName="Check-in" onNavigateHome={() => setCurrentView('setup')} />}
           >
-            <CheckinView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+            <Suspense fallback={<LoadingView />}>
+              <CheckinView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+            </Suspense>
           </ErrorBoundary>
         )
       case 'race-director':
@@ -189,17 +195,19 @@ function App() {
           <ErrorBoundary 
             fallback={<ViewErrorFallback viewName="Race Director" onNavigateHome={() => setCurrentView('setup')} />}
           >
-            <RaceDirectorView 
-              currentRace={currentRace} 
-              isRaceRunning={isRaceRunning}
-              elapsedTime={getElapsedTime()}
-              startRace={startRace}
-              recordFinishTime={recordFinishTime}
-              isTestingMode={isTestingMode}
-              setIsTestingMode={setIsTestingMode}
-              setCurrentView={setCurrentView}
-              setCurrentRace={setCurrentRace}
-            />
+            <Suspense fallback={<LoadingView />}>
+              <RaceDirectorView 
+                currentRace={currentRace} 
+                isRaceRunning={isRaceRunning}
+                elapsedTime={getElapsedTime()}
+                startRace={startRace}
+                recordFinishTime={recordFinishTime}
+                isTestingMode={isTestingMode}
+                setIsTestingMode={setIsTestingMode}
+                setCurrentView={setCurrentView}
+                setCurrentRace={setCurrentRace}
+              />
+            </Suspense>
           </ErrorBoundary>
         )
       case 'results':
@@ -207,7 +215,9 @@ function App() {
           <ErrorBoundary 
             fallback={<ViewErrorFallback viewName="Results" onNavigateHome={() => setCurrentView('setup')} />}
           >
-            <ResultsView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+            <Suspense fallback={<LoadingView />}>
+              <ResultsView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+            </Suspense>
           </ErrorBoundary>
         )
       case 'settings':
@@ -215,7 +225,9 @@ function App() {
           <ErrorBoundary 
             fallback={<ViewErrorFallback viewName="Settings" onNavigateHome={() => setCurrentView('setup')} />}
           >
-            <SettingsView clubConfig={clubConfig} setClubConfig={setClubConfig} />
+            <Suspense fallback={<LoadingView />}>
+              <SettingsView clubConfig={clubConfig} setClubConfig={setClubConfig} />
+            </Suspense>
           </ErrorBoundary>
         )
       default:
@@ -223,7 +235,9 @@ function App() {
           <ErrorBoundary 
             fallback={<ViewErrorFallback viewName="Setup" onNavigateHome={() => setCurrentView('setup')} />}
           >
-            <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+            <Suspense fallback={<LoadingView />}>
+              <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+            </Suspense>
           </ErrorBoundary>
         )
     }
