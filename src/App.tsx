@@ -12,9 +12,27 @@ import ResultsView from './components/views/ResultsView'
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('setup')
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Initialize from localStorage or default to false
+    // Check if we're in browser environment
+    if (typeof window === 'undefined') return true
+    
+    // Initialize from localStorage first
     const saved = localStorage.getItem('darkMode')
-    return saved ? JSON.parse(saved) : false
+    if (saved !== null) {
+      try {
+        return JSON.parse(saved)
+      } catch {
+        // If parsing fails, remove invalid data and use default
+        localStorage.removeItem('darkMode')
+      }
+    }
+    
+    // If no saved preference, check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return true
+    }
+    
+    // Final fallback to dark mode as default
+    return true
   })
 
   // Apply dark mode class to html element and persist preference

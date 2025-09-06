@@ -11,6 +11,7 @@
 ## Current Priority Fixes (Before Sprint 3)
 
 ### ⚠️ CRITICAL: Fix handicap system understanding
+- **Issue**: The dark mode is default which is ok however the light mode dees not work we need to fix it
 - **Issue**: UI descriptions incorrectly suggest handicap = head start time
 - **Reality**: Handicap = start delay time (lower handicap = earlier start)
 - **Impact**: Affects race timing logic and user understanding
@@ -92,6 +93,7 @@
 - ✅ Create component stories for all UI components
 - ✅ Set up Playwright for E2E testing
 - ✅ Write BDD scenarios for main user workflows
+- ✅ **🚨 CRITICAL: Fix light mode functionality** - Fixed Tailwind CSS imports and dark mode toggle is now working correctly
 - [ ] Add component unit tests for complex logic
 - [ ] Implement accessibility testing in Storybook
 - [ ] Create responsive design documentation
