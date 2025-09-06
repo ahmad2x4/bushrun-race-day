@@ -15,6 +15,7 @@ const ResultsView = lazy(() => import('./components/views/ResultsView'))
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('setup')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check if we're in browser environment
     if (typeof window === 'undefined') return true
@@ -254,8 +255,8 @@ function App() {
               {clubConfig.name}
             </h1>
             
-            {/* View Navigation */}
-            <nav className="flex space-x-1">
+            {/* Desktop Navigation - Hidden on mobile */}
+            <nav className="hidden md:flex space-x-1">
               <button
                 onClick={() => setCurrentView('setup')}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
@@ -311,17 +312,120 @@ function App() {
               >
                 ⚙️
               </button>
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-              aria-label="Toggle dark mode"
-            >
-              {isDarkMode ? '☀️' : '🌙'}
-            </button>
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                aria-label="Toggle dark mode"
+              >
+                {isDarkMode ? '☀️' : '🌙'}
+              </button>
+              
+              {/* Mobile Hamburger Button - Show only on mobile, positioned after theme toggle */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                aria-label="Toggle mobile menu"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Mobile Navigation Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden">
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="fixed inset-x-0 top-16 z-50 bg-white dark:bg-gray-800 shadow-lg">
+            <nav className="px-4 py-6 space-y-2">
+              <button
+                onClick={() => {
+                  setCurrentView('setup')
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-md text-base font-medium ${
+                  currentView === 'setup' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Setup
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView('checkin')
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-md text-base font-medium ${
+                  currentView === 'checkin' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Check-in
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView('race-director')
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-md text-base font-medium ${
+                  currentView === 'race-director' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Race Director
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView('results')
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-md text-base font-medium ${
+                  currentView === 'results' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Results
+              </button>
+              <hr className="my-4 border-gray-200 dark:border-gray-600" />
+              <button
+                onClick={() => {
+                  setCurrentView('settings')
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-md text-base font-medium flex items-center space-x-2 ${
+                  currentView === 'settings' 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                <span>⚙️</span>
+                <span>Settings</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsDarkMode(!isDarkMode)
+                  setIsMobileMenuOpen(false)
+                }}
+                className="w-full text-left px-4 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center space-x-2"
+              >
+                <span>{isDarkMode ? '☀️' : '🌙'}</span>
+                <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
