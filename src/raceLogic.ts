@@ -26,6 +26,21 @@ export function msToTimeString(ms: number): string {
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
+// BBR handicap adjustments must be in 15-second increments (0:00, 0:15, 0:30, 0:45, 1:00, etc.)
+export function roundToNext15Seconds(ms: number): number {
+  if (ms <= 0) return 0;
+  
+  const totalSeconds = Math.ceil(ms / 1000);
+  const remainder = totalSeconds % 15;
+  
+  if (remainder === 0) {
+    return totalSeconds * 1000;
+  }
+  
+  // Round up to next 15-second increment
+  return (totalSeconds + (15 - remainder)) * 1000;
+}
+
 export function formatFinishTime(ms: number): string {
   if (ms < 0) {
     throw new Error(`Negative time not allowed: ${ms}`);
@@ -104,28 +119,38 @@ export function calculateHandicaps(runners: Runner[]): Runner[] {
       let handicapAdjustmentMs = 0;
       
       if (distance === '10km') {
-        // 10km handicap rules per official rules
+        // 10km handicap rules per official rules - all adjustments rounded to 15-second increments
         if (position === 1) {
-          handicapAdjustmentMs = Math.max(60000, -timeDifferenceMs); // Greater of 1 minute OR time by which they beat handicap
+          const minimumAdjustment = 60000; // 1 minute minimum
+          const timeBasedAdjustment = -timeDifferenceMs; // How much they beat target by
+          handicapAdjustmentMs = roundToNext15Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
         } else if (position === 2) {
-          handicapAdjustmentMs = Math.max(30000, -timeDifferenceMs); // Greater of 30 seconds OR time by which they beat handicap
+          const minimumAdjustment = 30000; // 30 seconds minimum
+          const timeBasedAdjustment = -timeDifferenceMs; // How much they beat target by
+          handicapAdjustmentMs = roundToNext15Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
         } else if (position === 3) {
-          handicapAdjustmentMs = Math.max(15000, -timeDifferenceMs); // Greater of 15 seconds OR time by which they beat handicap
+          const minimumAdjustment = 15000; // 15 seconds minimum
+          const timeBasedAdjustment = -timeDifferenceMs; // How much they beat target by
+          handicapAdjustmentMs = roundToNext15Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
         } else if (position <= 9) {
           handicapAdjustmentMs = 0; // No change for 4th-9th place
         } else {
-          handicapAdjustmentMs = -30000; // All other finishers: decrease by 30 seconds
+          handicapAdjustmentMs = -30000; // All other finishers: decrease by 30 seconds (already 15s increment)
         }
       } else {
-        // 5km handicap rules per official rules
+        // 5km handicap rules per official rules - all adjustments rounded to 15-second increments
         if (position === 1) {
-          handicapAdjustmentMs = Math.max(30000, -timeDifferenceMs); // Greater of 30 seconds OR time by which they beat handicap
+          const minimumAdjustment = 30000; // 30 seconds minimum
+          const timeBasedAdjustment = -timeDifferenceMs; // How much they beat target by
+          handicapAdjustmentMs = roundToNext15Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
         } else if (position === 2 || position === 3) {
-          handicapAdjustmentMs = Math.max(15000, -timeDifferenceMs); // Greater of 15 seconds OR time by which they beat handicap
+          const minimumAdjustment = 15000; // 15 seconds minimum
+          const timeBasedAdjustment = -timeDifferenceMs; // How much they beat target by
+          handicapAdjustmentMs = roundToNext15Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
         } else if (position <= 9) {
           handicapAdjustmentMs = 0; // No change for 4th-9th place
         } else {
-          handicapAdjustmentMs = -15000; // All other finishers: decrease by 15 seconds
+          handicapAdjustmentMs = -15000; // All other finishers: decrease by 15 seconds (already 15s increment)
         }
       }
       
