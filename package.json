@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b tsconfig.prod.json && vite build",
+    "build:dev": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest --config vitest.unit.config.ts",
@@ -14,7 +15,9 @@
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "deploy:infra": "cd iac && ./deploy.sh",
+    "deploy:build": "npm run build && cd iac && npx cdk deploy BushrunnersSpaStack --require-approval never"
   },
   "dependencies": {
     "react": "^19.1.1",
