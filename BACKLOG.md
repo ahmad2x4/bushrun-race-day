@@ -21,6 +21,14 @@ All core features and infrastructure have been successfully implemented and are 
 - **Details**: Fixed core handicap calculations to match official BBR rules
 - **Impact**: Application now complies with authentic BBR regulations
 
+
+### 4. Add reset local storage button 
+This reset button helps to reset all the local stored data.
+This is great for testing purposes.
+
+### 5. Make sure if app crashes after running again app picks up from where it left off.
+This means we need to make sure the critical data is always in the safe storage and they can be calcualted from it. We may already have it however we need to check
+
 ## 🔧 Optional Future Enhancements
 
 ### Accessibility & Performance Audit

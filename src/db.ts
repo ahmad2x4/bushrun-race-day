@@ -131,20 +131,16 @@ class DatabaseManager {
   }
 
   async getCurrentRace(): Promise<Race | null> {
-    // Get the most recent active or in-progress race
-    const activeRaces = await this.getRacesByStatus('active');
-    if (activeRaces.length > 0) {
-      return activeRaces[0];
-    }
+    // Priority order: active -> checkin -> setup -> finished (most recent)
+    const statusPriority: Race['status'][] = ['active', 'checkin', 'setup', 'finished'];
     
-    const checkinRaces = await this.getRacesByStatus('checkin');
-    if (checkinRaces.length > 0) {
-      return checkinRaces[0];
-    }
-    
-    const setupRaces = await this.getRacesByStatus('setup');
-    if (setupRaces.length > 0) {
-      return setupRaces[0];
+    for (const status of statusPriority) {
+      const races = await this.getRacesByStatus(status);
+      if (races.length > 0) {
+        // Sort by date descending to get the most recent race
+        const sortedRaces = races.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return sortedRaces[0];
+      }
     }
     
     return null;
@@ -224,6 +220,55 @@ class DatabaseManager {
         resolve(defaultConfig);
       };
     });
+  }
+
+  // Data validation and repair
+  async validateAndRepairData(): Promise<void> {
+    this.ensureDatabase();
+    
+    try {
+      // Get all races and validate them
+      const races = await this.getAllRaces();
+      
+      for (const race of races) {
+        let needsUpdate = false;
+        
+        // Validate race structure and fix common issues
+        if (!race.id || !race.date || !race.status) {
+          console.warn('Invalid race found, removing:', race.id);
+          await this.deleteRace(race.id);
+          continue;
+        }
+        
+        // Ensure runners array exists
+        if (!Array.isArray(race.runners)) {
+          race.runners = [];
+          needsUpdate = true;
+        }
+        
+        // Validate runner data
+        race.runners.forEach(runner => {
+          if (typeof runner.checked_in !== 'boolean') {
+            runner.checked_in = false;
+            needsUpdate = true;
+          }
+          if (runner.finish_time && typeof runner.finish_time !== 'number') {
+            delete runner.finish_time;
+            needsUpdate = true;
+          }
+        });
+        
+        // Update if needed
+        if (needsUpdate) {
+          console.log('Repairing race data:', race.id);
+          await this.saveRace(race);
+        }
+      }
+      
+      console.log('Data validation and repair completed');
+    } catch (error) {
+      console.error('Failed to validate/repair data:', error);
+    }
   }
 
   // Utility operations

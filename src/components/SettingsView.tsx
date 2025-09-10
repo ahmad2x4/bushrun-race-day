@@ -11,6 +11,9 @@ function SettingsView({ clubConfig, setClubConfig }: SettingsViewProps) {
   const [tempConfig, setTempConfig] = useState<ClubConfig>(clubConfig)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string>('')
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
 
   const handleSave = async () => {
     try {
@@ -31,6 +34,24 @@ function SettingsView({ clubConfig, setClubConfig }: SettingsViewProps) {
   const handleReset = () => {
     setTempConfig(clubConfig)
     setSaveMessage('')
+  }
+
+  const handleResetAllData = async () => {
+    try {
+      setIsResetting(true)
+      
+      // Clear all database data
+      await db.clearAllData()
+      
+      // Clear localStorage
+      localStorage.clear()
+      
+      // Reload the page to reset app state
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to reset data:', error)
+      setIsResetting(false)
+    }
   }
 
   const hasChanges = JSON.stringify(tempConfig) !== JSON.stringify(clubConfig)
@@ -157,6 +178,62 @@ function SettingsView({ clubConfig, setClubConfig }: SettingsViewProps) {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Reset All Data Section */}
+      <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-red-200 dark:border-red-800 p-6">
+        <h3 className="text-lg font-medium text-red-900 dark:text-red-100 mb-3 flex items-center">
+          ⚠️ Danger Zone
+        </h3>
+        
+        <div className="mb-4">
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+            Reset all local data including race data, club settings, and preferences.
+          </p>
+          <p className="text-xs text-red-600 dark:text-red-400">
+            <strong>Warning:</strong> This action cannot be undone. All data will be permanently lost.
+          </p>
+        </div>
+
+        {!showResetConfirm ? (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium text-sm"
+          >
+            Reset All Data
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">
+              Are you sure you want to reset all data? Type "RESET" to confirm:
+            </p>
+            <div className="flex space-x-3">
+              <input
+                type="text"
+                value={resetConfirmText}
+                onChange={(e) => setResetConfirmText(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Type RESET"
+              />
+              <button
+                onClick={handleResetAllData}
+                disabled={isResetting || resetConfirmText !== 'RESET'}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-md font-medium text-sm disabled:cursor-not-allowed"
+              >
+                {isResetting ? 'Resetting...' : 'Confirm Reset'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowResetConfirm(false)
+                  setResetConfirmText('')
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Info */}
