@@ -88,6 +88,10 @@ function App() {
     const initDb = async () => {
       try {
         await initializeDatabase()
+        
+        // Validate and repair any corrupted data after potential crashes
+        await db.validateAndRepairData()
+        
         setIsDbInitialized(true)
         
         // Load club configuration
