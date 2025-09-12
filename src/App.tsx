@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
-import type { AppView, ClubConfig, Race, Runner } from './types'
+import type { AppView, ClubConfig, Race } from './types'
 import { initializeDatabase, db } from './db'
 import LoadingView from './components/ui/LoadingView'
 import ConfirmDialog from './components/ui/ConfirmDialog'
@@ -144,30 +144,8 @@ function App() {
     return isTestingMode ? realElapsed * 10 : realElapsed // 10x faster in testing mode
   }
 
-  // Check if all checked-in runners have finished
-  const areAllRunnersFinished = (race: Race) => {
-    const checkedInRunners = race.runners.filter(r => r.checked_in)
-    if (checkedInRunners.length === 0) return false
-    return checkedInRunners.every(r => r.finish_time !== undefined)
-  }
 
-  const recordFinishTime = async (runner: Runner) => {
-    if (!isRaceRunning || !currentRace) return
-    
-    runner.finish_time = getElapsedTime()
-    
-    const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
-    
-    // Check if all runners have finished and auto-complete race
-    if (areAllRunnersFinished(updatedRace)) {
-      updatedRace.status = 'finished'
-      setIsRaceRunning(false)
-      setCurrentView('results')
-    }
-    
-    await db.saveRace(updatedRace)
-    setCurrentRace(updatedRace)
-  }
+  // Removed recordFinishTime - now handled by FinishLineRegistration component
 
   const renderView = () => {
     if (!isDbInitialized) {
@@ -206,7 +184,6 @@ function App() {
                 isRaceRunning={isRaceRunning}
                 elapsedTime={getElapsedTime()}
                 startRace={startRace}
-                recordFinishTime={recordFinishTime}
                 isTestingMode={isTestingMode}
                 setIsTestingMode={setIsTestingMode}
                 setCurrentView={setCurrentView}
