@@ -1,15 +1,12 @@
 import { useState } from 'react'
-import type { Race, Runner } from '../../types'
+import type { Race } from '../../types'
 
 interface RunnerNumberGridProps {
   currentRace: Race
-  isRaceRunning: boolean
-  showFinishSection: boolean
-  onRecordFinishTime: (runner: Runner) => void
-  onViewResults: () => void
+  onViewResults?: () => void
 }
 
-function RunnerNumberGrid({ currentRace, isRaceRunning, showFinishSection, onRecordFinishTime, onViewResults }: RunnerNumberGridProps) {
+function RunnerNumberGrid({ currentRace, onViewResults }: RunnerNumberGridProps) {
   const [selectedDistance, setSelectedDistance] = useState<'all' | '5km' | '10km'>('all')
   
   const checkedInRunners = currentRace.runners.filter(r => r.checked_in)
@@ -24,11 +21,8 @@ function RunnerNumberGrid({ currentRace, isRaceRunning, showFinishSection, onRec
 
   return (
     <div>
-      {/* Show finish section only when all runners have started */}
-      {showFinishSection && (
-        <>
-          {/* Compact Filter Tabs */}
-          <div className="flex gap-1 mb-3 justify-center">
+      {/* Compact Filter Tabs */}
+      <div className="flex gap-1 mb-3 justify-center">
             <button
               onClick={() => setSelectedDistance('all')}
               className={`px-3 py-1 text-sm rounded transition-colors ${
@@ -89,7 +83,6 @@ function RunnerNumberGrid({ currentRace, isRaceRunning, showFinishSection, onRec
               {filteredRunners
                 .sort((a, b) => a.member_number - b.member_number)
                 .map((runner) => {
-                  const isProcessed = runner.finish_time !== undefined || runner.status === 'dnf' || runner.status === 'early_start'
                   const getButtonStyle = () => {
                     if (runner.status === 'dnf') {
                       return 'bg-red-500 text-white border-red-600'
@@ -97,10 +90,8 @@ function RunnerNumberGrid({ currentRace, isRaceRunning, showFinishSection, onRec
                       return 'bg-yellow-500 text-white border-yellow-600'
                     } else if (runner.finish_time !== undefined) {
                       return 'bg-green-500 text-white border-green-600'
-                    } else if (isRaceRunning) {
-                      return 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-700 hover:border-blue-400 active:scale-95'
                     } else {
-                      return 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600 cursor-not-allowed'
+                      return 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600'
                     }
                   }
                   
@@ -113,18 +104,16 @@ function RunnerNumberGrid({ currentRace, isRaceRunning, showFinishSection, onRec
                   }
                   
                   return (
-                    <button
+                    <div
                       key={runner.member_number}
-                      onClick={() => !isProcessed && isRaceRunning && onRecordFinishTime(runner)}
-                      disabled={!isRaceRunning || isProcessed}
                       className={`
-                        aspect-square rounded-lg font-bold text-lg transition-all duration-200 border-2 shadow-lg
+                        aspect-square rounded-lg font-bold text-lg border-2 shadow-lg flex items-center justify-center
                         ${getButtonStyle()}
                       `}
                       title={getButtonTitle()}
                     >
                       {runner.member_number}
-                    </button>
+                    </div>
                   )
                 })}
             </div>
@@ -135,8 +124,6 @@ function RunnerNumberGrid({ currentRace, isRaceRunning, showFinishSection, onRec
               No runners checked in for this distance.
             </div>
           )}
-        </>
-      )}
     </div>
   )
 }
