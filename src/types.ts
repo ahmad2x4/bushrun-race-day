@@ -39,8 +39,10 @@ export interface RaceResults {
 export interface ClubConfig {
   name: string;
   primary_color: string;
-  secondary_color: string;
+  secondary_color?: string;
   logo_url?: string;
+  website_url?: string;
+  contact_email?: string;
 }
 
 export type AppView = 'setup' | 'checkin' | 'race-director' | 'results' | 'settings';
