@@ -173,7 +173,7 @@ export const Interactive: Story = {
 
 // Mock React for the Interactive story
 const React = {
-  useState: (initial: any) => {
+  useState: (initial: unknown) => {
     // Simple mock for Storybook - in real usage React.useState would work properly
     return [initial, mockFn];
   }

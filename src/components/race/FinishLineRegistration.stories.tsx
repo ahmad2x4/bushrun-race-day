@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState, useCallback } from 'react'
 import FinishLineRegistration from './FinishLineRegistration'
 import type { Runner } from '../../types'
@@ -97,14 +97,14 @@ export default meta
 type Story = StoryObj<typeof FinishLineRegistration>
 
 // Interactive wrapper component for the story
-function InteractiveWrapper(args: any) {
-  const [finishTimes, setFinishTimes] = useState<any[]>([])
+function InteractiveWrapper(args: typeof meta.args) {
+  const [finishTimes, setFinishTimes] = useState<{ id: string; timestamp: number; position: number; runnerId?: number }[]>([])
   const [runnerAssignments, setRunnerAssignments] = useState<Record<string, number>>({})
-  const [currentTime, setCurrentTime] = useState(args.elapsedTime || 0)
+  const [currentTime, setCurrentTime] = useState(args?.elapsedTime || 0)
 
   // Simulate race timer
   useState(() => {
-    if (args.isRaceRunning) {
+    if (args?.isRaceRunning) {
       const interval = setInterval(() => {
         setCurrentTime((prev: number) => prev + 100)
       }, 100)
@@ -112,7 +112,7 @@ function InteractiveWrapper(args: any) {
     }
   })
 
-  const handleFinishTimeRecorded = useCallback((finishTime: any) => {
+  const handleFinishTimeRecorded = useCallback((finishTime: { id: string; timestamp: number; position: number }) => {
     setFinishTimes(prev => [...prev, finishTime])
     console.log('Finish time recorded:', finishTime)
   }, [])
@@ -152,7 +152,8 @@ function InteractiveWrapper(args: any) {
       </div>
       
       <FinishLineRegistration
-        {...args}
+        availableRunners={args?.availableRunners || []}
+        isRaceRunning={args?.isRaceRunning || false}
         elapsedTime={currentTime}
         onFinishTimeRecorded={handleFinishTimeRecorded}
         onRunnerAssigned={handleRunnerAssigned}
@@ -165,7 +166,7 @@ function InteractiveWrapper(args: any) {
         <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
           <div>Finish times recorded: {updatedFinishTimes.length}</div>
           <div>Assigned runners: {Object.keys(runnerAssignments).length}</div>
-          <div>Available runners: {args.availableRunners.length - Object.values(runnerAssignments).length}</div>
+          <div>Available runners: {(args?.availableRunners?.length || 0) - Object.values(runnerAssignments).length}</div>
         </div>
         
         {updatedFinishTimes.length > 0 && (

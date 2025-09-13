@@ -92,7 +92,7 @@ function RaceDirectorView({
     }
   }, [currentRace, setCurrentRace, setCurrentView])
 
-  const handleRunnerRemoved = useCallback(async (runnerId: number, _finishTimeId: string) => {
+  const handleRunnerRemoved = useCallback(async (runnerId: number) => {
     if (!currentRace || !setCurrentRace) return
     
     try {
@@ -231,7 +231,7 @@ function RaceDirectorView({
                   allRunners={allCheckedInRunners}
                   onFinishTimeRecorded={handleFinishTimeRecorded}
                   onRunnerAssigned={handleRunnerAssigned}
-                  onRunnerRemoved={handleRunnerRemoved}
+                  onRunnerRemoved={(runnerId) => handleRunnerRemoved(runnerId)}
                   isRaceRunning={isRaceRunning}
                   elapsedTime={elapsedTime}
                   onViewResults={() => {
