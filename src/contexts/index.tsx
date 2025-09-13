@@ -16,6 +16,3 @@ export function Providers({ children }: ProvidersProps) {
   )
 }
 
-// Re-export hooks for convenience
-export { useApp } from './AppContext'
-export { useRace } from './RaceContext'

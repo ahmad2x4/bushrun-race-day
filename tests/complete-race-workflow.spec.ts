@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { VALID_TEST_CSV, TEST_RUNNERS, TEST_SCENARIOS, EXPECTED_FINISH_TIMES } from './fixtures/test-data';
+import { VALID_TEST_CSV } from './fixtures/test-data';
 
 /**
  * Complete Race Workflow E2E Test

@@ -1,28 +1,8 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import type { AppView, ClubConfig } from '../types'
 import { db } from '../db'
-
-interface AppContextType {
-  // Navigation
-  currentView: AppView
-  setCurrentView: (view: AppView) => void
-  
-  // Theme
-  isDarkMode: boolean
-  setIsDarkMode: (dark: boolean) => void
-  
-  // Club configuration
-  clubConfig: ClubConfig
-  setClubConfig: (config: ClubConfig) => void
-  updateClubConfig: (config: ClubConfig) => Promise<void>
-  
-  // Dialogs
-  showResetConfirm: boolean
-  setShowResetConfirm: (show: boolean) => void
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined)
+import { AppContext } from './AppContextDefinition'
 
 interface AppProviderProps {
   children: ReactNode
@@ -79,10 +59,3 @@ export function AppProvider({ children }: AppProviderProps) {
   )
 }
 
-export function useApp() {
-  const context = useContext(AppContext)
-  if (context === undefined) {
-    throw new Error('useApp must be used within an AppProvider')
-  }
-  return context
-}

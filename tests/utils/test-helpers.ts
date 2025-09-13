@@ -1,4 +1,4 @@
-import { Page, expect, type Locator } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 /**
  * Test utilities for Bushrun Race Day E2E tests
@@ -158,7 +158,7 @@ export class BushrunTestHelpers {
 
       const finished10kElement = this.page.locator('[data-testid="finished-10k-count"]');
       stats.finished10k = parseInt(await finished10kElement.textContent() || '0');
-    } catch (error) {
+    } catch {
       // Some stats might not be available in certain views
     }
 
@@ -241,7 +241,7 @@ export class BushrunTestHelpers {
       };
       
       const expectedView = statusViewMap[expectedState.status];
-      await this.ensureViewActive(expectedView as any);
+      await this.ensureViewActive(expectedView as 'setup' | 'checkin' | 'race-director' | 'results' | 'settings');
     }
 
     if (expectedState.totalRunners !== undefined || 
