@@ -42,10 +42,10 @@ All core features and infrastructure have been successfully implemented and are 
 - **Details**: Full production infrastructure deployed at https://bbr.home.ahmadreza.com
 - **Impact**: Live production site with automated deployment
 
-### ✅ 3. BBR Handicap 15-Second Increment Rule Fix ✅
+### ✅ 3. BBR Handicap 5-Second Increment Rule Fix ✅
 - **Status**: COMPLETED
-- **Details**: Fixed core handicap calculations to match official BBR rules
-- **Impact**: Application now complies with authentic BBR regulations
+- **Details**: Fixed core handicap calculations to match updated BBR rules (5-second increments)
+- **Impact**: Application now uses more granular handicap adjustments for fairer results
 
 
 ### 4. Add reset local storage button 

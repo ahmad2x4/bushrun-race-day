@@ -104,9 +104,9 @@
 - **Details**: Replaced placeholder data with authentic BBR names, member numbers, and handicap times from 2025 race results
 - **Impact**: Application now uses realistic BBR data
 
-### ✅ BBR Handicap 15-Second Increment Rule Fix
-- **Completed**: Fixed handicap calculations to follow BBR rule requiring 15-second increments
-- **Details**: Added `roundToNext15Seconds()` utility, updated calculation logic, comprehensive unit tests, all handicaps now end in :00/:15/:30/:45
+### ✅ BBR Handicap 5-Second Increment Rule Fix
+- **Completed**: Fixed handicap calculations to follow BBR rule requiring 5-second increments
+- **Details**: Added `roundToNext5Seconds()` utility, updated calculation logic, comprehensive unit tests, all handicaps now end in 5-second increments (:00/:05/:10/:15/:20/etc.)
 - **Impact**: Core race calculations now match official BBR handicap rules
 
 ### ✅ Production Build Optimization
