@@ -3,7 +3,7 @@ import {
   timeStringToMs,
   msToTimeString,
   formatFinishTime,
-  roundToNext15Seconds,
+  roundToNext5Seconds,
   calculateHandicaps,
   generateResults,
   parseCSV,
@@ -89,35 +89,38 @@ describe('Time conversion utilities', () => {
     });
   });
 
-  describe('roundToNext15Seconds', () => {
-    it('should round up to next 15-second increment', () => {
-      // Values already at 15-second increments should stay the same
-      expect(roundToNext15Seconds(0)).toBe(0);       // 0:00
-      expect(roundToNext15Seconds(15000)).toBe(15000); // 0:15
-      expect(roundToNext15Seconds(30000)).toBe(30000); // 0:30
-      expect(roundToNext15Seconds(45000)).toBe(45000); // 0:45
-      expect(roundToNext15Seconds(60000)).toBe(60000); // 1:00
-      
+  describe('roundToNext5Seconds', () => {
+    it('should round up to next 5-second increment', () => {
+      // Values already at 5-second increments should stay the same
+      expect(roundToNext5Seconds(0)).toBe(0);       // 0:00
+      expect(roundToNext5Seconds(5000)).toBe(5000);  // 0:05
+      expect(roundToNext5Seconds(10000)).toBe(10000); // 0:10
+      expect(roundToNext5Seconds(15000)).toBe(15000); // 0:15
+      expect(roundToNext5Seconds(20000)).toBe(20000); // 0:20
+      expect(roundToNext5Seconds(60000)).toBe(60000); // 1:00
+
       // Values that need rounding up
-      expect(roundToNext15Seconds(1000)).toBe(15000);   // 0:01 -> 0:15
-      expect(roundToNext15Seconds(7000)).toBe(15000);   // 0:07 -> 0:15
-      expect(roundToNext15Seconds(14000)).toBe(15000);  // 0:14 -> 0:15
-      expect(roundToNext15Seconds(16000)).toBe(30000);  // 0:16 -> 0:30
-      expect(roundToNext15Seconds(37000)).toBe(45000);  // 0:37 -> 0:45
-      expect(roundToNext15Seconds(52000)).toBe(60000);  // 0:52 -> 1:00
-      expect(roundToNext15Seconds(73000)).toBe(75000);  // 1:13 -> 1:15
+      expect(roundToNext5Seconds(1000)).toBe(5000);   // 0:01 -> 0:05
+      expect(roundToNext5Seconds(3000)).toBe(5000);   // 0:03 -> 0:05
+      expect(roundToNext5Seconds(4000)).toBe(5000);   // 0:04 -> 0:05
+      expect(roundToNext5Seconds(7000)).toBe(10000);  // 0:07 -> 0:10
+      expect(roundToNext5Seconds(14000)).toBe(15000); // 0:14 -> 0:15
+      expect(roundToNext5Seconds(16000)).toBe(20000); // 0:16 -> 0:20
+      expect(roundToNext5Seconds(37000)).toBe(40000); // 0:37 -> 0:40
+      expect(roundToNext5Seconds(52000)).toBe(55000); // 0:52 -> 0:55
+      expect(roundToNext5Seconds(73000)).toBe(75000); // 1:13 -> 1:15
     });
 
     it('should handle zero and negative values', () => {
-      expect(roundToNext15Seconds(0)).toBe(0);
-      expect(roundToNext15Seconds(-1000)).toBe(0);
-      expect(roundToNext15Seconds(-15000)).toBe(0);
+      expect(roundToNext5Seconds(0)).toBe(0);
+      expect(roundToNext5Seconds(-1000)).toBe(0);
+      expect(roundToNext5Seconds(-15000)).toBe(0);
     });
 
     it('should handle larger time values', () => {
-      expect(roundToNext15Seconds(125000)).toBe(135000); // 2:05 -> 2:15
-      expect(roundToNext15Seconds(300000)).toBe(300000); // 5:00 (already 15s increment)
-      expect(roundToNext15Seconds(307000)).toBe(315000); // 5:07 -> 5:15
+      expect(roundToNext5Seconds(123000)).toBe(125000); // 2:03 -> 2:05
+      expect(roundToNext5Seconds(125000)).toBe(125000); // 2:05 (already 5s increment)
+      expect(roundToNext5Seconds(307000)).toBe(310000); // 5:07 -> 5:10
     });
   });
 });
@@ -653,8 +656,8 @@ describe('DNF and Early Start functionality', () => {
       expect(earlyStartRunner?.finish_position).toBeUndefined();
     });
 
-    it('should ensure all handicap adjustments follow 15-second increment rule', () => {
-      // Test scenario where times would produce non-15-second increments without rounding
+    it('should ensure all handicap adjustments follow 5-second increment rule', () => {
+      // Test scenario where times would produce non-5-second increments without rounding
       const runners: Runner[] = [
         {
           member_number: 1,
@@ -672,7 +675,7 @@ describe('DNF and Early Start functionality', () => {
           distance: '10km',
           current_handicap_10k: '05:30',
           checked_in: true,
-          finish_time: 3577000, // 59:37 (38s early) -> should get 45s adjustment (rounded up from 38s)  
+          finish_time: 3562000, // 59:22 (38s early) -> should get 40s adjustment (rounded up from 38s)  
         },
         {
           member_number: 3,
@@ -681,17 +684,17 @@ describe('DNF and Early Start functionality', () => {
           distance: '5km',
           current_handicap_5k: '02:00',
           checked_in: true,
-          finish_time: 2943000, // 49:03 (57s early) -> should get 1:00 adjustment (rounded up from 57s)
+          finish_time: 2943000, // 49:03 (57s early) -> should get 60s adjustment (rounded up from 57s)
         }
       ];
 
       const results = calculateHandicaps(runners);
 
-      // Verify all new handicaps end in :00, :15, :30, or :45
+      // Verify all new handicaps end in 5-second increments (:00, :05, :10, :15, :20, etc.)
       results.forEach(runner => {
         if (runner.new_handicap) {
           const [, seconds] = runner.new_handicap.split(':').map(Number);
-          expect(seconds % 15).toBe(0); // Seconds should be multiple of 15
+          expect(seconds % 5).toBe(0); // Seconds should be multiple of 5
         }
       });
 
@@ -702,11 +705,11 @@ describe('DNF and Early Start functionality', () => {
 
       // Expected calculations:
       // Runner1: 1st place 10km, 1min early -> 1:00 minimum adjustment -> 5:00 + 1:00 = 6:00
-      // Runner2: 2nd place 10km, 23s early -> 30s minimum adjustment -> 5:30 + 0:30 = 6:00  
-      // Runner3: 1st place 5km, 57s early -> 1:00 adjustment (rounded up) -> 2:00 + 1:00 = 3:00
+      // Runner2: 2nd place 10km, 38s early -> 40s adjustment (rounded up from 38s to next 5s) -> 5:30 + 0:40 = 6:10
+      // Runner3: 1st place 5km, 57s early -> 60s adjustment (rounded up from 57s to next 5s) -> 2:00 + 1:00 = 3:00
       expect(runner1?.new_handicap).toBe('06:00'); // 5:00 + 1:00 minimum
-      expect(runner2?.new_handicap).toBe('06:00'); // 5:30 + 0:30 minimum (30s already 15s increment)
-      expect(runner3?.new_handicap).toBe('03:00'); // 2:00 + 1:00 (rounded from 57s)
+      expect(runner2?.new_handicap).toBe('06:10'); // 5:30 + 0:40 (38s rounded up to 40s)
+      expect(runner3?.new_handicap).toBe('03:00'); // 2:00 + 1:00 (57s rounded up to 60s)
     });
   });
 
