@@ -138,6 +138,40 @@
 - **User Story**: "As a race director, I want to quickly record finish times with a large button, then assign race numbers to those times using an intuitive drag-and-drop interface, so I can accurately capture results even when athletes finish in quick succession." ✅ ACHIEVED
 - **Impact**: Dramatically improves finish line registration accuracy and speed
 
+### ✅ Start Delay Time Adjustment on Check-in (2025)
+- **Status**: COMPLETED 🎉
+- **User Story**: "As a runner during check-in, I want to be able to adjust my start delay time by ±5 seconds using +/- buttons so I can fine-tune my handicap if needed."
+- **Implementation Summary**:
+  - ✅ Added +/- buttons flanking the start delay time display
+  - ✅ Buttons adjust time by exactly ±5 seconds with immediate UI feedback
+  - ✅ Time cannot go below 0:00 (minimum constraint implemented)
+  - ✅ Changes persist to database immediately via existing db.saveRace() method
+  - ✅ Works for both 5km and 10km distances
+  - ✅ **CONFIGURABLE SETTING**: Added toggle in Settings to enable/disable feature
+  - ✅ Default: Enabled (can be turned off in club settings)
+  - ✅ Helper functions for time conversion (mm:ss ↔ seconds)
+  - ✅ Comprehensive test coverage (9 new unit tests)
+  - ✅ All existing tests passing (115 total)
+  - ✅ Production build successful
+- **Settings Location**: ⚙️ Settings → Runner Time Adjustment toggle
+- **Impact**: Gives runners control over their start delay time during check-in
+
+### ✅ Race Timer Bug Fix (2025)
+- **Status**: COMPLETED 🎉
+- **Bug**: Race timer continued running even after all runners finished
+- **Root Cause**: Missing `stopRace()` function and incomplete auto-completion logic
+- **Fix Summary**:
+  - ✅ Added `stopRace()` function to App.tsx that sets `isRaceRunning = false`
+  - ✅ Updated RaceDirectorView props interface to include `stopRace`
+  - ✅ Modified auto-completion logic to call `stopRace()` when all checked-in runners finish
+  - ✅ Timer now stops automatically when race completes
+  - ✅ All existing tests still passing (115 total)
+  - ✅ Production build successful
+- **Files Modified**:
+  - `src/App.tsx` - Added stopRace function and passed to RaceDirectorView
+  - `src/components/views/RaceDirectorView.tsx` - Updated props and auto-completion logic
+- **Impact**: Ensures race timer stops correctly when all runners finish
+
 ## Project Status
 - **Development Server**: http://localhost:5174
 - **Production Site**: https://bbr.home.ahmadreza.com
