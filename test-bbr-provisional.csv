@@ -1,0 +1,5 @@
+member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k,is_official_5k,is_official_10k
+331,John Smith,true,5km,02:15,,true,true
+200,Jane Doe (Provisional),true,5km,01:30,,false,true
+150,Bob Wilson,true,10km,,05:45,true,false
+999,New Runner (Both Provisional),true,10km,,03:00,false,false

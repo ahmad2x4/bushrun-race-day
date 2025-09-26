@@ -310,7 +310,9 @@ describe('CSV parsing', () => {
         is_financial_member: true,
         distance: '5km',
         current_handicap_5k: '02:15',
-        checked_in: false
+        checked_in: false,
+        is_official_5k: true,
+        is_official_10k: true
       });
       expect(runners[1]).toEqual({
         member_number: 200,
@@ -318,7 +320,9 @@ describe('CSV parsing', () => {
         is_financial_member: true,
         distance: '10km',
         current_handicap_10k: '09:30',
-        checked_in: false
+        checked_in: false,
+        is_official_5k: true,
+        is_official_10k: true
       });
     });
 
@@ -452,9 +456,9 @@ describe('CSV export functionality', () => {
       const csv = generateNextRaceCSV(runners);
       const lines = csv.split('\n');
       
-      expect(lines[0]).toBe('member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k');
-      expect(lines[1]).toBe('331,"John Smith",true,5km,02:30,'); // Uses new_handicap
-      expect(lines[2]).toBe('200,"Jane Doe",false,10km,,10:00'); // Uses new_handicap
+      expect(lines[0]).toBe('member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k,is_official_5k,is_official_10k');
+      expect(lines[1]).toBe('331,"John Smith",true,5km,02:30,,true,true'); // Uses new_handicap
+      expect(lines[2]).toBe('200,"Jane Doe",false,10km,,10:00,true,true'); // Uses new_handicap
     });
   });
 
@@ -463,10 +467,10 @@ describe('CSV export functionality', () => {
       const csv = generateResultsCSV(runners);
       const lines = csv.split('\n');
       
-      expect(lines[0]).toBe('member_number,full_name,distance,status,finish_position,finish_time,old_handicap,new_handicap');
+      expect(lines[0]).toBe('member_number,full_name,distance,status,finish_position,finish_time,old_handicap,new_handicap,is_official_5k,is_official_10k');
       // 5km comes first due to localeCompare sorting
-      expect(lines[1]).toContain('331,"John Smith",5km,finished,1,2:30.0,02:15,02:30');
-      expect(lines[2]).toContain('200,"Jane Doe",10km,finished,1,10:00.0,09:30,10:00');
+      expect(lines[1]).toContain('331,"John Smith",5km,finished,1,2:30.0,02:15,02:30,true,true');
+      expect(lines[2]).toContain('200,"Jane Doe",10km,finished,1,10:00.0,09:30,10:00,true,true');
     });
 
     it('should sort results by distance then position', () => {

@@ -6,7 +6,32 @@ All core features and infrastructure have been successfully implemented and are 
 
 ## 🚧 Active Development Items
 
-### 1. **Day-of Registration for New Members**
+### 1. **BBR "Two Handicaps" Rule Implementation**
+- **Priority**: High
+- **User Story**: "As a race director, I need to track which runners have participated in 2+ handicap races (including Starter/Timekeeper duties) so that only qualified runners receive official handicap status and championship points."
+- **BBR Rule**: Runners must have participated in two or more handicap races in current or prior membership year to have official handicap status
+- **Requirements**:
+  - Add `is_official_5k` and `is_official_10k` boolean fields to CSV input/output
+  - During check-in, ask provisional runners about their participation history
+  - Update runner status to official if they confirm 2+ participations
+  - Display official/provisional status in Setup preview
+  - Export updated status flags for next race
+- **Technical Implementation**:
+  - Update Runner interface with new boolean fields (default: true for backward compatibility)
+  - Modify CSV parser to handle new fields with fallback to true if missing
+  - Add confirmation popup in CheckinView for provisional runners
+  - Update CSV export functions to include new fields
+  - Add status indicators in SetupView runner preview
+- **Acceptance Criteria**:
+  - CSV import supports `is_official_5k` and `is_official_10k` fields
+  - Backward compatibility: missing fields default to true (official)
+  - Check-in shows popup for provisional runners asking about participation
+  - Popup allows race director to promote provisional to official status
+  - Setup view displays official/provisional badges for each distance
+  - CSV export includes updated status flags
+  - Status changes persist to database and carry forward to next race
+
+### 2. **Day-of Registration for New Members**
 - **Priority**: High
 - **User Story**: "As a race director, I want to add new runners to the starter list on race day, treating them exactly like any other runner from the CSV file."
 - **Key Principle**: **New members are just regular runners added to the list - no special treatment needed**
@@ -31,7 +56,7 @@ All core features and infrastructure have been successfully implemented and are 
   - New runner appears in results and exports with their race distance
   - **No distinction between "temporary" and "regular" runners in the UI**
 
-### 2. **Add Reset Local Storage Button**
+### 3. **Add Reset Local Storage Button**
 - **Priority**: Medium
 - **Description**: Add reset button to help reset all local stored data for testing purposes
 - **User Story**: "As a developer/tester, I want to easily reset all local data so I can test the application from a clean state."
@@ -42,7 +67,7 @@ All core features and infrastructure have been successfully implemented and are 
   - Reset application to initial state
   - Require confirmation (similar to existing reset functionality)
 
-### 3. **App Crash Recovery**
+### 4. **App Crash Recovery**
 - **Priority**: Medium
 - **Description**: Ensure app picks up from where it left off after crashes
 - **User Story**: "As a race director, if the app crashes during a race, I want it to recover to the exact state when I reopen it."

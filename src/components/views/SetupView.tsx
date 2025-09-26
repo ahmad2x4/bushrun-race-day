@@ -157,7 +157,7 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
               ✅ Race Configured Successfully
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
               <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
                 <div className="text-2xl font-bold text-blue-600">{currentRace.runners.length}</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">Total Runners</div>
@@ -173,6 +173,24 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
                   {currentRace.runners.filter(r => r.distance === '10km').length}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">10K Runners</div>
+              </div>
+              <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="text-2xl font-bold text-green-600">
+                  {currentRace.runners.filter(r => {
+                    const isOfficial = r.distance === '5km' ? (r.is_official_5k ?? true) : (r.is_official_10k ?? true)
+                    return isOfficial
+                  }).length}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Official</div>
+              </div>
+              <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="text-2xl font-bold text-orange-600">
+                  {currentRace.runners.filter(r => {
+                    const isOfficial = r.distance === '5km' ? (r.is_official_5k ?? true) : (r.is_official_10k ?? true)
+                    return !isOfficial
+                  }).length}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Provisional</div>
               </div>
             </div>
 
@@ -217,6 +235,9 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Start Delay
                     </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -235,6 +256,22 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
                       </td>
                       <td className="px-4 py-2 text-sm">
                         {runner.distance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k}
+                      </td>
+                      <td className="px-4 py-2 text-sm">
+                        {(() => {
+                          const isOfficial = runner.distance === '5km'
+                            ? (runner.is_official_5k ?? true)
+                            : (runner.is_official_10k ?? true)
+                          return (
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              isOfficial
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                            }`}>
+                              {isOfficial ? 'Official' : 'Provisional'}
+                            </span>
+                          )
+                        })()}
                       </td>
                     </tr>
                   ))}
