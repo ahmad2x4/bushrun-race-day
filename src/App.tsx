@@ -126,17 +126,21 @@ function App() {
   // Global race timer functions
   const startRace = async () => {
     if (!currentRace || currentRace.start_time) return
-    
+
     const now = Date.now()
-    const updatedRace = { 
-      ...currentRace, 
+    const updatedRace = {
+      ...currentRace,
       start_time: now,
       status: 'active' as const
     }
-    
+
     await db.saveRace(updatedRace)
     setCurrentRace(updatedRace)
     setIsRaceRunning(true)
+  }
+
+  const stopRace = () => {
+    setIsRaceRunning(false)
   }
 
   const getElapsedTime = () => {
@@ -180,11 +184,12 @@ function App() {
             fallback={<ViewErrorFallback viewName="Race Director" onNavigateHome={() => setCurrentView('setup')} />}
           >
             <Suspense fallback={<LoadingView />}>
-              <RaceDirectorView 
-                currentRace={currentRace} 
+              <RaceDirectorView
+                currentRace={currentRace}
                 isRaceRunning={isRaceRunning}
                 elapsedTime={getElapsedTime()}
                 startRace={startRace}
+                stopRace={stopRace}
                 isTestingMode={isTestingMode}
                 setIsTestingMode={setIsTestingMode}
                 setCurrentView={setCurrentView}

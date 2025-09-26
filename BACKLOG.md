@@ -23,7 +23,22 @@ All core features and infrastructure have been successfully implemented and are 
   - ✅ Production build successful
 - **Settings Location**: ⚙️ Settings → Runner Time Adjustment toggle
 
-### 2. **Day-of Registration for New Members**
+### 2. **✅ Race Timer Bug Fix** (COMPLETED)
+- **Priority**: High - **COMPLETED**
+- **Bug**: Race timer continued running even after all runners finished
+- **Root Cause**: Missing `stopRace()` function and incomplete auto-completion logic
+- **Fix Summary**:
+  - ✅ Added `stopRace()` function to App.tsx that sets `isRaceRunning = false`
+  - ✅ Updated RaceDirectorView props interface to include `stopRace`
+  - ✅ Modified auto-completion logic to call `stopRace()` when all checked-in runners finish
+  - ✅ Timer now stops automatically when race completes
+  - ✅ All existing tests still passing (115 total)
+  - ✅ Production build successful
+- **Files Modified**:
+  - `src/App.tsx` - Added stopRace function and passed to RaceDirectorView
+  - `src/components/views/RaceDirectorView.tsx` - Updated props and auto-completion logic
+
+### 3. **Day-of Registration for New Members**
 - **Priority**: High
 - **User Story**: "As a race director, I want to add new runners to the starter list on race day, treating them exactly like any other runner from the CSV file."
 - **Key Principle**: **New members are just regular runners added to the list - no special treatment needed**
