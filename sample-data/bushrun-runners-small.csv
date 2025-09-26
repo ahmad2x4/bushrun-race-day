@@ -1,5 +1,5 @@
-member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k
-516,"Mark Cracknell",true,10km,,06:30,
-502,"Liam Lasses",false,5km,37:31,
-331,"Ahmad Atighechi",true,10km,,09:30,
-352,"Eloise Ward",true,5km,28:23,
+member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k,is_official_5k,is_official_10k
+516,"Mark Cracknell",true,10km,,06:30,true,true
+502,"Liam Lasses",false,5km,37:31,,false,true
+331,"Ahmad Atighechi",true,10km,,09:30,true,true
+352,"Eloise Ward",true,5km,28:23,,true,false

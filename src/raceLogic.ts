@@ -272,13 +272,27 @@ export function parseCSV(csvText: string): Runner[] {
       // Parse financial member status
       const isFinancialStr = values[headers.indexOf('is_financial_member')].toLowerCase();
       const isFinancialMember = ['true', '1', 'yes'].includes(isFinancialStr);
-      
+
+      // Parse official status flags (default to true for backward compatibility)
+      const isOfficial5kIndex = headers.indexOf('is_official_5k');
+      const isOfficial10kIndex = headers.indexOf('is_official_10k');
+
+      const isOfficial5k = isOfficial5kIndex !== -1 && values[isOfficial5kIndex]
+        ? ['true', '1', 'yes'].includes(values[isOfficial5kIndex].toLowerCase())
+        : true; // Default to true if field missing
+
+      const isOfficial10k = isOfficial10kIndex !== -1 && values[isOfficial10kIndex]
+        ? ['true', '1', 'yes'].includes(values[isOfficial10kIndex].toLowerCase())
+        : true; // Default to true if field missing
+
       const runner: Runner = {
         member_number: memberNumber,
         full_name: values[headers.indexOf('full_name')] || `Runner ${memberNumber}`,
         is_financial_member: isFinancialMember,
         distance: distance as '5km' | '10km',
         checked_in: false,
+        is_official_5k: isOfficial5k,
+        is_official_10k: isOfficial10k,
       };
       
       // Add handicaps if present and validate format
@@ -344,7 +358,9 @@ export function generateNextRaceCSV(runners: Runner[]): string {
     'is_financial_member',
     'distance',
     'current_handicap_5k',
-    'current_handicap_10k'
+    'current_handicap_10k',
+    'is_official_5k',
+    'is_official_10k'
   ];
   
   const csvRows = [headers.join(',')];
@@ -355,10 +371,12 @@ export function generateNextRaceCSV(runners: Runner[]): string {
       `"${runner.full_name}"`,
       runner.is_financial_member.toString(),
       runner.distance,
-      runner.distance === '5km' && runner.new_handicap ? 
+      runner.distance === '5km' && runner.new_handicap ?
         runner.new_handicap : (runner.current_handicap_5k || ''),
-      runner.distance === '10km' && runner.new_handicap ? 
-        runner.new_handicap : (runner.current_handicap_10k || '')
+      runner.distance === '10km' && runner.new_handicap ?
+        runner.new_handicap : (runner.current_handicap_10k || ''),
+      (runner.is_official_5k ?? true).toString(),
+      (runner.is_official_10k ?? true).toString()
     ];
     csvRows.push(row.join(','));
   });
@@ -375,7 +393,9 @@ export function generateResultsCSV(runners: Runner[]): string {
     'finish_position',
     'finish_time',
     'old_handicap',
-    'new_handicap'
+    'new_handicap',
+    'is_official_5k',
+    'is_official_10k'
   ];
   
   const csvRows = [headers.join(',')];
@@ -410,7 +430,9 @@ export function generateResultsCSV(runners: Runner[]): string {
       runner.finish_position?.toString() || '',
       finishTimeStr,
       runner[handicapKey] || '',
-      runner.new_handicap || ''
+      runner.new_handicap || '',
+      (runner.is_official_5k ?? true).toString(),
+      (runner.is_official_10k ?? true).toString()
     ];
     csvRows.push(row.join(','));
   });

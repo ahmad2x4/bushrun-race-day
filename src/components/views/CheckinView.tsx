@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Race, Runner, ClubConfig } from '../../types'
 import { db } from '../../db'
 import NumberPad from '../ui/NumberPad'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 // Helper functions for time manipulation
 const timeToSeconds = (timeStr: string): number => {
@@ -30,6 +31,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   const [checkinStep, setCheckinStep] = useState<'member_number' | 'distance_selection' | 'complete'>('member_number')
   const [foundRunner, setFoundRunner] = useState<Runner | null>(null)
   const [selectedDistance, setSelectedDistance] = useState<'5km' | '10km'>('5km')
+  const [showProvisionalConfirm, setShowProvisionalConfirm] = useState(false)
 
   if (!currentRace) {
     return (
@@ -59,6 +61,69 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
     setCheckinStep('member_number')
     setFoundRunner(null)
     setSelectedDistance('5km')
+  }
+
+  // Helper function to check if runner is provisional for selected distance
+  const isRunnerProvisional = (runner: Runner, distance: '5km' | '10km'): boolean => {
+    return distance === '5km'
+      ? (runner.is_official_5k ?? true) === false
+      : (runner.is_official_10k ?? true) === false
+  }
+
+  // Perform the actual check-in process
+  const performCheckin = async (runner: Runner, distance: '5km' | '10km') => {
+    // Check if distance changed before updating
+    const distanceChanged = runner.distance !== distance
+    const wasAlreadyCheckedIn = runner.checked_in
+
+    // Update runner with selected distance and ensure checked in
+    runner.distance = distance
+    runner.checked_in = true
+
+    const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
+    await db.saveRace(updatedRace)
+    setCurrentRace(updatedRace)
+
+    setCheckinStatus('success')
+    if (wasAlreadyCheckedIn && distanceChanged) {
+      setStatusMessage(`${runner.full_name}'s distance updated to ${distance}!`)
+    } else if (wasAlreadyCheckedIn && !distanceChanged) {
+      setStatusMessage(`${runner.full_name} confirmed for ${distance} (already checked in)`)
+    } else {
+      setStatusMessage(`${runner.full_name} successfully checked in for ${distance}!${distanceChanged ? ' (Distance updated)' : ''}`)
+    }
+
+    // Auto-clear after success
+    setTimeout(() => {
+      handleClear()
+    }, 2000)
+  }
+
+  // Handle provisional runner confirmation
+  const handleProvisionalConfirm = async () => {
+    if (!foundRunner || !currentRace) return
+
+    // Promote runner to official status for the selected distance
+    if (selectedDistance === '5km') {
+      foundRunner.is_official_5k = true
+    } else {
+      foundRunner.is_official_10k = true
+    }
+
+    setShowProvisionalConfirm(false)
+
+    // Proceed with check-in
+    await performCheckin(foundRunner, selectedDistance)
+  }
+
+  // Handle provisional runner check-in as unofficial
+  const handleProvisionalCancel = async () => {
+    if (!foundRunner || !currentRace) return
+
+    setShowProvisionalConfirm(false)
+
+    // Proceed with check-in but keep runner as provisional (don't update official status)
+    await performCheckin(foundRunner, selectedDistance)
   }
 
   const handleTimeAdjustment = async (adjustment: number) => {
@@ -104,31 +169,15 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
       setCheckinStatus('idle')
       setStatusMessage('')
     } else if (checkinStep === 'distance_selection' && foundRunner) {
-      // Check if distance changed before updating
-      const distanceChanged = foundRunner.distance !== selectedDistance
-      const wasAlreadyCheckedIn = foundRunner.checked_in
-      
-      // Update runner with selected distance and ensure checked in
-      foundRunner.distance = selectedDistance
-      foundRunner.checked_in = true
-      
-      const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
-      await db.saveRace(updatedRace)
-      setCurrentRace(updatedRace)
-      
-      setCheckinStatus('success')
-      if (wasAlreadyCheckedIn && distanceChanged) {
-        setStatusMessage(`${foundRunner.full_name}'s distance updated to ${selectedDistance}!`)
-      } else if (wasAlreadyCheckedIn && !distanceChanged) {
-        setStatusMessage(`${foundRunner.full_name} confirmed for ${selectedDistance} (already checked in)`)
-      } else {
-        setStatusMessage(`${foundRunner.full_name} successfully checked in for ${selectedDistance}!${distanceChanged ? ' (Distance updated)' : ''}`)
+      // Check if runner is provisional for the selected distance
+      if (isRunnerProvisional(foundRunner, selectedDistance)) {
+        // Show confirmation dialog for provisional runners
+        setShowProvisionalConfirm(true)
+        return
       }
-      
-      // Auto-clear after success
-      setTimeout(() => {
-        handleClear()
-      }, 2000)
+
+      // Proceed with normal check-in for official runners
+      await performCheckin(foundRunner, selectedDistance)
     }
   }
 
@@ -320,7 +369,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
 
       {/* Number Pad - Only show during member number entry */}
       {checkinStep === 'member_number' && (
-        <NumberPad 
+        <NumberPad
           onNumberClick={handleNumberInput}
           onBackspace={handleBackspace}
           onClear={handleClear}
@@ -329,6 +378,18 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
           buttonText="Find Runner"
         />
       )}
+
+      {/* Provisional Runner Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showProvisionalConfirm}
+        onClose={handleProvisionalCancel}
+        onConfirm={handleProvisionalConfirm}
+        title="Confirm Official Status"
+        message={`${foundRunner?.full_name} is currently listed as provisional for ${selectedDistance}. Has this runner participated in two or more handicap races (including Starter/Timekeeper duties) in the current or prior membership year? If yes, this race will count as official and the runner will receive championship points.`}
+        confirmText="Yes, Make Official"
+        cancelText="No, Check-in as Provisional"
+        confirmButtonClass="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+      />
     </div>
   )
 }
