@@ -43,6 +43,7 @@ export interface ClubConfig {
   logo_url?: string;
   website_url?: string;
   contact_email?: string;
+  enable_time_adjustment?: boolean; // Default: true - Allow runners to adjust start delay time during check-in
 }
 
 export type AppView = 'setup' | 'checkin' | 'race-director' | 'results' | 'settings';
