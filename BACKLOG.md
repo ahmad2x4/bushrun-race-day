@@ -6,39 +6,7 @@ All core features and infrastructure have been successfully implemented and are 
 
 ## 🚧 Active Development Items
 
-### 1. **✅ Start Delay Time Adjustment on Check-in** (COMPLETED)
-- **Priority**: High (Top Priority) - **COMPLETED**
-- **User Story**: "As a runner during check-in, I want to be able to adjust my start delay time by ±5 seconds using +/- buttons so I can fine-tune my handicap if needed."
-- **Implementation Summary**:
-  - ✅ Added +/- buttons flanking the start delay time display
-  - ✅ Buttons adjust time by exactly ±5 seconds with immediate UI feedback
-  - ✅ Time cannot go below 0:00 (minimum constraint implemented)
-  - ✅ Changes persist to database immediately via existing db.saveRace() method
-  - ✅ Works for both 5km and 10km distances
-  - ✅ **CONFIGURABLE SETTING**: Added toggle in Settings to enable/disable feature
-  - ✅ Default: Enabled (can be turned off in club settings)
-  - ✅ Helper functions for time conversion (mm:ss ↔ seconds)
-  - ✅ Comprehensive test coverage (9 new unit tests)
-  - ✅ All existing tests passing (115 total)
-  - ✅ Production build successful
-- **Settings Location**: ⚙️ Settings → Runner Time Adjustment toggle
-
-### 2. **✅ Race Timer Bug Fix** (COMPLETED)
-- **Priority**: High - **COMPLETED**
-- **Bug**: Race timer continued running even after all runners finished
-- **Root Cause**: Missing `stopRace()` function and incomplete auto-completion logic
-- **Fix Summary**:
-  - ✅ Added `stopRace()` function to App.tsx that sets `isRaceRunning = false`
-  - ✅ Updated RaceDirectorView props interface to include `stopRace`
-  - ✅ Modified auto-completion logic to call `stopRace()` when all checked-in runners finish
-  - ✅ Timer now stops automatically when race completes
-  - ✅ All existing tests still passing (115 total)
-  - ✅ Production build successful
-- **Files Modified**:
-  - `src/App.tsx` - Added stopRace function and passed to RaceDirectorView
-  - `src/components/views/RaceDirectorView.tsx` - Updated props and auto-completion logic
-
-### 3. **Day-of Registration for New Members**
+### 1. **Day-of Registration for New Members**
 - **Priority**: High
 - **User Story**: "As a race director, I want to add new runners to the starter list on race day, treating them exactly like any other runner from the CSV file."
 - **Key Principle**: **New members are just regular runners added to the list - no special treatment needed**
@@ -63,12 +31,27 @@ All core features and infrastructure have been successfully implemented and are 
   - New runner appears in results and exports with their race distance
   - **No distinction between "temporary" and "regular" runners in the UI**
 
-### 2. Add reset local storage button
-This reset button helps to reset all the local stored data.
-This is great for testing purposes.
+### 2. **Add Reset Local Storage Button**
+- **Priority**: Medium
+- **Description**: Add reset button to help reset all local stored data for testing purposes
+- **User Story**: "As a developer/tester, I want to easily reset all local data so I can test the application from a clean state."
+- **Requirements**:
+  - Add reset button in Settings view (in Danger Zone section)
+  - Clear all IndexedDB data
+  - Clear localStorage data
+  - Reset application to initial state
+  - Require confirmation (similar to existing reset functionality)
 
-### 3. Make sure if app crashes after running again app picks up from where it left off.
-This means we need to make sure the critical data is always in the safe storage and they can be calcualted from it. We may already have it however we need to check
+### 3. **App Crash Recovery**
+- **Priority**: Medium
+- **Description**: Ensure app picks up from where it left off after crashes
+- **User Story**: "As a race director, if the app crashes during a race, I want it to recover to the exact state when I reopen it."
+- **Requirements**:
+  - Verify critical race data persistence
+  - Test race timer recovery after app restart
+  - Ensure runner data and finish times are always saved
+  - Test recovery during different race phases (setup, active, finished)
+- **Investigation Needed**: Check if current implementation already handles this correctly
 
 ## 🔧 Optional Future Enhancements
 
@@ -85,10 +68,13 @@ This means we need to make sure the critical data is always in the safe storage 
 
 ## Current Status
 - **Development Server**: http://localhost:5174
-- **Production Site**: https://bbr.home.ahmadreza.com  
+- **Production Site**: https://bbr.home.ahmadreza.com
 - **Commands**: `npm run dev`, `npm run build`, `npm test`
-- **Tests**: All tests passing (106 total)
+- **Tests**: All tests passing (115 total)
 - **Production Build**: Working with automated AWS deployment
+
+## 📋 Completed Tasks
+See [Backlog_done.md](./Backlog_done.md) for full list of completed features and implementations.
 
 ---
 *🎯 Core application is production-ready! All major features implemented successfully.*
