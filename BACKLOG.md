@@ -8,26 +8,28 @@ All core features and infrastructure have been successfully implemented and are 
 
 ### 1. **Day-of Registration for New Members**
 - **Priority**: High
-- **User Story**: "As a race director, I want to register new members who show up on race day, so that everyone can participate even if they're not in the original CSV file."
+- **User Story**: "As a race director, I want to add new runners to the starter list on race day, treating them exactly like any other runner from the CSV file."
+- **Key Principle**: **New members are just regular runners added to the list - no special treatment needed**
 - **Requirements**:
-  - Add "New Member" button on the registration dial pad interface
-  - Assign temporary race numbers starting at 990 (990, 991, 992, etc.)
-  - Collect new member information:
-    - Full name
-    - Race selection (5K or 10K)
-    - Default start time: 0 (no handicap delay)
-    - Optional: Allow manual start time adjustment with +/- controls
-  - Store new members in local database alongside CSV-imported runners
-  - Ensure new members appear in all race management interfaces
-- **Technical Considerations**:
-  - Extend database schema to handle dynamically added runners
-  - Update check-in, race director, and results views to include new members
-  - Maintain data persistence across app restarts
+  - Add "New Member" button on the check-in dial pad interface
+  - Simple registration form with minimal fields:
+    - Full name (required)
+    - Race distance: 5K or 10K (required)
+  - Assign next available race number starting from 990 (990, 991, 992, etc.)
+  - **Default handicap time: 00:00 (immediate start with the gun)**
+  - **Treat identically to CSV-imported runners in ALL systems**
+- **Technical Implementation**:
+  - Add new runner directly to existing `runners` array in race object
+  - Use existing check-in, timing, staggered start, and results logic
+  - No special flags, separate database methods, or different handling
+  - Persist by saving updated race object to database
 - **Acceptance Criteria**:
-  - New members can be registered during check-in process
-  - New members receive unique temporary numbers (990+)
-  - New members can be checked in and participate in race
-  - New members appear in results with their chosen race distance
+  - New runner can be added during check-in process
+  - New runner gets unique number (990+) and appears in total count
+  - New runner can be checked in and participates like any other runner
+  - New runner appears in staggered start queue (at 00:00 if default)
+  - New runner appears in results and exports with their race distance
+  - **No distinction between "temporary" and "regular" runners in the UI**
 
 ### 2. Add reset local storage button
 This reset button helps to reset all the local stored data.
