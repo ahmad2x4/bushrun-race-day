@@ -6,7 +6,24 @@ All core features and infrastructure have been successfully implemented and are 
 
 ## 🚧 Active Development Items
 
-### 1. **Day-of Registration for New Members**
+### 1. **✅ Start Delay Time Adjustment on Check-in** (COMPLETED)
+- **Priority**: High (Top Priority) - **COMPLETED**
+- **User Story**: "As a runner during check-in, I want to be able to adjust my start delay time by ±5 seconds using +/- buttons so I can fine-tune my handicap if needed."
+- **Implementation Summary**:
+  - ✅ Added +/- buttons flanking the start delay time display
+  - ✅ Buttons adjust time by exactly ±5 seconds with immediate UI feedback
+  - ✅ Time cannot go below 0:00 (minimum constraint implemented)
+  - ✅ Changes persist to database immediately via existing db.saveRace() method
+  - ✅ Works for both 5km and 10km distances
+  - ✅ **CONFIGURABLE SETTING**: Added toggle in Settings to enable/disable feature
+  - ✅ Default: Enabled (can be turned off in club settings)
+  - ✅ Helper functions for time conversion (mm:ss ↔ seconds)
+  - ✅ Comprehensive test coverage (9 new unit tests)
+  - ✅ All existing tests passing (115 total)
+  - ✅ Production build successful
+- **Settings Location**: ⚙️ Settings → Runner Time Adjustment toggle
+
+### 2. **Day-of Registration for New Members**
 - **Priority**: High
 - **User Story**: "As a race director, I want to add new runners to the starter list on race day, treating them exactly like any other runner from the CSV file."
 - **Key Principle**: **New members are just regular runners added to the list - no special treatment needed**

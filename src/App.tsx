@@ -53,7 +53,8 @@ function App() {
   const defaultClubConfig: ClubConfig = {
     name: "Berowra Bushrunners",
     primary_color: "#3b82f6",
-    secondary_color: "#1f2937"
+    secondary_color: "#1f2937",
+    enable_time_adjustment: true // Default: enabled
   }
 
   const [currentRace, setCurrentRace] = useState<Race | null>(null)
@@ -169,7 +170,7 @@ function App() {
             fallback={<ViewErrorFallback viewName="Check-in" onNavigateHome={() => setCurrentView('setup')} />}
           >
             <Suspense fallback={<LoadingView />}>
-              <CheckinView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+              <CheckinView currentRace={currentRace} setCurrentRace={setCurrentRace} clubConfig={clubConfig} />
             </Suspense>
           </ErrorBoundary>
         )

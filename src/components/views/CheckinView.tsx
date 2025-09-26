@@ -1,14 +1,29 @@
 import { useState } from 'react'
-import type { Race, Runner } from '../../types'
+import type { Race, Runner, ClubConfig } from '../../types'
 import { db } from '../../db'
 import NumberPad from '../ui/NumberPad'
+
+// Helper functions for time manipulation
+const timeToSeconds = (timeStr: string): number => {
+  if (!timeStr || timeStr === '0:00') return 0
+  const [minutes, seconds] = timeStr.split(':').map(Number)
+  return minutes * 60 + seconds
+}
+
+const secondsToTime = (totalSeconds: number): string => {
+  if (totalSeconds <= 0) return '0:00'
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+}
 
 interface CheckinViewProps {
   currentRace: Race | null
   setCurrentRace: (race: Race | null) => void
+  clubConfig: ClubConfig
 }
 
-function CheckinView({ currentRace, setCurrentRace }: CheckinViewProps) {
+function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewProps) {
   const [memberNumber, setMemberNumber] = useState('')
   const [checkinStatus, setCheckinStatus] = useState<'idle' | 'success' | 'error' | 'already_checked_in'>('idle')
   const [statusMessage, setStatusMessage] = useState('')
@@ -44,6 +59,30 @@ function CheckinView({ currentRace, setCurrentRace }: CheckinViewProps) {
     setCheckinStep('member_number')
     setFoundRunner(null)
     setSelectedDistance('5km')
+  }
+
+  const handleTimeAdjustment = async (adjustment: number) => {
+    if (!foundRunner || !currentRace) return
+
+    const currentTimeStr = selectedDistance === '5km'
+      ? foundRunner.current_handicap_5k || '0:00'
+      : foundRunner.current_handicap_10k || '0:00'
+
+    const currentSeconds = timeToSeconds(currentTimeStr)
+    const newSeconds = Math.max(0, currentSeconds + adjustment) // Prevent negative times
+    const newTimeStr = secondsToTime(newSeconds)
+
+    // Update the runner object
+    if (selectedDistance === '5km') {
+      foundRunner.current_handicap_5k = newTimeStr
+    } else {
+      foundRunner.current_handicap_10k = newTimeStr
+    }
+
+    // Persist to database
+    const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
+    await db.saveRace(updatedRace)
+    setCurrentRace(updatedRace)
   }
 
   const handleCheckin = async () => {
@@ -168,9 +207,36 @@ function CheckinView({ currentRace, setCurrentRace }: CheckinViewProps) {
               <div className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2 uppercase tracking-wide">
                 🏃‍♂️ YOUR START DELAY TIME 🏃‍♀️
               </div>
-              <div className="text-5xl font-black text-blue-900 dark:text-blue-100 mb-3 font-mono">
-                {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '0:00' : foundRunner.current_handicap_10k || '0:00'}
-              </div>
+
+              {/* Time Display with +/- Buttons (conditionally) */}
+              {clubConfig.enable_time_adjustment ?? true ? (
+                <div className="flex items-center justify-center gap-4 mb-3">
+                  <button
+                    onClick={() => handleTimeAdjustment(-5)}
+                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center"
+                    title="Decrease time by 5 seconds"
+                  >
+                    −
+                  </button>
+
+                  <div className="text-5xl font-black text-blue-900 dark:text-blue-100 font-mono min-w-[140px] text-center">
+                    {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '0:00' : foundRunner.current_handicap_10k || '0:00'}
+                  </div>
+
+                  <button
+                    onClick={() => handleTimeAdjustment(5)}
+                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center"
+                    title="Increase time by 5 seconds"
+                  >
+                    +
+                  </button>
+                </div>
+              ) : (
+                <div className="text-5xl font-black text-blue-900 dark:text-blue-100 mb-3 font-mono text-center">
+                  {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '0:00' : foundRunner.current_handicap_10k || '0:00'}
+                </div>
+              )}
+
               <div className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-2">
                 You will start <span className="font-black">{selectedDistance === '5km' ? foundRunner.current_handicap_5k || '0:00' : foundRunner.current_handicap_10k || '0:00'}</span> after the race begins
               </div>
