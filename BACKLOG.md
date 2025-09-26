@@ -4,55 +4,36 @@
 
 All core features and infrastructure have been successfully implemented and are production-ready.
 
-## ✅ Recently Completed Features
+## 🚧 Active Development Items
 
-### ✅ 1. **Quick Finish Line Registration with Drag & Drop Interface** ✅
-- **Status**: COMPLETED 🎉
-- **Description**: Revolutionary finish line registration system for race directors
-- **Implemented Features**:
-  - ✅ Large "FINISH!" button for quick time recording as athletes cross finish line
-  - ✅ Multi-modal feedback system (haptic vibration + audio beep + visual feedback)
-  - ✅ Two-column drag & drop interface:
-    - Left: Available race numbers (from checked-in runners)
-    - Right: Time slots created by FINISH! button presses (newest first)
-  - ✅ Beautiful drag-and-drop component using @dnd-kit for intuitive UX
-  - ✅ Smart reordering - only swaps runner assignments, keeps finish times immutable
-  - ✅ Delete empty finish slots with "✕" button to prevent accidental recordings
-  - ✅ Records exact finish times while allowing flexible number assignment
-  - ✅ Interactive Storybook component with multiple scenarios
-- **Technical Implementation**:
-  - ✅ @dnd-kit library integration for touch-friendly mobile interface
-  - ✅ Real-time time recording with millisecond precision
-  - ✅ Smooth animations and visual feedback
-  - ✅ TypeScript with proper type safety
-  - ✅ Web Audio API for audio feedback
-  - ✅ Navigator Vibration API for haptic feedback
-- **User Story**: "As a race director, I want to quickly record finish times with a large button, then assign race numbers to those times using an intuitive drag-and-drop interface, so I can accurately capture results even when athletes finish in quick succession." ✅ ACHIEVED
-- **Impact**: Dramatically improves finish line registration accuracy and speed
+### 1. **Day-of Registration for New Members**
+- **Priority**: High
+- **User Story**: "As a race director, I want to register new members who show up on race day, so that everyone can participate even if they're not in the original CSV file."
+- **Requirements**:
+  - Add "New Member" button on the registration dial pad interface
+  - Assign temporary race numbers starting at 990 (990, 991, 992, etc.)
+  - Collect new member information:
+    - Full name
+    - Race selection (5K or 10K)
+    - Default start time: 0 (no handicap delay)
+    - Optional: Allow manual start time adjustment with +/- controls
+  - Store new members in local database alongside CSV-imported runners
+  - Ensure new members appear in all race management interfaces
+- **Technical Considerations**:
+  - Extend database schema to handle dynamically added runners
+  - Update check-in, race director, and results views to include new members
+  - Maintain data persistence across app restarts
+- **Acceptance Criteria**:
+  - New members can be registered during check-in process
+  - New members receive unique temporary numbers (990+)
+  - New members can be checked in and participate in race
+  - New members appear in results with their chosen race distance
 
-## ✅ Recently Completed (All Major Items)
-
-### ✅ 1. Mobile Navigation - Hamburger Menu ✅
-- **Status**: COMPLETED 
-- **Details**: Responsive hamburger menu implemented with touch-friendly interactions
-- **Impact**: Mobile UX significantly improved
-
-### ✅ 2. AWS CDK Deployment Infrastructure ✅
-- **Status**: COMPLETED
-- **Details**: Full production infrastructure deployed at https://bbr.home.ahmadreza.com
-- **Impact**: Live production site with automated deployment
-
-### ✅ 3. BBR Handicap 5-Second Increment Rule Fix ✅
-- **Status**: COMPLETED
-- **Details**: Fixed core handicap calculations to match updated BBR rules (5-second increments)
-- **Impact**: Application now uses more granular handicap adjustments for fairer results
-
-
-### 4. Add reset local storage button 
+### 2. Add reset local storage button
 This reset button helps to reset all the local stored data.
 This is great for testing purposes.
 
-### 5. Make sure if app crashes after running again app picks up from where it left off.
+### 3. Make sure if app crashes after running again app picks up from where it left off.
 This means we need to make sure the critical data is always in the safe storage and they can be calcualted from it. We may already have it however we need to check
 
 ## 🔧 Optional Future Enhancements
