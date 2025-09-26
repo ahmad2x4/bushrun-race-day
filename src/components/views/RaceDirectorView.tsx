@@ -10,19 +10,20 @@ interface RaceDirectorViewProps {
   isRaceRunning: boolean
   elapsedTime: number
   startRace: () => void
+  stopRace: () => void
   isTestingMode: boolean
   setIsTestingMode: (mode: boolean) => void
   setCurrentView: (view: AppView) => void
   setCurrentRace: (race: Race | null) => void
 }
 
-function RaceDirectorView({ 
-  currentRace, 
-  isRaceRunning, 
-  elapsedTime, 
-  startRace, 
- 
-  isTestingMode, 
+function RaceDirectorView({
+  currentRace,
+  isRaceRunning,
+  elapsedTime,
+  startRace,
+  stopRace,
+  isTestingMode,
   setIsTestingMode,
   setCurrentView,
   setCurrentRace
@@ -77,11 +78,12 @@ function RaceDirectorView({
       
       // Check if all runners have finished and auto-complete race
       const checkedInRunners = updatedRace.runners.filter(r => r.checked_in)
-      const areAllFinished = checkedInRunners.length > 0 && 
+      const areAllFinished = checkedInRunners.length > 0 &&
         checkedInRunners.every(r => r.finish_time !== undefined)
-      
+
       if (areAllFinished) {
         updatedRace.status = 'finished'
+        stopRace() // Stop the race timer
         setCurrentView('results')
       }
       
@@ -90,7 +92,7 @@ function RaceDirectorView({
     } catch (error) {
       console.error('Error assigning runner:', error)
     }
-  }, [currentRace, setCurrentRace, setCurrentView])
+  }, [currentRace, setCurrentRace, setCurrentView, stopRace])
 
   const handleRunnerRemoved = useCallback(async (runnerId: number) => {
     if (!currentRace || !setCurrentRace) return
