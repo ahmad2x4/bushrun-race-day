@@ -8,9 +8,10 @@ interface SetupViewProps {
   setCurrentRace: (race: Race | null) => void
   setCurrentView: (view: AppView) => void
   setShowResetConfirm: (show: boolean) => void
+  resetAllCheckIns: (race: Race) => Promise<Race>
 }
 
-function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetConfirm }: SetupViewProps) {
+function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetConfirm, resetAllCheckIns }: SetupViewProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -80,6 +81,14 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
       await db.saveRace(updatedRace)
       setCurrentRace(updatedRace)
       setCurrentView('checkin') // Auto-navigate to check-in view
+    }
+  }
+
+  const handleResetCheckIns = async () => {
+    if (currentRace) {
+      const resetRace = await resetAllCheckIns(currentRace)
+      setCurrentRace(resetRace)
+      setUploadStatus('success') // Show the success state again
     }
   }
 
@@ -194,13 +203,35 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
               </div>
             </div>
 
+            {/* Status-specific information */}
+            {currentRace.status === 'finished' && (
+              <div className="mb-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <h4 className="font-medium text-orange-800 dark:text-orange-200 mb-2">
+                  🏁 Race Completed
+                </h4>
+                <p className="text-sm text-orange-700 dark:text-orange-300">
+                  This race has been completed. To start a new race session, reset the check-ins below
+                  or upload a new CSV file with fresh runner data.
+                </p>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={startCheckin}
-                className="btn-primary px-6 py-3 text-lg font-semibold flex-1 sm:flex-none"
-              >
-                Start Runner Check-in →
-              </button>
+              {currentRace.status === 'finished' ? (
+                <button
+                  onClick={handleResetCheckIns}
+                  className="btn-primary px-6 py-3 text-lg font-semibold flex-1 sm:flex-none"
+                >
+                  🔄 Reset for New Race →
+                </button>
+              ) : (
+                <button
+                  onClick={startCheckin}
+                  className="btn-primary px-6 py-3 text-lg font-semibold flex-1 sm:flex-none"
+                >
+                  Start Runner Check-in →
+                </button>
+              )}
               <button
                 onClick={() => {
                   setUploadStatus('idle')
