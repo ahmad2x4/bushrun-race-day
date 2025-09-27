@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { Providers } from './contexts'
 
 // Register service worker for PWA functionality (disabled for development)
 // Uncomment for production builds only
@@ -31,6 +32,8 @@ if ('serviceWorker' in navigator && import.meta.env.DEV) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <Providers>
+      <App />
+    </Providers>
   </StrictMode>,
 )
