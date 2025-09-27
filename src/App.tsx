@@ -1,6 +1,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
 import type { AppView, ClubConfig, Race } from './types'
 import { initializeDatabase, db } from './db'
+import { syncAudioWithClubConfig } from './utils/audioUtils'
 import LoadingView from './components/ui/LoadingView'
 import ConfirmDialog from './components/ui/ConfirmDialog'
 import ErrorBoundary from './components/ui/ErrorBoundary'
@@ -75,6 +76,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem('testingMode', JSON.stringify(isTestingMode))
   }, [isTestingMode])
+
+  // Sync audio settings with club config
+  useEffect(() => {
+    syncAudioWithClubConfig(clubConfig)
+  }, [clubConfig])
 
   // Global timer effect - always running for race persistence
   useEffect(() => {
@@ -194,6 +200,7 @@ function App() {
                 setIsTestingMode={setIsTestingMode}
                 setCurrentView={setCurrentView}
                 setCurrentRace={setCurrentRace}
+                clubConfig={clubConfig}
               />
             </Suspense>
           </ErrorBoundary>

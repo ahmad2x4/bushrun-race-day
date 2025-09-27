@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react'
-import type { Race, AppView } from '../../types'
+import type { Race, AppView, ClubConfig } from '../../types'
 import { timeStringToMs } from '../../raceLogic'
 import { db } from '../../db'
 import StaggeredStartQueue from '../race/StaggeredStartQueue'
@@ -15,6 +15,7 @@ interface RaceDirectorViewProps {
   setIsTestingMode: (mode: boolean) => void
   setCurrentView: (view: AppView) => void
   setCurrentRace: (race: Race | null) => void
+  clubConfig: ClubConfig
 }
 
 function RaceDirectorView({
@@ -26,7 +27,8 @@ function RaceDirectorView({
   isTestingMode,
   setIsTestingMode,
   setCurrentView,
-  setCurrentRace
+  setCurrentRace,
+  clubConfig
 }: RaceDirectorViewProps) {
   const formatTime = (milliseconds: number) => {
     const totalSeconds = Math.floor(milliseconds / 1000)
@@ -220,9 +222,10 @@ function RaceDirectorView({
             <>
               {/* Show start queue when race is running and has upcoming starts */}
               {isRaceRunning && hasUpcomingStarts && (
-                <StaggeredStartQueue 
+                <StaggeredStartQueue
                   currentRace={currentRace}
                   elapsedTime={elapsedTime}
+                  audioEnabled={clubConfig.audio_enabled ?? true}
                 />
               )}
 
@@ -254,6 +257,7 @@ function RaceDirectorView({
                   currentRace={currentRace}
                   elapsedTime={0}
                   showPreRace={true}
+                  audioEnabled={clubConfig.audio_enabled ?? true}
                 />
               )}
 

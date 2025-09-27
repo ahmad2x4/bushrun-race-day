@@ -1,14 +1,16 @@
-import { useMemo, memo } from 'react'
+import { useMemo, memo, useEffect, useRef } from 'react'
 import type { Race, Runner } from '../../types'
 import { timeStringToMs } from '../../raceLogic'
+import { playStartBeep } from '../../utils/audioUtils'
 
 interface StaggeredStartQueueProps {
   currentRace: Race
   elapsedTime: number
   showPreRace?: boolean
+  audioEnabled?: boolean
 }
 
-function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false }: StaggeredStartQueueProps) {
+function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, audioEnabled = true }: StaggeredStartQueueProps) {
 
   // Get checked-in runners with their handicaps - memoized
   const checkedInRunners = useMemo(() => 
@@ -56,6 +58,36 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false }: 
       }))
       .sort((a, b) => a.startTime - b.startTime)
   }, [checkedInRunners, elapsedTime, showPreRace])
+
+  // Track which groups have already triggered audio to avoid repeats
+  const audioTriggeredRef = useRef<Set<number>>(new Set())
+
+  // Audio trigger effect - play beep 4 seconds before start time
+  useEffect(() => {
+    if (showPreRace || !audioEnabled) return // No audio in pre-race mode or when disabled
+
+    upcomingGroups.forEach(group => {
+      const startTime = group.startTime
+      const timeUntilStart = group.timeUntilStart
+
+      // Trigger audio exactly 4 seconds before start (4000ms window)
+      if (timeUntilStart <= 4000 && timeUntilStart > 3900 && !audioTriggeredRef.current.has(startTime)) {
+        audioTriggeredRef.current.add(startTime)
+        playStartBeep().then(success => {
+          if (success) {
+            console.log(`Start beep triggered for group starting at ${timeUntilStart}ms`)
+          }
+        }).catch(error => {
+          console.error('Failed to play start beep:', error)
+        })
+      }
+
+      // Clean up triggered audio tracking for groups that have long passed
+      if (timeUntilStart < -10000) {
+        audioTriggeredRef.current.delete(startTime)
+      }
+    })
+  }, [upcomingGroups, showPreRace, audioEnabled])
 
   const formatCountdown = (milliseconds: number) => {
     if (milliseconds <= 0) return "STARTED"
