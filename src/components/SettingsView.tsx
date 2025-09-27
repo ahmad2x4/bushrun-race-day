@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ClubConfig } from '../types'
 import { db } from '../db'
+import { testAudioBeep } from '../utils/audioUtils'
 
 interface SettingsViewProps {
   clubConfig: ClubConfig
@@ -149,6 +150,62 @@ function SettingsView({ clubConfig, setClubConfig }: SettingsViewProps) {
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             When enabled, runners can adjust their start delay time by ±5 seconds during check-in
+          </p>
+        </div>
+
+        {/* Audio Settings */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Start Beep Audio
+          </label>
+          <div className="space-y-3">
+            {/* Audio Enable Toggle */}
+            <div className="flex items-center space-x-3">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={tempConfig.audio_enabled ?? true}
+                  onChange={(e) => setTempConfig({ ...tempConfig, audio_enabled: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                {tempConfig.audio_enabled ?? true ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+
+            {/* Volume Control */}
+            {(tempConfig.audio_enabled ?? true) && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Volume: {Math.round((tempConfig.audio_volume ?? 0.5) * 100)}%
+                </label>
+                <div className="flex items-center space-x-3">
+                  <span className="text-xs text-gray-500">🔈</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={tempConfig.audio_volume ?? 0.5}
+                    onChange={(e) => setTempConfig({ ...tempConfig, audio_volume: parseFloat(e.target.value) })}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                  />
+                  <span className="text-xs text-gray-500">🔊</span>
+                  <button
+                    type="button"
+                    onClick={() => testAudioBeep()}
+                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 rounded transition-colors"
+                  >
+                    Test
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Plays a 4-second beep before each runner's start time during races
           </p>
         </div>
 
