@@ -2,6 +2,27 @@
 
 ## User Experience Improvements
 
+### Wake Lock for Mobile PWA
+- [ ] Implement Screen Wake Lock API to prevent mobile sleep during race operations
+- [ ] Add wake lock management for staggered start queue periods
+- [ ] Show user notification when wake lock is active
+- [ ] Handle browser compatibility and graceful fallbacks
+
+**Description**: Prevent mobile devices from going to sleep while runners are still in the staggered start queue. Uses the Screen Wake Lock API to keep the screen active during critical race timing periods.
+
+**Technical Implementation**:
+1. Acquire wake lock when staggered start queue has pending runners
+2. Release wake lock when all runners have started or queue is empty
+3. Display subtle UI indicator when wake lock is active
+4. Graceful fallback for browsers without wake lock support
+
+**Browser Support**: Chrome/Edge (full), Safari iOS 16.4+ (full), Firefox (limited)
+
+**Priority**: Medium
+**Effort**: Small-Medium
+**User Impact**: High for race directors using mobile devices
+
+---
 
 ### Time Adjustment Enhancement
 - [ ] Add tap-and-hold functionality to +/- buttons for faster time adjustment

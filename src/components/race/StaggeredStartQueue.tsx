@@ -1,7 +1,7 @@
-import { useMemo, memo, useEffect, useRef } from 'react'
+import { useMemo, memo, useEffect, useRef, useState } from 'react'
 import type { Race, Runner } from '../../types'
 import { timeStringToMs } from '../../raceLogic'
-import { playStartBeep } from '../../utils/audioUtils'
+import { playStartBeep, getAudioState, initializeAudio, type AudioState } from '../../utils/audioUtils'
 
 interface StaggeredStartQueueProps {
   currentRace: Race
@@ -12,9 +12,13 @@ interface StaggeredStartQueueProps {
 
 function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, audioEnabled = true }: StaggeredStartQueueProps) {
 
+  // Audio and visual alert state
+  const [audioState, setAudioState] = useState<AudioState>(getAudioState())
+  const [visualAlert, setVisualAlert] = useState<string | null>(null)
+
   // Get checked-in runners with their handicaps - memoized
-  const checkedInRunners = useMemo(() => 
-    currentRace.runners.filter(r => r.checked_in), 
+  const checkedInRunners = useMemo(() =>
+    currentRace.runners.filter(r => r.checked_in),
     [currentRace.runners]
   )
   
@@ -62,6 +66,35 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
   // Track which groups have already triggered audio to avoid repeats
   const audioTriggeredRef = useRef<Set<number>>(new Set())
 
+  // Audio initialization effect - always try to initialize audio
+  useEffect(() => {
+    const currentAudioState = getAudioState()
+    setAudioState(currentAudioState)
+
+    // Always try to initialize audio when race starts (not in pre-race)
+    if (!showPreRace && audioEnabled && !currentAudioState.isInitialized) {
+      console.log('🔊 Auto-initializing audio for race')
+      initializeAudio().then(success => {
+        if (success) {
+          const newState = getAudioState()
+          setAudioState(newState)
+          console.log('✅ Audio initialized successfully')
+        } else {
+          console.warn('⚠️ Audio initialization failed - will use visual alerts as fallback')
+        }
+      }).catch(error => {
+        console.warn('⚠️ Audio initialization error:', error)
+      })
+    }
+  }, [showPreRace, audioEnabled])
+
+
+  // Visual alert trigger function
+  const triggerVisualAlert = (message: string) => {
+    setVisualAlert(message)
+    setTimeout(() => setVisualAlert(null), 4000) // Clear after 4 seconds
+  }
+
   // Audio trigger effect - play beep 4 seconds before start time
   useEffect(() => {
     if (showPreRace || !audioEnabled) return // No audio in pre-race mode or when disabled
@@ -70,15 +103,25 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
       const startTime = group.startTime
       const timeUntilStart = group.timeUntilStart
 
-      // Trigger audio exactly 4 seconds before start (4000ms window)
-      if (timeUntilStart <= 4000 && timeUntilStart > 3900 && !audioTriggeredRef.current.has(startTime)) {
+      // Trigger audio exactly 4 seconds before start (500ms window for reliability)
+      if (timeUntilStart <= 4000 && timeUntilStart > 3500 && !audioTriggeredRef.current.has(startTime)) {
         audioTriggeredRef.current.add(startTime)
+        console.log(`🔊 Attempting to trigger beep for group at ${timeUntilStart}ms until start`)
+
         playStartBeep().then(success => {
           if (success) {
-            console.log(`Start beep triggered for group starting at ${timeUntilStart}ms`)
+            console.log(`✅ Start beep triggered successfully for group starting in ${timeUntilStart}ms`)
+          } else {
+            console.warn(`❌ Start beep failed - showing visual alert instead`)
+            // Audio failed - trigger visual alert as fallback
+            const runnerNames = group.runners.map(r => `#${r.member_number} ${r.full_name}`).join(', ')
+            triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
           }
         }).catch(error => {
-          console.error('Failed to play start beep:', error)
+          console.error('❌ Failed to play start beep:', error)
+          // Audio failed - trigger visual alert as fallback
+          const runnerNames = group.runners.map(r => `#${r.member_number} ${r.full_name}`).join(', ')
+          triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
         })
       }
 
@@ -121,7 +164,32 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col flex-1">
-      <h3 className="font-semibold text-lg mb-3 text-center">Staggered Start Queue</h3>
+      <h3 className="font-semibold text-lg mb-3 text-center">
+        Staggered Start Queue
+        {/* Debug info - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-xs text-gray-500 mt-1">
+            Audio: {audioState.isInitialized ? '✅' : '❌'} |
+            Mobile: {audioState.isMobile ? '📱' : '💻'} |
+            Gesture: {audioState.requiresUserGesture ? '👆' : '🔄'}
+          </div>
+        )}
+      </h3>
+
+
+      {/* Visual alert overlay */}
+      {visualAlert && (
+        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/30 border-2 border-red-400 dark:border-red-600 rounded-lg animate-pulse">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-800 dark:text-red-200 mb-2">
+              {visualAlert}
+            </div>
+            <div className="text-sm text-red-700 dark:text-red-300">
+              Audio unavailable - Visual alert only
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="space-y-3 flex-1 overflow-y-auto">
         {upcomingGroups.map((group, index) => {
