@@ -5,9 +5,10 @@ import { timeStringToMs } from '../../raceLogic'
 interface StaggeredStartQueueProps {
   currentRace: Race
   elapsedTime: number
+  showPreRace?: boolean
 }
 
-function StaggeredStartQueue({ currentRace, elapsedTime }: StaggeredStartQueueProps) {
+function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false }: StaggeredStartQueueProps) {
 
   // Get checked-in runners with their handicaps - memoized
   const checkedInRunners = useMemo(() => 
@@ -38,9 +39,11 @@ function StaggeredStartQueue({ currentRace, elapsedTime }: StaggeredStartQueuePr
     // Sort groups by start time (handicap)
     const sortedStartTimes = Array.from(startGroups.keys()).sort((a, b) => a - b)
     
-    // Show groups - filter out those that started more than 2 seconds ago
+    // Show groups - for pre-race show all, during race filter out those that started more than 2 seconds ago
     return sortedStartTimes
       .filter(startTime => {
+        if (showPreRace) return true // Show all groups in pre-race mode
+
         const timeUntilStart = startTime - elapsedTime
         // Show if not started yet OR started within last 2 seconds
         return timeUntilStart > -2000
@@ -49,10 +52,10 @@ function StaggeredStartQueue({ currentRace, elapsedTime }: StaggeredStartQueuePr
         startTime,
         runners: startGroups.get(startTime)!,
         timeUntilStart: startTime - elapsedTime,
-        hasStarted: startTime <= elapsedTime
+        hasStarted: !showPreRace && startTime <= elapsedTime
       }))
       .sort((a, b) => a.startTime - b.startTime)
-  }, [checkedInRunners, elapsedTime])
+  }, [checkedInRunners, elapsedTime, showPreRace])
 
   const formatCountdown = (milliseconds: number) => {
     if (milliseconds <= 0) return "STARTED"
@@ -126,13 +129,16 @@ function StaggeredStartQueue({ currentRace, elapsedTime }: StaggeredStartQueuePr
                 </div>
                 
                 <div className={`text-lg font-bold tabular-nums ${
-                  group.hasStarted 
+                  group.hasStarted
                     ? 'text-green-600 dark:text-green-400'
                     : isStarting
                     ? 'text-red-600 dark:text-red-400'
                     : 'text-blue-600 dark:text-blue-400'
                 }`}>
-                  {formatCountdown(group.timeUntilStart)}
+                  {showPreRace
+                    ? `Starts at ${msToTimeString(group.startTime)}`
+                    : formatCountdown(group.timeUntilStart)
+                  }
                 </div>
               </div>
               
