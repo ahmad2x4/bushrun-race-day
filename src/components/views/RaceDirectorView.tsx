@@ -4,6 +4,7 @@ import { timeStringToMs } from '../../raceLogic'
 import { db } from '../../db'
 import StaggeredStartQueue from '../race/StaggeredStartQueue'
 import FinishLineRegistration from '../race/FinishLineRegistration'
+import WakeLockIndicator from '../ui/WakeLockIndicator'
 
 interface RaceDirectorViewProps {
   currentRace: Race | null
@@ -155,6 +156,7 @@ function RaceDirectorView({
         <div>
           <p className="font-semibold text-blue-800 dark:text-blue-200 text-sm">{currentRace.name}</p>
           <p className="text-xs text-blue-600 dark:text-blue-300">{checkedInCount}/{currentRace.runners.length} checked in</p>
+          <WakeLockIndicator className="mt-1" />
         </div>
         <div className="flex items-center gap-3">
           <div className={`text-xs font-medium px-2 py-1 rounded-full ${
