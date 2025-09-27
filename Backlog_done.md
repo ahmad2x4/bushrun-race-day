@@ -172,11 +172,42 @@
   - `src/components/views/RaceDirectorView.tsx` - Updated props and auto-completion logic
 - **Impact**: Ensures race timer stops correctly when all runners finish
 
+### ✅ BBR "Two Handicaps" Rule Implementation (2025)
+- **Status**: COMPLETED 🎉
+- **User Story**: "As a race director, I need to track which runners have participated in 2+ handicap races (including Starter/Timekeeper duties) so that only qualified runners receive official handicap status and championship points."
+- **Implementation Summary**:
+  - ✅ Added `is_official_5k` and `is_official_10k` boolean fields to Runner interface
+  - ✅ Enhanced CSV parsing with backward compatibility (defaults to true if missing)
+  - ✅ Updated CSV export functions to include new official status fields
+  - ✅ Smart check-in confirmation popup for provisional runners
+  - ✅ Enhanced Setup view with official/provisional status display
+  - ✅ Updated sample CSV files with realistic test data
+  - ✅ All 115 tests passing with updated test cases
+  - ✅ Production build successful
+- **Key Features**:
+  - **Simple Two-Flag System**: Uses boolean flags for each distance
+  - **Backward Compatibility**: Missing fields default to true (official status)
+  - **Smart Check-in Flow**: Only shows popup for provisional runners
+  - **Database Persistence**: Status changes saved and carry forward to next race
+  - **Visual Indicators**: Clear official/provisional badges throughout UI
+  - **BBR Rule Compliance**: Asks about "two or more handicap races including Starter/Timekeeper duties"
+- **Technical Implementation**:
+  - `src/types.ts` - Added is_official_5k and is_official_10k fields to Runner interface
+  - `src/raceLogic.ts` - Updated CSV parsing and export functions with backward compatibility
+  - `src/components/views/CheckinView.tsx` - Added provisional runner confirmation popup
+  - `src/components/views/SetupView.tsx` - Enhanced with official/provisional status display
+  - `src/components/ui/ConfirmDialog.tsx` - Added custom cancel text support
+  - Updated unit tests to handle new CSV fields and functionality
+- **Dialog Flow**: When provisional runners check in, they see:
+  - **"Yes, Make Official"** → Promotes to official status + checks in
+  - **"No, Check-in as Provisional"** → Keeps provisional status + checks in
+- **Impact**: Enables BBR compliance for official handicap status tracking while maintaining simple, flexible workflow
+
 ## Project Status
 - **Development Server**: http://localhost:5174
 - **Production Site**: https://bbr.home.ahmadreza.com
 - **Commands**: `npm run dev`, `npm run build`, `npm test`
-- **Tests**: All tests passing (106 total)
+- **Tests**: All tests passing (115 total)
 - **Production Build**: Working correctly with AWS CDK deployment
 
 ---
