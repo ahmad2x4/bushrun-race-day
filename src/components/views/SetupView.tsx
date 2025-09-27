@@ -133,9 +133,9 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
                   {uploadStatus === 'processing' ? 'Processing...' : 'Drop CSV file here or click to upload'}
                 </p>
                 <p className="text-sm text-gray-500">
-                  CSV file with columns: member_number, full_name, is_financial_member, distance, current_handicap_5k, current_handicap_10k
+                  CSV file with columns: member_number, full_name, is_financial_member, distance, current_handicap_5k, current_handicap_10k, is_official_5k, is_official_10k
                   <br />
-                  <span className="text-xs text-gray-400">Handicap times represent start delays (lower = earlier start)</span>
+                  <span className="text-xs text-gray-400">Handicap times represent start delays (lower = earlier start). Official flags default to true if not specified.</span>
                 </p>
               </div>
             </div>
@@ -149,14 +149,6 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
             </div>
           )}
 
-          {/* Sample Files */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h3 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Sample Files Available:</h3>
-            <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              <li>• <code>sample-data/bushrun-runners-small.csv</code> - 5 runners for quick testing</li>
-              <li>• <code>sample-data/bushrun-runners-30.csv</code> - 30 runners (realistic race size)</li>
-            </ul>
-          </div>
         </div>
       ) : (
         /* Race Configuration */
