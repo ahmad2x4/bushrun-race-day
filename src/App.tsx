@@ -82,6 +82,29 @@ function App() {
     syncAudioWithClubConfig(clubConfig)
   }, [clubConfig])
 
+  // Reset race running state when race changes (e.g., new CSV upload)
+  useEffect(() => {
+    if (currentRace) {
+      // Only set running if race has start_time AND status is active
+      const shouldBeRunning = !!(currentRace.start_time && currentRace.status === 'active')
+      if (isRaceRunning !== shouldBeRunning) {
+        console.log('Updating race running state:', {
+          previouslyRunning: isRaceRunning,
+          shouldBeRunning,
+          raceStatus: currentRace.status,
+          hasStartTime: !!currentRace.start_time
+        })
+        setIsRaceRunning(shouldBeRunning)
+      }
+    } else {
+      // No race - definitely not running
+      if (isRaceRunning) {
+        console.log('No current race - stopping timer')
+        setIsRaceRunning(false)
+      }
+    }
+  }, [currentRace, isRaceRunning])
+
   // Global timer effect - always running for race persistence
   useEffect(() => {
     const interval = setInterval(() => {
@@ -108,13 +131,23 @@ function App() {
         // Try to load current race
         const race = await db.getCurrentRace()
         if (race) {
+          console.log('Loaded existing race:', {
+            name: race.name,
+            status: race.status,
+            hasStartTime: !!race.start_time,
+            startTime: race.start_time ? new Date(race.start_time).toISOString() : null
+          })
           setCurrentRace(race)
-          
-          // Initialize race running state from database
+
+          // Initialize race running state from database - only if status is active
           if (race.start_time && race.status === 'active') {
             setIsRaceRunning(true)
+            console.log('Race is actively running')
+          } else {
+            setIsRaceRunning(false)
+            console.log('Race is not running - status:', race.status)
           }
-          
+
           // Set appropriate view based on race status
           if (race.status === 'checkin') setCurrentView('checkin')
           else if (race.status === 'active') setCurrentView('race-director')
@@ -131,8 +164,17 @@ function App() {
 
   // Global race timer functions
   const startRace = async () => {
-    if (!currentRace || currentRace.start_time) return
+    // Only allow starting if we have a race and it's not already running
+    if (!currentRace || isRaceRunning) {
+      console.warn('Cannot start race:', {
+        hasRace: !!currentRace,
+        isRunning: isRaceRunning,
+        currentStatus: currentRace?.status
+      })
+      return
+    }
 
+    console.log('Starting race:', currentRace.name)
     const now = Date.now()
     const updatedRace = {
       ...currentRace,
@@ -143,10 +185,33 @@ function App() {
     await db.saveRace(updatedRace)
     setCurrentRace(updatedRace)
     setIsRaceRunning(true)
+    console.log('Race started successfully at:', new Date(now).toISOString())
   }
 
   const stopRace = () => {
     setIsRaceRunning(false)
+  }
+
+  // Reset all runner check-in status (for starting fresh after a completed race)
+  const resetAllCheckIns = async (race: Race): Promise<Race> => {
+    const resetRunners = race.runners.map(runner => ({
+      ...runner,
+      checked_in: false,
+      finish_time: undefined,
+      finish_position: undefined,
+      status: undefined
+    }))
+
+    const resetRace = {
+      ...race,
+      runners: resetRunners,
+      start_time: undefined, // Also clear start time
+      status: 'setup' as const
+    }
+
+    console.log('Resetting race check-ins and status for fresh start')
+    await db.saveRace(resetRace)
+    return resetRace
   }
 
   const getElapsedTime = () => {
@@ -166,11 +231,17 @@ function App() {
     switch (currentView) {
       case 'setup':
         return (
-          <ErrorBoundary 
+          <ErrorBoundary
             fallback={<ViewErrorFallback viewName="Setup" onNavigateHome={() => setCurrentView('setup')} />}
           >
             <Suspense fallback={<LoadingView />}>
-              <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+              <SetupView
+                currentRace={currentRace}
+                setCurrentRace={setCurrentRace}
+                setCurrentView={setCurrentView}
+                setShowResetConfirm={setShowResetConfirm}
+                resetAllCheckIns={resetAllCheckIns}
+              />
             </Suspense>
           </ErrorBoundary>
         )
@@ -227,11 +298,17 @@ function App() {
         )
       default:
         return (
-          <ErrorBoundary 
+          <ErrorBoundary
             fallback={<ViewErrorFallback viewName="Setup" onNavigateHome={() => setCurrentView('setup')} />}
           >
             <Suspense fallback={<LoadingView />}>
-              <SetupView currentRace={currentRace} setCurrentRace={setCurrentRace} setCurrentView={setCurrentView} setShowResetConfirm={setShowResetConfirm} />
+              <SetupView
+                currentRace={currentRace}
+                setCurrentRace={setCurrentRace}
+                setCurrentView={setCurrentView}
+                setShowResetConfirm={setShowResetConfirm}
+                resetAllCheckIns={resetAllCheckIns}
+              />
             </Suspense>
           </ErrorBoundary>
         )
