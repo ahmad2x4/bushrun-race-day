@@ -63,8 +63,9 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
       .sort((a, b) => a.startTime - b.startTime)
   }, [checkedInRunners, elapsedTime, showPreRace])
 
-  // Track which groups have already triggered audio to avoid repeats
-  const audioTriggeredRef = useRef<Set<number>>(new Set())
+  // Track audio trigger attempts and successful plays separately
+  const audioTriggeredRef = useRef<Set<number>>(new Set()) // Successfully triggered audio
+  const audioAttemptedRef = useRef<Set<number>>(new Set()) // Attempted but may have failed
 
   // Audio initialization effect - always try to initialize audio
   useEffect(() => {
@@ -102,35 +103,71 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
     upcomingGroups.forEach(group => {
       const startTime = group.startTime
       const timeUntilStart = group.timeUntilStart
+      const runnerNames = group.runners.map(r => `#${r.member_number} ${r.full_name}`).join(', ')
 
-      // Trigger audio exactly 4 seconds before start (500ms window for reliability)
-      if (timeUntilStart <= 4000 && timeUntilStart > 3500 && !audioTriggeredRef.current.has(startTime)) {
-        audioTriggeredRef.current.add(startTime)
-        console.log(`🔊 Attempting to trigger beep for group at ${timeUntilStart}ms until start`)
+      // Trigger audio 4 seconds before start (wider window: 5000ms to 3000ms for better reliability)
+      const shouldTriggerAudio = timeUntilStart <= 5000 && timeUntilStart > 3000
+      const alreadyTriggered = audioTriggeredRef.current.has(startTime)
+      const alreadyAttempted = audioAttemptedRef.current.has(startTime)
 
-        playStartBeep().then(success => {
-          if (success) {
-            console.log(`✅ Start beep triggered successfully for group starting in ${timeUntilStart}ms`)
+      if (shouldTriggerAudio && !alreadyTriggered) {
+        // If we haven't attempted yet, or if we attempted but audio wasn't initialized, try again
+        const shouldRetry = !alreadyAttempted || (!audioState.isInitialized && alreadyAttempted)
+
+        if (shouldRetry) {
+          audioAttemptedRef.current.add(startTime)
+          console.log(`🔊 Attempting beep for group starting in ${Math.round(timeUntilStart/1000)}s: ${runnerNames}`)
+          console.log(`🔍 Audio state: initialized=${audioState.isInitialized}, mobile=${audioState.isMobile}, gesture=${audioState.requiresUserGesture}`)
+
+          // Try to initialize audio if not already done
+          if (!audioState.isInitialized) {
+            console.log('🔊 Re-attempting audio initialization for upcoming group')
+            initializeAudio().then(initSuccess => {
+              if (initSuccess) {
+                setAudioState(getAudioState())
+                console.log('✅ Audio re-initialized successfully, now playing beep')
+                return playStartBeep()
+              } else {
+                console.warn('⚠️ Audio re-initialization failed')
+                return Promise.resolve(false)
+              }
+            }).then(playSuccess => {
+              if (playSuccess) {
+                audioTriggeredRef.current.add(startTime)
+                console.log(`✅ Beep played successfully for group: ${runnerNames}`)
+              } else {
+                console.warn(`❌ Beep failed for group: ${runnerNames} - showing visual alert`)
+                triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
+              }
+            }).catch(error => {
+              console.error('❌ Audio initialization/play error:', error)
+              triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
+            })
           } else {
-            console.warn(`❌ Start beep failed - showing visual alert instead`)
-            // Audio failed - trigger visual alert as fallback
-            const runnerNames = group.runners.map(r => `#${r.member_number} ${r.full_name}`).join(', ')
-            triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
+            // Audio already initialized, just play the beep
+            playStartBeep().then(success => {
+              if (success) {
+                audioTriggeredRef.current.add(startTime)
+                console.log(`✅ Beep played successfully for group: ${runnerNames}`)
+              } else {
+                console.warn(`❌ Beep failed for group: ${runnerNames} - showing visual alert`)
+                triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
+              }
+            }).catch(error => {
+              console.error('❌ Failed to play beep:', error)
+              triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
+            })
           }
-        }).catch(error => {
-          console.error('❌ Failed to play start beep:', error)
-          // Audio failed - trigger visual alert as fallback
-          const runnerNames = group.runners.map(r => `#${r.member_number} ${r.full_name}`).join(', ')
-          triggerVisualAlert(`🏃 START NOW: ${runnerNames}`)
-        })
+        }
       }
 
-      // Clean up triggered audio tracking for groups that have long passed
-      if (timeUntilStart < -10000) {
+      // Clean up tracking for groups that have passed (increased cleanup time)
+      if (timeUntilStart < -15000) {
         audioTriggeredRef.current.delete(startTime)
+        audioAttemptedRef.current.delete(startTime)
       }
     })
-  }, [upcomingGroups, showPreRace, audioEnabled])
+  }, [upcomingGroups, showPreRace, audioEnabled, audioState])
 
   const formatCountdown = (milliseconds: number) => {
     if (milliseconds <= 0) return "STARTED"
