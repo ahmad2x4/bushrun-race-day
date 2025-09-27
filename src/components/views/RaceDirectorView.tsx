@@ -248,20 +248,27 @@ function RaceDirectorView({
                 />
               )}
 
-              {/* Show ready state when race is not running */}
-              {!isRaceRunning && (
+              {/* Show pre-race start overview when race is not running */}
+              {!isRaceRunning && checkedInRunners.length > 0 && (
+                <StaggeredStartQueue
+                  currentRace={currentRace}
+                  elapsedTime={0}
+                  showPreRace={true}
+                />
+              )}
+
+              {/* Show ready state when race is not running and no runners checked in */}
+              {!isRaceRunning && checkedInRunners.length === 0 && (
                 <div className="text-center py-12">
                   <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
                     Ready to Start Race
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    {checkedInRunners.length} runners checked in and ready
+                    No runners checked in yet
                   </p>
-                  {hasUpcomingStarts && (
-                    <p className="text-sm text-blue-600 dark:text-blue-400">
-                      Staggered starts will begin when race is started
-                    </p>
-                  )}
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    Go to Check-in to register runners
+                  </p>
                 </div>
               )}
             </>

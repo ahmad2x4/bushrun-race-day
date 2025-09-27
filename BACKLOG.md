@@ -2,22 +2,6 @@
 
 ## User Experience Improvements
 
-### Pre-Race Staggered Start View
-- [ ] Add pre-race view showing all checked-in runners with their staggered start times
-- [ ] Sort runners by start time (earliest first)
-- [ ] Make the staggered start list scrollable
-- [ ] Highlight runners who need to start at the beginning (0:00 start time)
-- [ ] Show this view before race starts, then switch to timers after race begins
-
-**Description**: Currently before race start, users can't see the staggered start order. Need a view that shows:
-1. All checked-in runners sorted by start time
-2. Clear indication of who starts at 0:00 (beginning starters)
-3. Scrollable list to handle many runners
-4. Automatic transition to timer view when race starts
-
-**Priority**: High
-**Effort**: Medium
-**User Impact**: Critical for race organization
 
 ### Time Adjustment Enhancement
 - [ ] Add tap-and-hold functionality to +/- buttons for faster time adjustment
