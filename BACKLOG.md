@@ -4,40 +4,6 @@
 
 ## Future Features
 
-### Cross-Distance Handicap Calculations
-- [ ] Implement cross-distance handicap calculations for unofficial entries
-
-**Description**: Allow runners who have a handicap for one distance (5k or 10k) but not the other to participate in the other distance with a calculated handicap. The calculated time should be marked as unofficial and the runner should be informed that this is a calculated estimate.
-
-**Use Cases**:
-1. Runner has 5k handicap but wants to do 10k on race day
-2. Runner has 10k handicap but wants to do 5k on race day
-
-**Conversion Formulas** (based on provided Excel formulas):
-- **10k → 5k conversion**: `=IF(ISBLANK($A4),0,MROUND(5/6*1/24-(1/24-VLOOKUP($A4,Data_10km,6,FALSE))/2.1,"0:00:15"))`
-- **5k → 10k conversion**: `=IFERROR(IF(ISBLANK($A4),0,MROUND(1/24-(5/6*1/24-VLOOKUP($A4,Data_5km,6,FALSE))*2.1,"0:00:15")),0)`
-
-**Technical Implementation Requirements**:
-1. Add conversion functions to `raceLogic.ts` implementing the 5/6 ratio and 2.1 conversion factor
-2. Round results to nearest 15 seconds (MROUND equivalent)
-3. Handle blank/missing handicaps gracefully
-4. Extend Runner interface to support calculated handicaps with unofficial flag
-5. Update UI to indicate calculated/unofficial handicap status
-6. Add race director approval/modification capability for calculated handicaps
-7. Provide clear messaging to runners about unofficial status
-8. Include option to convert calculated handicap to official after race completion
-
-**Acceptance Criteria**:
-- [ ] Conversion functions accurately implement provided Excel formulas
-- [ ] UI clearly distinguishes between official and calculated handicaps
-- [ ] Race directors can review and modify calculated handicaps before race start
-- [ ] Runners receive clear notification about unofficial handicap status
-- [ ] Results properly label unofficial entries
-- [ ] Post-race option to promote calculated handicaps to official status
-
-**Priority**: Medium (enhances race day flexibility)
-**Effort**: Medium (involves formula implementation, UI updates, and data model changes)
-**Dependencies**: Current handicap calculation system in `raceLogic.ts`
 
 ---
 

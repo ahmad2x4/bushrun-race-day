@@ -4,6 +4,7 @@ import { db } from '../../db'
 import NumberPad from '../ui/NumberPad'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import { useTapAndHold } from '../../hooks'
+import { getHandicapForDistance } from '../../raceLogic'
 
 // Helper functions for time manipulation
 const timeToSeconds = (timeStr: string): number => {
@@ -19,6 +20,7 @@ const secondsToTime = (totalSeconds: number): string => {
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 }
 
+
 interface CheckinViewProps {
   currentRace: Race | null
   setCurrentRace: (race: Race | null) => void
@@ -33,6 +35,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   const [foundRunner, setFoundRunner] = useState<Runner | null>(null)
   const [selectedDistance, setSelectedDistance] = useState<'5km' | '10km'>('5km')
   const [showProvisionalConfirm, setShowProvisionalConfirm] = useState(false)
+  const [isCalculatedHandicap, setIsCalculatedHandicap] = useState(false)
 
   // Helper function for time adjustment
   const handleTimeAdjustment = async (adjustment: number) => {
@@ -124,6 +127,20 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
     runner.distance = distance
     runner.checked_in = true
 
+    // Populate handicap field with calculated value if needed
+    const currentHandicap = distance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k
+    if (!currentHandicap || currentHandicap === '0:00' || currentHandicap === '00:00') {
+      // Get calculated handicap from other distance
+      const handicapInfo = getHandicapForDistance(runner, distance)
+      if (handicapInfo.handicap && handicapInfo.handicap !== '00:00' && handicapInfo.isCalculated) {
+        if (distance === '5km') {
+          runner.current_handicap_5k = handicapInfo.handicap
+        } else {
+          runner.current_handicap_10k = handicapInfo.handicap
+        }
+      }
+    }
+
     const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
     await db.saveRace(updatedRace)
     setCurrentRace(updatedRace)
@@ -189,6 +206,15 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
       setCheckinStep('distance_selection')
       setCheckinStatus('idle')
       setStatusMessage('')
+
+      // Check if current selection would use calculated handicap
+      const currentHandicap = runner.distance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k
+      if (!currentHandicap || currentHandicap === '0:00' || currentHandicap === '00:00') {
+        const handicapInfo = getHandicapForDistance(runner, runner.distance)
+        setIsCalculatedHandicap(handicapInfo.isCalculated)
+      } else {
+        setIsCalculatedHandicap(false)
+      }
     } else if (checkinStep === 'distance_selection' && foundRunner) {
       // Check if runner is provisional for the selected distance
       if (isRunnerProvisional(foundRunner, selectedDistance)) {
@@ -290,7 +316,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
                   </button>
 
                   <div className="text-5xl font-black text-blue-900 dark:text-blue-100 font-mono min-w-[140px] text-center">
-                    {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '0:00' : foundRunner.current_handicap_10k || '0:00'}
+                    {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '00:00' : foundRunner.current_handicap_10k || '00:00'}
                   </div>
 
                   <button
@@ -303,12 +329,12 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
                 </div>
               ) : (
                 <div className="text-5xl font-black text-blue-900 dark:text-blue-100 mb-3 font-mono text-center">
-                  {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '0:00' : foundRunner.current_handicap_10k || '0:00'}
+                  {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '00:00' : foundRunner.current_handicap_10k || '00:00'}
                 </div>
               )}
 
               <div className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-2">
-                You will start <span className="font-black">{selectedDistance === '5km' ? foundRunner.current_handicap_5k || '0:00' : foundRunner.current_handicap_10k || '0:00'}</span> after the race begins
+                You will start <span className="font-black">{selectedDistance === '5km' ? foundRunner.current_handicap_5k || '00:00' : foundRunner.current_handicap_10k || '00:00'}</span> after the race begins
               </div>
               <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
                 💡 Lower times = Earlier start • Higher times = Later start
@@ -316,6 +342,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
               <div className="mt-3 text-xs text-blue-500 dark:text-blue-500 italic">
                 Wait for your time to be called before starting!
               </div>
+
             </div>
           </div>
           
@@ -325,7 +352,19 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
             </label>
             <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => setSelectedDistance('5km')}
+                onClick={() => {
+                  setSelectedDistance('5km')
+                  // Update calculated handicap status when distance changes
+                  if (foundRunner) {
+                    const currentHandicap = foundRunner.current_handicap_5k
+                    if (!currentHandicap || currentHandicap === '0:00' || currentHandicap === '00:00') {
+                      const handicapInfo = getHandicapForDistance(foundRunner, '5km')
+                      setIsCalculatedHandicap(handicapInfo.isCalculated)
+                    } else {
+                      setIsCalculatedHandicap(false)
+                    }
+                  }
+                }}
                 className={`p-4 rounded-lg border-2 transition-colors ${
                   selectedDistance === '5km'
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
@@ -338,7 +377,19 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
                 </div>
               </button>
               <button
-                onClick={() => setSelectedDistance('10km')}
+                onClick={() => {
+                  setSelectedDistance('10km')
+                  // Update calculated handicap status when distance changes
+                  if (foundRunner) {
+                    const currentHandicap = foundRunner.current_handicap_10k
+                    if (!currentHandicap || currentHandicap === '0:00' || currentHandicap === '00:00') {
+                      const handicapInfo = getHandicapForDistance(foundRunner, '10km')
+                      setIsCalculatedHandicap(handicapInfo.isCalculated)
+                    } else {
+                      setIsCalculatedHandicap(false)
+                    }
+                  }
+                }}
                 className={`p-4 rounded-lg border-2 transition-colors ${
                   selectedDistance === '10km'
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
@@ -406,7 +457,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
         onClose={handleProvisionalCancel}
         onConfirm={handleProvisionalConfirm}
         title="Confirm Official Status"
-        message={`${foundRunner?.full_name} is currently listed as provisional for ${selectedDistance}. Has this runner participated in two or more handicap races (including Starter/Timekeeper duties) in the current or prior membership year? If yes, this race will count as official and the runner will receive championship points.`}
+        message={`${foundRunner?.full_name} is currently listed as ${isCalculatedHandicap ? '<span class="font-bold text-orange-600 dark:text-orange-400">calculated</span> provisional' : 'provisional'} for ${selectedDistance}. Has this runner participated in two or more handicap races (including Starter/Timekeeper duties) in the current or prior membership year? If yes, this race will count as official and the runner will receive championship points.`}
         confirmText="Yes, Make Official"
         cancelText="No, Check-in as Provisional"
         confirmButtonClass="text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"

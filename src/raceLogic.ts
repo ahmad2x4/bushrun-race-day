@@ -41,6 +41,118 @@ export function roundToNext5Seconds(ms: number): number {
   return (totalSeconds + (5 - remainder)) * 1000;
 }
 
+// Cross-distance handicap calculations must be rounded to 15-second increments
+export function roundToNearest15Seconds(ms: number): number {
+  if (ms <= 0) return 0;
+
+  const totalSeconds = Math.round(ms / 1000);
+  const remainder = totalSeconds % 15;
+
+  if (remainder === 0) {
+    return totalSeconds * 1000;
+  }
+
+  // Round to nearest 15-second increment
+  if (remainder < 7.5) {
+    return (totalSeconds - remainder) * 1000;
+  } else {
+    return (totalSeconds + (15 - remainder)) * 1000;
+  }
+}
+
+// Convert 10k handicap to 5k using formula: 5/6*1/24-(1/24-handicap_value)/2.1
+export function convert10kTo5k(handicap10k: string): string {
+  if (!handicap10k) {
+    return '00:00';
+  }
+
+  try {
+    // Convert handicap to fraction of day (Excel format where 1/24 = 1 hour)
+    const handicapMs = timeStringToMs(handicap10k);
+    const handicapFraction = handicapMs / (24 * 60 * 60 * 1000); // Convert to fraction of day
+
+    // Apply formula: 5/6*1/24-(1/24-handicap_value)/2.1
+    const oneHour = 1/24; // 1 hour as fraction of day
+    const result = (5/6) * oneHour - (oneHour - handicapFraction) / 2.1;
+
+    // Convert back to milliseconds
+    const resultMs = result * (24 * 60 * 60 * 1000);
+
+    // Round to nearest 15 seconds
+    const roundedMs = roundToNearest15Seconds(Math.max(0, resultMs));
+
+    return msToTimeString(roundedMs);
+  } catch (error) {
+    console.error('Error converting 10k to 5k handicap:', error);
+    return '00:00';
+  }
+}
+
+// Convert 5k handicap to 10k using formula: 1/24-(5/6*1/24-handicap_value)*2.1
+export function convert5kTo10k(handicap5k: string): string {
+  if (!handicap5k) {
+    return '00:00';
+  }
+
+  try {
+    // Convert handicap to fraction of day (Excel format where 1/24 = 1 hour)
+    const handicapMs = timeStringToMs(handicap5k);
+    const handicapFraction = handicapMs / (24 * 60 * 60 * 1000); // Convert to fraction of day
+
+    // Apply formula: 1/24-(5/6*1/24-handicap_value)*2.1
+    const oneHour = 1/24; // 1 hour as fraction of day
+    const result = oneHour - ((5/6) * oneHour - handicapFraction) * 2.1;
+
+    // Convert back to milliseconds
+    const resultMs = result * (24 * 60 * 60 * 1000);
+
+    // Round to nearest 15 seconds
+    const roundedMs = roundToNearest15Seconds(Math.max(0, resultMs));
+
+    return msToTimeString(roundedMs);
+  } catch (error) {
+    console.error('Error converting 5k to 10k handicap:', error);
+    return '00:00';
+  }
+}
+
+// Get handicap for any distance (official or calculated)
+export function getHandicapForDistance(runner: Runner, distance: '5km' | '10km'): {
+  handicap: string,
+  isCalculated: boolean
+} {
+  // First try to get official handicap for the requested distance
+  const officialHandicap = distance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k;
+
+  if (officialHandicap && officialHandicap !== '0:00') {
+    return {
+      handicap: officialHandicap,
+      isCalculated: false
+    };
+  }
+
+  // If no official handicap, try to calculate from other distance
+  const otherDistance = distance === '5km' ? '10km' : '5km';
+  const otherHandicap = otherDistance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k;
+
+  if (otherHandicap && otherHandicap !== '0:00') {
+    const calculatedHandicap = distance === '5km'
+      ? convert10kTo5k(otherHandicap)
+      : convert5kTo10k(otherHandicap);
+
+    return {
+      handicap: calculatedHandicap,
+      isCalculated: true
+    };
+  }
+
+  // No handicap available for either distance
+  return {
+    handicap: '00:00',
+    isCalculated: false
+  };
+}
+
 export function formatFinishTime(ms: number): string {
   if (ms < 0) {
     throw new Error(`Negative time not allowed: ${ms}`);

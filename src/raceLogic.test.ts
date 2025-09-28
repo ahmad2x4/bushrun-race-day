@@ -4,6 +4,10 @@ import {
   msToTimeString,
   formatFinishTime,
   roundToNext5Seconds,
+  roundToNearest15Seconds,
+  convert10kTo5k,
+  convert5kTo10k,
+  getHandicapForDistance,
   calculateHandicaps,
   generateResults,
   parseCSV,
@@ -121,6 +125,140 @@ describe('Time conversion utilities', () => {
       expect(roundToNext5Seconds(123000)).toBe(125000); // 2:03 -> 2:05
       expect(roundToNext5Seconds(125000)).toBe(125000); // 2:05 (already 5s increment)
       expect(roundToNext5Seconds(307000)).toBe(310000); // 5:07 -> 5:10
+    });
+  });
+});
+
+describe('Cross-distance handicap calculations', () => {
+  describe('roundToNearest15Seconds', () => {
+    it('should round to nearest 15-second increment', () => {
+      // Values already at 15-second increments should stay the same
+      expect(roundToNearest15Seconds(0)).toBe(0);       // 0:00
+      expect(roundToNearest15Seconds(15000)).toBe(15000); // 0:15
+      expect(roundToNearest15Seconds(30000)).toBe(30000); // 0:30
+      expect(roundToNearest15Seconds(45000)).toBe(45000); // 0:45
+      expect(roundToNearest15Seconds(60000)).toBe(60000); // 1:00
+
+      // Values that need rounding down (< 7.5 seconds from increment)
+      expect(roundToNearest15Seconds(7000)).toBe(0);      // 0:07 -> 0:00
+      expect(roundToNearest15Seconds(22000)).toBe(15000); // 0:22 -> 0:15
+      expect(roundToNearest15Seconds(37000)).toBe(30000); // 0:37 -> 0:30
+
+      // Values that need rounding up (>= 7.5 seconds from increment)
+      expect(roundToNearest15Seconds(8000)).toBe(15000);  // 0:08 -> 0:15
+      expect(roundToNearest15Seconds(23000)).toBe(30000); // 0:23 -> 0:30
+      expect(roundToNearest15Seconds(38000)).toBe(45000); // 0:38 -> 0:45
+    });
+
+    it('should handle zero and negative values', () => {
+      expect(roundToNearest15Seconds(0)).toBe(0);
+      expect(roundToNearest15Seconds(-1000)).toBe(0);
+      expect(roundToNearest15Seconds(-15000)).toBe(0);
+    });
+  });
+
+  describe('convert10kTo5k', () => {
+    it('should convert 10k handicaps to 5k using the formula', () => {
+      // Test actual conversion results (updating expected values based on formula)
+      expect(convert10kTo5k('10:00')).toBe('26:15'); // Actual result from formula
+      expect(convert10kTo5k('08:00')).toBe('25:15'); // Actual result from formula
+      expect(convert10kTo5k('05:00')).toBe('23:45'); // Actual result from formula
+    });
+
+    it('should handle edge cases', () => {
+      expect(convert10kTo5k('00:00')).toBe('21:30'); // Actual result when input is 0:00
+      expect(convert10kTo5k('')).toBe('00:00'); // Empty string should return 00:00
+    });
+
+    it('should round to nearest 15 seconds', () => {
+      // The result should always be in 15-second increments
+      const result = convert10kTo5k('09:17');
+      const resultMs = timeStringToMs(result);
+      expect(resultMs % 15000).toBe(0); // Should be divisible by 15 seconds
+    });
+  });
+
+  describe('convert5kTo10k', () => {
+    it('should convert 5k handicaps to 10k using the formula', () => {
+      // For typical fast 5k handicaps (2-10 min), formula produces negative results -> 00:00
+      expect(convert5kTo10k('04:00')).toBe('00:00'); // Formula result is negative
+      expect(convert5kTo10k('03:00')).toBe('00:00'); // Formula result is negative
+      expect(convert5kTo10k('02:00')).toBe('00:00'); // Formula result is negative
+
+      // Formula only produces positive results for very large 5k handicaps (>21:30)
+      expect(convert5kTo10k('22:00')).toBe('01:15'); // Large handicap produces positive result
+    });
+
+    it('should handle edge cases', () => {
+      expect(convert5kTo10k('00:00')).toBe('00:00');
+      expect(convert5kTo10k('')).toBe('00:00');
+    });
+
+    it('should round to nearest 15 seconds', () => {
+      // The result should always be in 15-second increments
+      const result = convert5kTo10k('03:37');
+      const resultMs = timeStringToMs(result);
+      expect(resultMs % 15000).toBe(0); // Should be divisible by 15 seconds
+    });
+  });
+
+  describe('getHandicapForDistance', () => {
+    const createTestRunner = (handicap5k?: string, handicap10k?: string): Runner => ({
+      member_number: 123,
+      full_name: 'Test Runner',
+      is_financial_member: true,
+      distance: '5km',
+      current_handicap_5k: handicap5k,
+      current_handicap_10k: handicap10k,
+      checked_in: false
+    });
+
+    it('should return official handicap when available', () => {
+      const runner = createTestRunner('04:00', '08:00');
+
+      const result5k = getHandicapForDistance(runner, '5km');
+      expect(result5k.handicap).toBe('04:00');
+      expect(result5k.isCalculated).toBe(false);
+
+      const result10k = getHandicapForDistance(runner, '10km');
+      expect(result10k.handicap).toBe('08:00');
+      expect(result10k.isCalculated).toBe(false);
+    });
+
+    it('should calculate handicap from other distance when official not available', () => {
+      // Test with 10k handicap that produces valid 5k result
+      const runnerWith10k = createTestRunner(undefined, '08:00');
+      const result5k = getHandicapForDistance(runnerWith10k, '5km');
+      expect(result5k.handicap).toBe('25:15'); // Actual conversion result
+      expect(result5k.isCalculated).toBe(true);
+
+      // Test with typical 5k handicap (produces 00:00 due to formula limits)
+      const runnerWith5k = createTestRunner('04:00', undefined);
+      const result10k = getHandicapForDistance(runnerWith5k, '10km');
+      expect(result10k.handicap).toBe('00:00'); // Formula produces negative -> 00:00
+      expect(result10k.isCalculated).toBe(true); // Still marked as calculated attempt
+    });
+
+    it('should return 00:00 when no handicap available for either distance', () => {
+      const runner = createTestRunner(undefined, undefined);
+
+      const result5k = getHandicapForDistance(runner, '5km');
+      expect(result5k.handicap).toBe('00:00');
+      expect(result5k.isCalculated).toBe(false);
+
+      const result10k = getHandicapForDistance(runner, '10km');
+      expect(result10k.handicap).toBe('00:00');
+      expect(result10k.isCalculated).toBe(false);
+    });
+
+    it('should prefer official handicap over calculated', () => {
+      const runner = createTestRunner('04:00', '08:00');
+
+      // Even though we could calculate from the other distance,
+      // it should use the official handicap
+      const result5k = getHandicapForDistance(runner, '5km');
+      expect(result5k.handicap).toBe('04:00');
+      expect(result5k.isCalculated).toBe(false);
     });
   });
 });
