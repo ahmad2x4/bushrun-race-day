@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ClubConfig } from '../types'
 import { db } from '../db'
 import { testAudioBeep } from '../utils/audioUtils'
@@ -15,6 +15,11 @@ function SettingsView({ clubConfig, setClubConfig }: SettingsViewProps) {
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   const [resetConfirmText, setResetConfirmText] = useState('')
+
+  // Sync tempConfig when clubConfig changes (e.g., when loaded from database)
+  useEffect(() => {
+    setTempConfig(clubConfig)
+  }, [clubConfig])
 
   const handleSave = async () => {
     try {

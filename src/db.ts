@@ -195,7 +195,10 @@ class DatabaseManager {
     const defaultConfig: ClubConfig = {
       name: "Berowra Bushrunners",
       primary_color: "#3b82f6", // blue-600
-      secondary_color: "#1f2937" // gray-800
+      secondary_color: "#1f2937", // gray-800
+      enable_time_adjustment: true, // Default: enabled
+      audio_enabled: true, // Default: enabled
+      audio_volume: 0.5 // Default: 50%
     };
     
     return new Promise((resolve) => {
