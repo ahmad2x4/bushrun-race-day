@@ -2,21 +2,6 @@
 
 ## User Experience Improvements
 
-### Time Adjustment Enhancement
-- [ ] Add tap-and-hold functionality to +/- buttons for faster time adjustment
-- [ ] Implement accelerated time changes (5 second increments) when holding buttons after initial delay
-
-**Description**: Currently users need to tap multiple times to adjust start times significantly. Add tap-and-hold with acceleration:
-1. Initial tap: +/- 1 second
-2. Hold with delay: Switch to +/- 5 seconds every interval
-3. Continue until user releases
-
-**Priority**: Medium
-**Effort**: Small
-**User Impact**: High for users with large time adjustments
-
----
-
 ## Future Features
 
 ### Cross-Distance Handicap Calculations
