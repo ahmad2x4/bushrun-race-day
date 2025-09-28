@@ -237,72 +237,102 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
             </div>
           </div>
 
-          {/* Runner Preview */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          {/* Runner Preview - Mobile-Optimized Cards */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold">Runner Preview</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Showing first {Math.min(currentRace.runners.length, 10)} runners
+              </p>
             </div>
-            <div className="max-h-64 overflow-y-auto">
-              <table className="min-w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Number
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Distance
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Start Delay
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {currentRace.runners.slice(0, 10).map((runner) => (
-                    <tr key={runner.member_number} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 py-2 text-sm font-medium">{runner.member_number}</td>
-                      <td className="px-4 py-2 text-sm">{runner.full_name}</td>
-                      <td className="px-4 py-2 text-sm">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          runner.distance === '5km' 
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+
+            {/* Mobile-First Card Layout */}
+            <div className="max-h-80 overflow-y-auto">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                {currentRace.runners.slice(0, 10).map((runner) => {
+                  const isOfficial = runner.distance === '5km'
+                    ? (runner.is_official_5k ?? true)
+                    : (runner.is_official_10k ?? true)
+                  const startDelay = runner.distance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k
+
+                  return (
+                    <div key={runner.member_number}
+                         className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+
+                      {/* Header Row - Number and Name */}
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                          <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                            #{runner.member_number}
+                          </span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white leading-tight break-words">
+                            {runner.full_name}
+                          </h4>
+                        </div>
+                      </div>
+
+                      {/* Full-Width Mobile Info Grid */}
+                      <div className="grid grid-cols-3 gap-3">
+
+                        {/* Distance Badge */}
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Distance</div>
+                          <span className={`inline-flex items-center w-full justify-center px-2 py-1.5 text-sm font-medium rounded-lg ${
+                            runner.distance === '5km'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
+                              : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200'
+                          }`}>
+                            {runner.distance}
+                          </span>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</div>
+                          <span className={`inline-flex items-center w-full justify-center px-2 py-1.5 text-sm font-medium rounded-lg ${
+                            isOfficial
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200'
+                          }`}>
+                            {isOfficial ? 'Official' : 'Provisional'}
+                          </span>
+                        </div>
+
+                        {/* Start Delay */}
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Start Delay</div>
+                          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-2 py-1.5 text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                            {startDelay || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Membership Info - Full width on larger screens */}
+                      <div className="hidden xs:flex items-center justify-center mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                          runner.is_financial_member
+                            ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                            : 'bg-gray-50 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                         }`}>
-                          {runner.distance}
+                          {runner.is_financial_member ? 'Financial Member' : 'Non-Financial Member'}
                         </span>
-                      </td>
-                      <td className="px-4 py-2 text-sm">
-                        {runner.distance === '5km' ? runner.current_handicap_5k : runner.current_handicap_10k}
-                      </td>
-                      <td className="px-4 py-2 text-sm">
-                        {(() => {
-                          const isOfficial = runner.distance === '5km'
-                            ? (runner.is_official_5k ?? true)
-                            : (runner.is_official_10k ?? true)
-                          return (
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              isOfficial
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                            }`}>
-                              {isOfficial ? 'Official' : 'Provisional'}
-                            </span>
-                          )
-                        })()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* More Runners Indicator */}
               {currentRace.runners.length > 10 && (
-                <div className="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">
-                  ... and {currentRace.runners.length - 10} more runners
+                <div className="p-4 text-center border-t border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    ... and {currentRace.runners.length - 10} more runners
+                  </span>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    Complete list available in check-in view
+                  </div>
                 </div>
               )}
             </div>
