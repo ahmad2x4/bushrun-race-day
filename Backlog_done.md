@@ -32,4 +32,39 @@
 
 ---
 
+### Wake Lock for Mobile PWA ✅ COMPLETED
+- [x] Implement Screen Wake Lock API to prevent mobile sleep during race operations
+- [x] Add wake lock management for staggered start queue periods
+- [x] Show user notification when wake lock is active
+- [x] Handle browser compatibility and graceful fallbacks
+
+**Description**: Prevents mobile devices from going to sleep while runners are still in the staggered start queue. Uses the Screen Wake Lock API to keep the screen active during critical race timing periods.
+
+**Priority**: Medium
+**Effort**: Small-Medium
+**User Impact**: High for race directors using mobile devices
+
+**Implementation Details**:
+- Custom `useWakeLock` hook with full Wake Lock API integration
+- Automatic wake lock management via `WakeLockProvider` context
+- Intelligent acquisition/release based on pending runners in staggered start queue
+- Visual indicator component (`WakeLockIndicator`) showing wake lock status
+- Handles page visibility changes and re-acquires wake lock when needed
+- Graceful fallback for browsers without wake lock support
+- Debug logging in development mode
+
+**Browser Support**: Chrome/Edge (full), Safari iOS 16.4+ (full), Firefox (limited)
+
+**Files Implemented**:
+- `src/hooks/useWakeLock.ts` - Core wake lock functionality
+- `src/contexts/WakeLockContext.tsx` - Context provider with automatic management
+- `src/contexts/WakeLockContextDefinition.ts` - Type definitions
+- `src/hooks/useWakeLockContext.ts` - Context hook
+- `src/components/ui/WakeLockIndicator.tsx` - Visual status indicator
+- Integration in `src/contexts/index.tsx` and `RaceDirectorView.tsx`
+
+**Testing Status**: Build passes, ready for production use
+
+---
+
 *This document tracks completed features that have been implemented and deployed.*
