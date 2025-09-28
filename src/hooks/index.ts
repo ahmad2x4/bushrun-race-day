@@ -15,3 +15,6 @@ export {
 
 // Timer hooks
 export { useRaceTimer } from './useRaceTimer'
+
+// UI interaction hooks
+export { useTapAndHold } from './useTapAndHold'

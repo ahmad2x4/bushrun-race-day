@@ -3,6 +3,7 @@ import type { Race, Runner, ClubConfig } from '../../types'
 import { db } from '../../db'
 import NumberPad from '../ui/NumberPad'
 import ConfirmDialog from '../ui/ConfirmDialog'
+import { useTapAndHold } from '../../hooks'
 
 // Helper functions for time manipulation
 const timeToSeconds = (timeStr: string): number => {
@@ -32,6 +33,49 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   const [foundRunner, setFoundRunner] = useState<Runner | null>(null)
   const [selectedDistance, setSelectedDistance] = useState<'5km' | '10km'>('5km')
   const [showProvisionalConfirm, setShowProvisionalConfirm] = useState(false)
+
+  // Helper function for time adjustment
+  const handleTimeAdjustment = async (adjustment: number) => {
+    if (!foundRunner || !currentRace) return
+
+    const currentTimeStr = selectedDistance === '5km'
+      ? foundRunner.current_handicap_5k || '0:00'
+      : foundRunner.current_handicap_10k || '0:00'
+
+    const currentSeconds = timeToSeconds(currentTimeStr)
+    const newSeconds = Math.max(0, currentSeconds + adjustment) // Prevent negative times
+    const newTimeStr = secondsToTime(newSeconds)
+
+    // Update the runner object
+    if (selectedDistance === '5km') {
+      foundRunner.current_handicap_5k = newTimeStr
+    } else {
+      foundRunner.current_handicap_10k = newTimeStr
+    }
+
+    // Persist to database
+    const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
+    await db.saveRace(updatedRace)
+    setCurrentRace(updatedRace)
+  }
+
+  // Tap-and-hold handlers for time adjustment (must be called at top level)
+  // Both single tap and hold use 5-second increments, hold just repeats faster
+  const decreaseTimeHandlers = useTapAndHold({
+    onInitialAction: () => handleTimeAdjustment(-5), // Initial: -5 seconds
+    onHoldAction: () => handleTimeAdjustment(-5), // Hold: -5 seconds (repeated)
+    initialDelay: 500, // Wait 500ms before switching to hold mode
+    repeatInterval: 200, // During hold: repeat every 200ms
+    enabled: clubConfig.enable_time_adjustment ?? true
+  })
+
+  const increaseTimeHandlers = useTapAndHold({
+    onInitialAction: () => handleTimeAdjustment(5), // Initial: +5 seconds
+    onHoldAction: () => handleTimeAdjustment(5), // Hold: +5 seconds (repeated)
+    initialDelay: 500, // Wait 500ms before switching to hold mode
+    repeatInterval: 200, // During hold: repeat every 200ms
+    enabled: clubConfig.enable_time_adjustment ?? true
+  })
 
   if (!currentRace) {
     return (
@@ -126,29 +170,6 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
     await performCheckin(foundRunner, selectedDistance)
   }
 
-  const handleTimeAdjustment = async (adjustment: number) => {
-    if (!foundRunner || !currentRace) return
-
-    const currentTimeStr = selectedDistance === '5km'
-      ? foundRunner.current_handicap_5k || '0:00'
-      : foundRunner.current_handicap_10k || '0:00'
-
-    const currentSeconds = timeToSeconds(currentTimeStr)
-    const newSeconds = Math.max(0, currentSeconds + adjustment) // Prevent negative times
-    const newTimeStr = secondsToTime(newSeconds)
-
-    // Update the runner object
-    if (selectedDistance === '5km') {
-      foundRunner.current_handicap_5k = newTimeStr
-    } else {
-      foundRunner.current_handicap_10k = newTimeStr
-    }
-
-    // Persist to database
-    const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
-    await db.saveRace(updatedRace)
-    setCurrentRace(updatedRace)
-  }
 
   const handleCheckin = async () => {
     if (checkinStep === 'member_number') {
@@ -261,9 +282,9 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
               {clubConfig.enable_time_adjustment ?? true ? (
                 <div className="flex items-center justify-center gap-4 mb-3">
                   <button
-                    onClick={() => handleTimeAdjustment(-5)}
-                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center"
-                    title="Decrease time by 5 seconds"
+                    {...decreaseTimeHandlers}
+                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center select-none"
+                    title="Tap: -5 seconds, Hold: -5 seconds (faster)"
                   >
                     −
                   </button>
@@ -273,9 +294,9 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
                   </div>
 
                   <button
-                    onClick={() => handleTimeAdjustment(5)}
-                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center"
-                    title="Increase time by 5 seconds"
+                    {...increaseTimeHandlers}
+                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center select-none"
+                    title="Tap: +5 seconds, Hold: +5 seconds (faster)"
                   >
                     +
                   </button>
