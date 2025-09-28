@@ -20,6 +20,9 @@ export default {
       minWidth: {
         'touch': '44px',
       },
+      screens: {
+        'xs': '475px',
+      },
     },
   },
   plugins: [],
