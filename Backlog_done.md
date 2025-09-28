@@ -2,6 +2,30 @@
 
 ## User Experience Improvements
 
+### Time Adjustment Enhancement ✅ COMPLETED
+- [x] Add tap-and-hold functionality to +/- buttons for faster time adjustment
+- [x] Implement accelerated time changes (5 second increments) when holding buttons after initial delay
+
+**Description**: Enhanced time adjustment buttons in runner check-in view with tap-and-hold functionality:
+1. Single tap: +/- 5 seconds (immediate adjustment)
+2. Hold button: +/- 5 seconds repeated every 200ms after 500ms delay
+3. Works on both mouse (desktop) and touch (mobile) events
+4. Proper cleanup and accessibility maintained
+
+**Implementation Details**:
+- Created `useTapAndHold` custom hook for reusable tap-and-hold behavior
+- Updated CheckinView component to use new interaction pattern
+- Added visual feedback with updated tooltips
+- Maintained compatibility with `enable_time_adjustment` setting
+- Fixed database default config persistence bug
+
+**Priority**: Medium
+**Effort**: Small
+**User Impact**: High for users with large time adjustments
+**Completed**: 2025-09-28
+
+---
+
 ### Pre-Race Staggered Start View ✅ COMPLETED
 - [x] Add pre-race view showing all checked-in runners with their staggered start times
 - [x] Sort runners by start time (earliest first)
