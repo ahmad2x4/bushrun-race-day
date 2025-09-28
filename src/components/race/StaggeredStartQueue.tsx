@@ -28,11 +28,11 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
     const startGroups = new Map<number, Runner[]>()
     
     checkedInRunners.forEach(runner => {
-      const handicapStr = runner.distance === '5km' 
-        ? runner.current_handicap_5k 
+      const handicapStr = runner.distance === '5km'
+        ? runner.current_handicap_5k
         : runner.current_handicap_10k
-      
-      if (!handicapStr) return
+
+      if (!handicapStr || handicapStr === '00:00') return
       
       const handicapMs = timeStringToMs(handicapStr)
       

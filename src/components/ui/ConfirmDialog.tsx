@@ -24,9 +24,10 @@ export default function ConfirmDialog({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="space-y-4">
-        <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
-          {message}
-        </p>
+        <p
+          className="text-base leading-relaxed text-gray-500 dark:text-gray-400"
+          dangerouslySetInnerHTML={{ __html: message }}
+        />
       </div>
       
       {/* Modal footer */}
