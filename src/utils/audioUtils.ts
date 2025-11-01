@@ -185,12 +185,10 @@ class AudioManager {
       }
     }
 
-    if (this.isPlaying) {
-      return false
-    }
+    // Allow concurrent beeps for different start times - remove global isPlaying check
+    // Multiple start groups may need to play simultaneously
 
     try {
-      this.isPlaying = true
       let success = false
 
       // Try Web Audio API first if available
@@ -206,6 +204,9 @@ class AudioManager {
         if (this.isMobile && this.supportsVibration) {
           this.triggerVibration()
         }
+        // Set a brief isPlaying flag to prevent rapid-fire calls, but allow concurrent beeps
+        this.isPlaying = true
+        setTimeout(() => { this.isPlaying = false }, 100) // Very brief delay
         return true
       } else {
         this.triggerFallbackAlerts()
@@ -213,7 +214,6 @@ class AudioManager {
       }
     } catch (error) {
       console.error('Error playing start beep:', error)
-      this.isPlaying = false
       this.triggerFallbackAlerts()
       return false
     }
@@ -225,13 +225,13 @@ class AudioManager {
     }
 
     try {
+      // Create a new source for each playback to allow concurrent beeps
       const source = this.audioContext.createBufferSource()
       source.buffer = this.audioBuffer
       source.connect(this.gainNode)
 
-      source.onended = () => {
-        this.isPlaying = false
-      }
+      // Don't set isPlaying to false here - let it be managed at higher level
+      // Multiple concurrent beeps are allowed
 
       source.start(0)
       return true
@@ -242,14 +242,15 @@ class AudioManager {
   }
 
   private async playHTMLAudio(): Promise<boolean> {
-    if (!this.audio) {
+    if (!this.audio || !this.audio.src) {
       return false
     }
 
     try {
-      // Reset audio to beginning
-      this.audio.currentTime = 0
-      await this.audio.play()
+      // Create a new audio instance for concurrent playback
+      const audioInstance = new Audio(this.audio.src)
+      audioInstance.volume = this.config.volume
+      await audioInstance.play()
       return true
     } catch (error) {
       console.error('HTML Audio playback failed:', error)
