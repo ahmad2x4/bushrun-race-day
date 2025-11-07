@@ -105,8 +105,9 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
       const timeUntilStart = group.timeUntilStart
       const runnerNames = group.runners.map(r => `#${r.member_number} ${r.full_name}`).join(', ')
 
-      // Trigger audio 4 seconds before start (wider window: 5000ms to 3000ms for better reliability)
-      const shouldTriggerAudio = timeUntilStart <= 5000 && timeUntilStart > 3000
+      // Trigger audio 4 seconds before start (narrow window for precise timing)
+      // Window: 4200ms to 3800ms gives 400ms window centered at 4000ms
+      const shouldTriggerAudio = timeUntilStart <= 4200 && timeUntilStart > 3800
       const alreadyTriggered = audioTriggeredRef.current.has(startTime)
       const alreadyAttempted = audioAttemptedRef.current.has(startTime)
 
