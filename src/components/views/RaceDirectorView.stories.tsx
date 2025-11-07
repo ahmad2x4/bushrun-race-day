@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import RaceDirectorView from './RaceDirectorView';
 import type { Race, ClubConfig } from '../../types';
 import { WakeLockProvider } from '../../contexts/WakeLockContext';
+import { RaceProvider } from '../../contexts/RaceContext';
 
 // Simple mock function for story actions
 const mockFn = () => {};
@@ -109,11 +110,13 @@ const meta: Meta<typeof RaceDirectorView> = {
   },
   decorators: [
     (Story) => (
-      <WakeLockProvider>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <Story />
-        </div>
-      </WakeLockProvider>
+      <RaceProvider>
+        <WakeLockProvider>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <Story />
+          </div>
+        </WakeLockProvider>
+      </RaceProvider>
     ),
   ],
 };
