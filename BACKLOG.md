@@ -1,5 +1,73 @@
 # Project Backlog
 
+## Infrastructure & DevOps
+
+### GitHub Actions Deployment Workflow
+- [ ] Create automated CI/CD pipeline for S3 deployment
+
+**Description**: Set up GitHub Actions workflow to automatically build and deploy the Bushrun Race Day PWA to S3-hosted website (https://bbr.home.ahmadreza.com/) whenever code is pushed to the main branch.
+
+**Current State**:
+- Manual deployment process (or no automated deployment)
+- Need automated build and deploy pipeline for faster iteration
+- Want consistent, repeatable deployments
+
+**Requirements**:
+1. **GitHub Workflow Configuration**:
+   - Workflow file at `.github/workflows/deploy.yml`
+   - Trigger on push to main branch
+   - Manual trigger option (workflow_dispatch)
+
+2. **Build Process**:
+   - Run `npm install` to install dependencies
+   - Run `npm run build` to create production build
+   - Build artifacts located in `dist/` directory (Vite default)
+
+3. **AWS Deployment**:
+   - Use OIDC authentication (no long-lived credentials)
+   - Assume AWS IAM role for deployment permissions
+   - Deploy to S3 bucket: `bbr.home.ahmadreza.com`
+   - Invalidate CloudFront cache after deployment
+   - AWS Region: ap-southeast-2
+
+4. **Required AWS Configuration** (Prerequisites):
+   - AWS IAM Role ARN for GitHub Actions (format: `arn:aws:iam::ACCOUNT_ID:role/GitHubDeployRole`)
+   - CloudFront Distribution ID
+   - S3 bucket already created and configured for static website hosting
+   - CloudFront distribution already set up pointing to S3 bucket
+
+**Implementation Steps**:
+1. Create `.github/workflows/` directory if it doesn't exist
+2. Create `deploy.yml` workflow file with:
+   - Build job with Node.js setup
+   - AWS credentials configuration using OIDC
+   - S3 sync command to upload build files
+   - CloudFront invalidation command
+
+**Acceptance Criteria**:
+- [ ] Workflow file created at `.github/workflows/deploy.yml`
+- [ ] Workflow triggers automatically on push to main branch
+- [ ] Manual trigger (workflow_dispatch) works correctly
+- [ ] Build step successfully compiles application
+- [ ] AWS authentication works using OIDC (role-to-assume)
+- [ ] Build artifacts successfully deployed to S3 bucket
+- [ ] CloudFront cache invalidation runs after deployment
+- [ ] Deployment status visible in GitHub Actions tab
+- [ ] Failed deployments provide clear error messages
+
+**Security Considerations**:
+- Use OIDC for AWS authentication (no stored credentials)
+- IAM role should have minimum required permissions (S3 write, CloudFront invalidate)
+- No secrets stored in workflow file
+- AWS account ID and sensitive ARNs configured as GitHub repository secrets/variables
+
+**Priority**: High (enables automated deployments and faster iteration)
+**Effort**: Small (workflow file creation, requires AWS configuration)
+**Dependencies**: AWS infrastructure (S3 bucket, CloudFront, IAM role) must be set up first
+**User Impact**: Development team - faster deployment cycle
+
+---
+
 ## User Experience Improvements
 
 ## Future Features

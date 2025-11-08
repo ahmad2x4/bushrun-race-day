@@ -50,12 +50,8 @@ const preview: Preview = {
           },
         ],
       },
-      // Optional: customize what elements to check
-      element: '#storybook-root',
       // Manual testing mode - set to false for automatic testing
-      manual: false,
-      // Show a11y violations as warnings in dev, errors in CI
-      test: 'todo'
+      manual: false
     },
     // Viewport configuration for responsive testing
     viewport: {

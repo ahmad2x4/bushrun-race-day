@@ -1,9 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import CheckinView from './CheckinView';
-import type { Race } from '../../types';
+import type { Race, ClubConfig } from '../../types';
 
 // Simple mock function for story actions
 const mockFn = () => {};
+
+const mockClubConfig: ClubConfig = {
+  name: 'Berowra Bushrunners',
+  primary_color: '#2563eb',
+  enable_time_adjustment: true,
+  audio_enabled: true,
+  audio_volume: 0.5,
+};
 
 const mockRace: Race = {
   id: 'test-race',
@@ -97,7 +105,7 @@ export const Default: Story = {
   args: {
     currentRace: mockRace,
     setCurrentRace: mockFn,
-    setCurrentView: mockFn,
+    clubConfig: mockClubConfig,
   },
 };
 
@@ -105,7 +113,7 @@ export const MobilePortrait: Story = {
   args: {
     currentRace: mockRace,
     setCurrentRace: mockFn,
-    setCurrentView: mockFn,
+    clubConfig: mockClubConfig,
   },
   parameters: {
     viewport: {
@@ -123,7 +131,7 @@ export const TabletPortrait: Story = {
   args: {
     currentRace: mockRace,
     setCurrentRace: mockFn,
-    setCurrentView: mockFn,
+    clubConfig: mockClubConfig,
   },
   parameters: {
     viewport: {
@@ -144,7 +152,7 @@ export const AllCheckedIn: Story = {
       runners: mockRace.runners.map(r => ({ ...r, checked_in: true })),
     },
     setCurrentRace: mockFn,
-    setCurrentView: mockFn,
+    clubConfig: mockClubConfig,
   },
   parameters: {
     docs: {
@@ -159,7 +167,7 @@ export const DarkMode: Story = {
   args: {
     currentRace: mockRace,
     setCurrentRace: mockFn,
-    setCurrentView: mockFn,
+    clubConfig: mockClubConfig,
   },
   decorators: [
     (Story) => (
