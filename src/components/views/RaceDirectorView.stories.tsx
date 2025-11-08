@@ -1,9 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import RaceDirectorView from './RaceDirectorView';
-import type { Race } from '../../types';
+import type { Race, ClubConfig } from '../../types';
+import { WakeLockProvider } from '../../contexts/WakeLockContext';
+import { RaceProvider } from '../../contexts/RaceContext';
 
 // Simple mock function for story actions
 const mockFn = () => {};
+
+const mockClubConfig: ClubConfig = {
+  name: 'Berowra Bushrunners',
+  primary_color: '#2563eb',
+  enable_time_adjustment: true,
+  audio_enabled: true,
+  audio_volume: 0.5,
+};
 
 const mockActiveRace: Race = {
   id: 'test-race',
@@ -21,11 +31,7 @@ const mockActiveRace: Race = {
       checked_in: true,
       finish_time: 2534500, // Finished
       finish_position: 1,
-      handicap_status: 'official',
-      championship_points_10k: 45,
-      championship_points_5k: 0,
-      races_participated_10k: 3,
-      races_participated_5k: 0,
+      is_official_10k: true,
     },
     {
       member_number: 200,
@@ -35,11 +41,7 @@ const mockActiveRace: Race = {
       current_handicap_5k: '02:15',
       checked_in: true,
       finish_time: undefined, // Still running
-      handicap_status: 'provisional',
-      championship_points_10k: 0,
-      championship_points_5k: 12,
-      races_participated_10k: 0,
-      races_participated_5k: 2,
+      is_official_5k: false,
     },
     {
       member_number: 150,
@@ -49,11 +51,7 @@ const mockActiveRace: Race = {
       current_handicap_10k: '08:45',
       checked_in: true,
       finish_time: undefined, // Still running
-      handicap_status: 'official',
-      championship_points_10k: 28,
-      championship_points_5k: 0,
-      races_participated_10k: 2,
-      races_participated_5k: 0,
+      is_official_10k: true,
     },
   ],
   race_5k_active: true,
@@ -85,28 +83,40 @@ const meta: Meta<typeof RaceDirectorView> = {
       action: 'setCurrentView',
       description: 'Function to change application view',
     },
-    raceTimer: {
+    elapsedTime: {
       control: 'number',
-      description: 'Current race timer in milliseconds',
+      description: 'Current race elapsed time in milliseconds',
     },
-    setRaceTimer: {
-      action: 'setRaceTimer',
-      description: 'Function to update race timer',
-    },
-    isTimerRunning: {
+    isRaceRunning: {
       control: 'boolean',
-      description: 'Whether race timer is currently running',
+      description: 'Whether race is currently running',
     },
-    setIsTimerRunning: {
-      action: 'setIsTimerRunning',
-      description: 'Function to control timer state',
+    startRace: {
+      action: 'startRace',
+      description: 'Function to start the race',
+    },
+    stopRace: {
+      action: 'stopRace',
+      description: 'Function to stop the race',
+    },
+    isTestingMode: {
+      control: 'boolean',
+      description: 'Whether testing mode is enabled',
+    },
+    setIsTestingMode: {
+      action: 'setIsTestingMode',
+      description: 'Function to toggle testing mode',
     },
   },
   decorators: [
     (Story) => (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Story />
-      </div>
+      <RaceProvider>
+        <WakeLockProvider>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <Story />
+          </div>
+        </WakeLockProvider>
+      </RaceProvider>
     ),
   ],
 };
@@ -119,10 +129,13 @@ export const ActiveRace: Story = {
     currentRace: mockActiveRace,
     setCurrentRace: mockFn,
     setCurrentView: mockFn,
-    raceTimer: 600000, // 10 minutes
-    setRaceTimer: mockFn,
-    isTimerRunning: true,
-    setIsTimerRunning: mockFn,
+    clubConfig: mockClubConfig,
+    elapsedTime: 600000, // 10 minutes
+    isRaceRunning: true,
+    startRace: mockFn,
+    stopRace: mockFn,
+    isTestingMode: false,
+    setIsTestingMode: mockFn,
   },
 };
 
@@ -134,10 +147,13 @@ export const StaggeredStartQueue: Story = {
     },
     setCurrentRace: mockFn,
     setCurrentView: mockFn,
-    raceTimer: 60000, // 1 minute
-    setRaceTimer: mockFn,
-    isTimerRunning: true,
-    setIsTimerRunning: mockFn,
+    clubConfig: mockClubConfig,
+    elapsedTime: 60000, // 1 minute
+    isRaceRunning: true,
+    startRace: mockFn,
+    stopRace: mockFn,
+    isTestingMode: false,
+    setIsTestingMode: mockFn,
   },
   parameters: {
     docs: {
@@ -153,10 +169,13 @@ export const TabletLandscape: Story = {
     currentRace: mockActiveRace,
     setCurrentRace: mockFn,
     setCurrentView: mockFn,
-    raceTimer: 900000, // 15 minutes
-    setRaceTimer: mockFn,
-    isTimerRunning: true,
-    setIsTimerRunning: mockFn,
+    clubConfig: mockClubConfig,
+    elapsedTime: 900000, // 15 minutes
+    isRaceRunning: true,
+    startRace: mockFn,
+    stopRace: mockFn,
+    isTestingMode: false,
+    setIsTestingMode: mockFn,
   },
   parameters: {
     viewport: {
@@ -179,10 +198,13 @@ export const RaceNotStarted: Story = {
     },
     setCurrentRace: mockFn,
     setCurrentView: mockFn,
-    raceTimer: 0,
-    setRaceTimer: mockFn,
-    isTimerRunning: false,
-    setIsTimerRunning: mockFn,
+    clubConfig: mockClubConfig,
+    elapsedTime: 0,
+    isRaceRunning: false,
+    startRace: mockFn,
+    stopRace: mockFn,
+    isTestingMode: false,
+    setIsTestingMode: mockFn,
   },
   parameters: {
     docs: {
@@ -198,10 +220,13 @@ export const DarkMode: Story = {
     currentRace: mockActiveRace,
     setCurrentRace: mockFn,
     setCurrentView: mockFn,
-    raceTimer: 600000,
-    setRaceTimer: mockFn,
-    isTimerRunning: true,
-    setIsTimerRunning: mockFn,
+    clubConfig: mockClubConfig,
+    elapsedTime: 600000,
+    isRaceRunning: true,
+    startRace: mockFn,
+    stopRace: mockFn,
+    isTestingMode: false,
+    setIsTestingMode: mockFn,
   },
   decorators: [
     (Story) => (
