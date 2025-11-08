@@ -11,6 +11,8 @@ Automatically builds and deploys to https://bbr.home.ahmadreza.com on push to `m
 
 ### How It Works
 
+- Runs linter (`npm run lint`)
+- Runs unit tests (`npm test`)
 - Builds app with `npm run build`
 - Uploads to S3 bucket (auto-discovered from "bushrunners-spa" name)
 - Invalidates CloudFront cache
