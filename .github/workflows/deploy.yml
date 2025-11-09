@@ -3,8 +3,8 @@ name: Deploy to S3
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 jobs:
   deploy:
@@ -15,6 +15,18 @@ jobs:
     steps:
       - name: Pull repository
         uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+        shell: bash
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,6 +44,8 @@ jobs:
         run: npm test
 
       - name: Build app
+        env:
+          VITE_APP_VERSION: ${{ steps.version.outputs.version }}
         run: npm run build
 
       - name: Assume deployer role
@@ -81,6 +95,7 @@ jobs:
         run: |
           echo "### Deployment Complete! :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**S3 Bucket:** ${{ steps.get-bucket.outputs.bucket_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**CloudFront Distribution:** ${{ steps.get-distribution.outputs.distribution_id }}" >> $GITHUB_STEP_SUMMARY
           echo "**Website:** https://bbr.home.ahmadreza.com" >> $GITHUB_STEP_SUMMARY

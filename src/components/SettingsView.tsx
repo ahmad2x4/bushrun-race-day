@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { ClubConfig } from '../types'
 import { db } from '../db'
 import { testAudioBeep } from '../utils/audioUtils'
+import { getAppVersion } from '../utils/version'
 
 interface SettingsViewProps {
   clubConfig: ClubConfig
@@ -325,8 +326,15 @@ function SettingsView({ clubConfig, setClubConfig }: SettingsViewProps) {
       {/* Info */}
       <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
         <p className="text-sm text-blue-800 dark:text-blue-200">
-          <strong>💡 Tip:</strong> Your club settings will be saved locally and persist across sessions. 
+          <strong>💡 Tip:</strong> Your club settings will be saved locally and persist across sessions.
           Colors will be applied to the main header and primary buttons throughout the application.
+        </p>
+      </div>
+
+      {/* Version Info */}
+      <div className="mt-6 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Bushrun Race Day PWA v{getAppVersion()}
         </p>
       </div>
     </div>
