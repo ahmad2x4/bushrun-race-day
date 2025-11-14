@@ -78,4 +78,4 @@ echo "1. If this is the first deployment, SSL certificate validation may take 5-
 echo "2. CloudFront cache invalidation may take 5-15 minutes to propagate"
 echo "3. DNS changes may take up to 48 hours to propagate globally"
 echo ""
-echo "🌐 Your site will be available at: https://bbr.home.ahmadreza.com"
+echo "🌐 Your site will be available at: https://bushrun.example.com"

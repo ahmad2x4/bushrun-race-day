@@ -20,7 +20,7 @@ cd iac
 # Get bucket name and distribution ID
 echo "📊 Getting deployment information..."
 BUCKET_NAME=$(aws s3 ls | grep bushrunners-spa | awk '{print $3}')
-DISTRIBUTION_ID=$(aws cloudfront list-distributions --query 'DistributionList.Items[?Aliases.Items[0]==`bbr.home.ahmadreza.com`].Id' --output text)
+DISTRIBUTION_ID=$(aws cloudfront list-distributions --query 'DistributionList.Items[?Aliases.Items[0]==`bushrun.example.com`].Id' --output text)
 
 if [ -z "$BUCKET_NAME" ]; then
   echo "❌ Error: Could not find S3 bucket. Make sure the infrastructure is deployed."
@@ -49,4 +49,4 @@ echo "✅ Upload complete!"
 echo "🔄 Cache invalidation ID: $INVALIDATION_ID"
 echo ""
 echo "⏰ Please wait 5-15 minutes for the cache invalidation to complete."
-echo "🌐 Your site: https://bbr.home.ahmadreza.com"
+echo "🌐 Your site: https://bushrun.example.com"

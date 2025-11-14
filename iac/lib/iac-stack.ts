@@ -80,13 +80,13 @@ export class IacStack extends cdk.Stack {
         'HostedZone',
         {
           hostedZoneId: props.hostedZoneId,
-          zoneName: 'home.ahmadreza.com', // Explicit zone name
+          zoneName: 'example.com', // Replace with your zone name
         }
       );
 
       // Extract subdomain from full domain name
-      // For bbr.home.ahmadreza.com, we want 'bbr' as record name
-      const recordName = 'bbr'; // Since we know it's bbr.home.ahmadreza.com
+      // Extract subdomain from domain name
+      const recordName = domainName.split('.')[0]; // e.g., 'bushrun' from 'bushrun.example.com'
 
       new route53.ARecord(this, 'AliasRecord', {
         zone: hostedZone,
