@@ -70,7 +70,7 @@ To use a different domain, modify `iac/bin/iac.ts`:
 
 ```typescript
 const domainName = 'bushrun.example.com'; // Replace with your domain
-const hostedZoneId = 'ZTN6ZXIGQ79P3'; // Or your hosted zone ID
+const hostedZoneId = 'YOUR_HOSTED_ZONE_ID'; // Replace with your hosted zone ID
 ```
 
 ## CDK Commands

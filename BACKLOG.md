@@ -5,7 +5,7 @@
 ### GitHub Actions Deployment Workflow
 - [ ] Create automated CI/CD pipeline for S3 deployment
 
-**Description**: Set up GitHub Actions workflow to automatically build and deploy the Bushrun Race Day PWA to S3-hosted website (https://bbr.home.ahmadreza.com/) whenever code is pushed to the main branch.
+**Description**: Set up GitHub Actions workflow to automatically build and deploy the Bushrun Race Day PWA to GitHub Pages (https://ahmad2x4.github.io/bushrun-race-day/) whenever code is pushed to the main branch.
 
 **Current State**:
 - Manual deployment process (or no automated deployment)
@@ -26,7 +26,7 @@
 3. **AWS Deployment**:
    - Use OIDC authentication (no long-lived credentials)
    - Assume AWS IAM role for deployment permissions
-   - Deploy to S3 bucket: `bbr.home.ahmadreza.com`
+   - Deploy to GitHub Pages: `https://ahmad2x4.github.io/bushrun-race-day/`
    - Invalidate CloudFront cache after deployment
    - AWS Region: ap-southeast-2
 
