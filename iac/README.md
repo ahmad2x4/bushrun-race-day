@@ -11,8 +11,8 @@ This directory contains AWS CDK infrastructure code for deploying the Bushrunner
 
 ## Domain Configuration
 
-- **Domain**: `bbr.home.ahmadreza.com`
-- **Hosted Zone**: `home.ahmadreza.com` (ID: `ZTN6ZXIGQ79P3`)
+- **Domain**: `bushrun.example.com` (replace with your domain)
+- **Hosted Zone**: Your Route53 hosted zone ID
 - **Region**: `us-east-1` (N. Virginia) - All resources (CloudFront + ACM requirement)
 - **SSL**: Automatic certificate provisioning via ACM
 
@@ -69,7 +69,7 @@ npx cdk deploy -c hostedZoneId=Z1234567890ABC BushrunnersSpaStack
 To use a different domain, modify `iac/bin/iac.ts`:
 
 ```typescript
-const domainName = 'your-subdomain.home.ahmadreza.com';
+const domainName = 'bushrun.example.com'; // Replace with your domain
 const hostedZoneId = 'ZTN6ZXIGQ79P3'; // Or your hosted zone ID
 ```
 
@@ -90,7 +90,7 @@ After deployment, the stack provides these outputs:
 - **BucketName**: S3 bucket name for uploads
 - **DistributionId**: CloudFront distribution ID for cache invalidation
 - **DistributionDomainName**: CloudFront domain name
-- **WebsiteURL**: Final website URL (https://bbr.home.ahmadreza.com)
+- **WebsiteURL**: Final website URL (https://bushrun.example.com)
 
 ## Security
 

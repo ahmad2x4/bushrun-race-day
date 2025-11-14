@@ -5,8 +5,8 @@ import { IacStack } from '../lib/iac-stack';
 const app = new cdk.App();
 
 // Configuration
-const domainName = 'bbr.home.ahmadreza.com';
-const hostedZoneId = 'ZTN6ZXIGQ79P3'; // home.ahmadreza.com hosted zone
+const domainName = 'bushrun.example.com'; // Replace with your domain
+const hostedZoneId = 'YOUR_HOSTED_ZONE_ID'; // Replace with your Route53 hosted zone ID
 
 // Single stack approach - deploy everything in us-east-1 to avoid cross-region issues
 // CloudFront is global anyway, so the S3 location doesn't matter much for performance

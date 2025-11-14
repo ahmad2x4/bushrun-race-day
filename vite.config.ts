@@ -12,6 +12,8 @@ const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(file
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [react()],
+  // Base path for GitHub Pages: https://ahmad2x4.github.io/bushrun-race-day/
+  base: '/bushrun-race-day/',
   define: {
     __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION || 'dev'),
   },
