@@ -52,6 +52,80 @@ jobs:
           tag_prefix: "v"
           create_annotated_tag: true
 
+      - name: Build Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: |
+            {
+              "categories": [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": ["feature", "feat"],
+                  "rules": [
+                    {"pattern": "^feat(\\(.+\\))?:", "on_property": "title"}
+                  ]
+                },
+                {
+                  "title": "## 🐛 Bug Fixes",
+                  "labels": ["fix", "bugfix"],
+                  "rules": [
+                    {"pattern": "^fix(\\(.+\\))?:", "on_property": "title"}
+                  ]
+                },
+                {
+                  "title": "## 📝 Documentation",
+                  "labels": ["docs", "documentation"],
+                  "rules": [
+                    {"pattern": "^docs(\\(.+\\))?:", "on_property": "title"}
+                  ]
+                },
+                {
+                  "title": "## 🔧 Maintenance",
+                  "labels": ["chore"],
+                  "rules": [
+                    {"pattern": "^chore(\\(.+\\))?:", "on_property": "title"}
+                  ]
+                },
+                {
+                  "title": "## 💎 Improvements",
+                  "labels": ["refactor", "perf"],
+                  "rules": [
+                    {"pattern": "^(refactor|perf)(\\(.+\\))?:", "on_property": "title"}
+                  ]
+                },
+                {
+                  "title": "## 🎨 Style",
+                  "labels": ["style"],
+                  "rules": [
+                    {"pattern": "^style(\\(.+\\))?:", "on_property": "title"}
+                  ]
+                },
+                {
+                  "title": "## 🧪 Tests",
+                  "labels": ["test"],
+                  "rules": [
+                    {"pattern": "^test(\\(.+\\))?:", "on_property": "title"}
+                  ]
+                },
+                {
+                  "title": "## 📦 Other Changes",
+                  "labels": []
+                }
+              ],
+              "template": "#{{CHANGELOG}}",
+              "pr_template": "- #{{TITLE}} (#{{NUMBER}})",
+              "empty_template": "- No changes",
+              "trim_values": true,
+              "max_tags_to_fetch": 100,
+              "max_pull_requests": 200,
+              "max_back_track_time_days": 90
+            }
+          toTag: v${{ steps.semver.outputs.version }}
+          failOnError: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -60,16 +134,18 @@ jobs:
           body: |
             ## Bushrun Race Day v${{ steps.semver.outputs.version }}
 
-            🚀 Deployed to GitHub Pages: https://ahmad2x4.github.io/bushrun-race-day/
-
-            ### Changes
-            ${{ github.event.head_commit.message }}
+            🚀 **Deployed to:** https://ahmad2x4.github.io/bushrun-race-day/
 
             ---
 
-            **Built from commit:** ${{ github.sha }}
-            **Build number:** #${{ github.run_number }}
-            **Deployed by:** @${{ github.actor }}
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+
+            **Build Information**
+            - **Commit:** ${{ github.sha }}
+            - **Build:** #${{ github.run_number }}
+            - **Deployed by:** @${{ github.actor }}
           draft: false
           prerelease: false
         env:
