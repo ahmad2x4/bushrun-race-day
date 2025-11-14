@@ -1,6 +1,9 @@
 # Workflow for building and deploying React app to GitHub Pages
 name: Deploy to GitHub Pages
 
+# Add build info to workflow run title
+run-name: "Deploy #${{ github.run_number }} by @${{ github.actor }}"
+
 on:
   # Runs on pushes targeting the default branch
   push:
@@ -51,6 +54,30 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ steps.semver.outputs.version }}
           tag_prefix: "v"
+          create_annotated_tag: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.semver.outputs.version }}
+          name: "Release v${{ steps.semver.outputs.version }}"
+          body: |
+            ## Bushrun Race Day v${{ steps.semver.outputs.version }}
+
+            🚀 Deployed to GitHub Pages: https://ahmad2x4.github.io/bushrun-race-day/
+
+            ### Changes
+            ${{ github.event.head_commit.message }}
+
+            ---
+
+            **Built from commit:** ${{ github.sha }}
+            **Build number:** #${{ github.run_number }}
+            **Deployed by:** @${{ github.actor }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
