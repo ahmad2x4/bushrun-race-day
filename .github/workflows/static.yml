@@ -11,7 +11,7 @@ on:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
+  contents: write  # Changed from read to write for tagging
   pages: write
   id-token: write
 
@@ -29,6 +29,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper version calculation
+
+      - name: Calculate semantic version
+        id: semver
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          version_format: "${major}.${minor}.${patch}"
+          bump_each_commit: true
+          search_commit_body: false
+          user_format_type: "csv"
+
+      - name: Create and push tag
+        id: tag
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ steps.semver.outputs.version }}
+          tag_prefix: "v"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -36,23 +58,23 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Extract version from package.json
+      - name: Display version
         id: version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=${{ steps.semver.outputs.version }}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Building version: $VERSION"
+          echo "📦 Building version: v$VERSION"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build React app
         env:
-          VITE_APP_VERSION: ${{ steps.version.outputs.version }}
+          VITE_APP_VERSION: ${{ steps.semver.outputs.version }}
         run: |
-          echo "🚀 Building Bushrun Race Day v${{ steps.version.outputs.version }}"
+          echo "🚀 Building Bushrun Race Day v${{ steps.semver.outputs.version }}"
           npm run build
-          echo "✅ Build complete for version ${{ steps.version.outputs.version }}"
+          echo "✅ Build complete for version ${{ steps.semver.outputs.version }}"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
