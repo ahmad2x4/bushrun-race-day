@@ -31,6 +31,7 @@ git commit -m "Add GitHub Pages deployment"
 git push origin main
 ```
 
+
 ## Automatic Deployment
 
 Once you push to the `main` branch:
