@@ -91,6 +91,11 @@ jobs:
           VERSION=${{ steps.semver.outputs.version }}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Building version: v$VERSION"
+          echo "### 🚀 Building v$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Install dependencies
         run: npm ci
@@ -115,3 +120,15 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Deployment summary
+        run: |
+          echo "### ✅ Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎉 **Bushrun Race Day v${{ steps.semver.outputs.version }}** has been deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Live URL:** https://ahmad2x4.github.io/bushrun-race-day/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Version:** v${{ steps.semver.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "🏷️ **Tag:** v${{ steps.semver.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Release:** https://github.com/ahmad2x4/bushrun-race-day/releases/tag/v${{ steps.semver.outputs.version }}" >> $GITHUB_STEP_SUMMARY
