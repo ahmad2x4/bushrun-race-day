@@ -10,23 +10,48 @@
   "categories": ["sports", "utilities"],
   "lang": "en",
   "scope": "/",
+  "keywords": [
+    "bushrun",
+    "bush runner",
+    "berowra",
+    "berowra bush runners",
+    "race",
+    "race day",
+    "running",
+    "timer",
+    "timekeeping",
+    "time keeping",
+    "handicap",
+    "handicap timing",
+    "race results",
+    "running club",
+    "race management",
+    "stopwatch",
+    "race timer"
+  ],
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/favicon/web-app-manifest-192x192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon.svg", 
+      "src": "/favicon/web-app-manifest-512x512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon.svg",
+      "src": "/favicon/apple-touch-icon.png",
       "sizes": "180x180",
-      "type": "image/svg+xml"
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "shortcuts": [
@@ -35,14 +60,14 @@
       "short_name": "Check-in",
       "description": "Quick access to runner check-in",
       "url": "/#checkin",
-      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "/favicon/web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Race Director",
       "short_name": "Timer",
       "description": "Race timing and finish recording",
-      "url": "/#race-director", 
-      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+      "url": "/#race-director",
+      "icons": [{ "src": "/favicon/web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
