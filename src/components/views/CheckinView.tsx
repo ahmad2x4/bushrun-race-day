@@ -229,30 +229,21 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   }
 
   const checkedInCount = currentRace.runners.filter(r => r.checked_in).length
-  const totalRunners = currentRace.runners.length
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6 text-center">Runner Check-in</h2>
-      
-      {/* Status Bar */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="font-semibold text-blue-800 dark:text-blue-200">{currentRace.name}</p>
-            <p className="text-sm text-blue-600 dark:text-blue-300">
-              {checkedInCount} of {totalRunners} runners checked in
-            </p>
-          </div>
-          <div className="text-2xl font-bold text-blue-600">
-            {Math.round((checkedInCount / totalRunners) * 100)}%
-          </div>
-        </div>
+      {/* Compact Status Bar */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+        <p className="text-sm text-center text-blue-800 dark:text-blue-200">
+          <span className="font-semibold">{currentRace.name}</span>
+          <span className="mx-2">•</span>
+          <span>{checkedInCount} checked in</span>
+        </p>
       </div>
 
       {/* Step 1: Member Number Input */}
       {checkinStep === 'member_number' && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Enter Member Number
           </label>
