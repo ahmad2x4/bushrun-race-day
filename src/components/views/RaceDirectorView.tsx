@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Race, AppView, ClubConfig } from '../../types'
 import { timeStringToMs } from '../../raceLogic'
 import { db } from '../../db'
@@ -31,6 +31,19 @@ function RaceDirectorView({
   setCurrentRace,
   clubConfig
 }: RaceDirectorViewProps) {
+  const [isFocusMode, setIsFocusMode] = useState(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return JSON.parse(localStorage.getItem('raceDirectorFocusMode') || 'false')
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    localStorage.setItem('raceDirectorFocusMode', JSON.stringify(isFocusMode))
+  }, [isFocusMode])
+
   const formatTime = (milliseconds: number) => {
     const totalSeconds = Math.floor(milliseconds / 1000)
     const minutes = Math.floor(totalSeconds / 60)
@@ -148,31 +161,64 @@ function RaceDirectorView({
   }
 
   const checkedInCount = currentRace.runners.filter(r => r.checked_in).length
+  const isActiveRaceState = isRaceRunning && currentRace.status === 'active'
+  const showFocusToggle = true
 
   return (
-    <div className="max-w-7xl mx-auto h-full flex flex-col">
-      {/* Compact Header */}
-      <div className="flex justify-between items-center p-2 mb-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex-shrink-0">
-        <div>
-          <p className="font-semibold text-blue-800 dark:text-blue-200 text-sm">{currentRace.name}</p>
+    <div className={`max-w-7xl mx-auto h-full flex flex-col ${isActiveRaceState && isFocusMode ? 'gap-3' : 'gap-4'}`}>
+      {/* Header adapts when race is active */}
+      <div
+        className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between flex-shrink-0 ${
+          isActiveRaceState
+            ? 'pb-3 mb-2 border-b border-blue-200 dark:border-blue-800'
+            : 'p-3 mb-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg'
+        }`}
+      >
+        <div className="min-w-0">
+          <p className="font-semibold text-blue-800 dark:text-blue-200 text-sm truncate">{currentRace.name}</p>
           <p className="text-xs text-blue-600 dark:text-blue-300">{checkedInCount}/{currentRace.runners.length} checked in</p>
           <WakeLockIndicator className="mt-1" />
         </div>
-        <div className="flex items-center gap-3">
-          <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          <div className={`text-xs font-semibold px-2 py-1 rounded-full tracking-wide ${
             isRaceRunning 
               ? isTestingMode 
                 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-200'
                 : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200'
               : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
           }`}>
-            {isRaceRunning ? (isTestingMode ? '⚡ Testing 10x' : 'Running') : 'Ready'}
+            {isRaceRunning ? (isTestingMode ? '⚡ Testing 10x' : 'Active Race') : 'Ready'}
           </div>
-          <div className="timer-display text-2xl font-bold tabular-nums text-blue-900 dark:text-blue-100">
+          <div
+            className={`timer-display font-bold tabular-nums ${
+              isActiveRaceState ? 'text-2xl sm:text-3xl' : 'text-3xl'
+            } text-blue-900 dark:text-blue-100`}
+            aria-live="polite"
+          >
             {formatTime(elapsedTime)}
           </div>
         </div>
       </div>
+
+      {showFocusToggle && (
+        <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+          <span className="uppercase tracking-wide font-semibold">
+            {isFocusMode ? 'Focus mode enabled' : isActiveRaceState ? 'Active race controls' : 'Focus mode available once race starts'}
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsFocusMode(prev => !prev)}
+            disabled={!isActiveRaceState && !isFocusMode}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs sm:text-sm font-medium transition ${
+              isFocusMode
+                ? 'border-yellow-400 bg-yellow-50 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-200'
+                : 'border-blue-300 text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-700 dark:text-blue-200'
+            }`}
+          >
+            {isFocusMode ? 'Exit Focus Mode' : 'Enter Focus Mode'}
+          </button>
+        </div>
+      )}
 
       {/* Testing Mode Toggle - Show only when race is not running */}
       {!isRaceRunning && (
@@ -228,6 +274,8 @@ function RaceDirectorView({
                   currentRace={currentRace}
                   elapsedTime={elapsedTime}
                   audioEnabled={clubConfig.audio_enabled ?? true}
+                  isActiveRace
+                  isFocusMode={isFocusMode}
                 />
               )}
 
