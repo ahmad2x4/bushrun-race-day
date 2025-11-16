@@ -28,6 +28,162 @@
 
 ## Future Features
 
+### Race Day New Member Registration
+- [ ] Add "New" button on check-in view for registering new members on race day
+- [ ] Implement temporary member number assignment (starting from 999, decreasing)
+- [ ] Auto-check-in new members after registration
+- [ ] Display assigned temp number to new member
+- [ ] Include temporary members in CSV exports
+
+**Description**: Allow race directors to register new members on race day who are trying the club for the first time. These new members need temporary member numbers and immediate check-in to participate in the race.
+
+**User Story**:
+"As a race director, when someone shows up on race day who isn't a member yet, I need to quickly register them with a temporary number so they can participate. They need to know their temp number to tell the timekeeper at the finish line."
+
+**Current Gap**:
+- No way to register runners who aren't in the pre-loaded CSV
+- New runners showing up on race day cannot participate
+- Manual workarounds required for temporary registrations
+
+**Proposed Solution**:
+
+1. **UI Enhancement - Check-in View**:
+   - Add "New" button on the number pad (opposite side from "Find Runner")
+   - Same styling as "Find Runner" button (blue, prominent)
+   - Opens registration dialog when clicked
+
+2. **New Member Registration Dialog**:
+   - Simple modal/popup with single name input field
+   - "Cancel" and "Register" buttons
+   - Minimal friction for quick race-day registration
+
+3. **Temporary Number Assignment**:
+   - Start at 999 and decrement for each new member (999, 998, 997...)
+   - Track next available temp number in race data
+   - Prevent conflicts with regular member numbers
+
+4. **Auto Check-in**:
+   - New members are automatically checked in upon registration
+   - Default distance: 5km
+   - Default handicap: 00:00 (no start delay)
+   - Marked as non-official (provisional)
+
+5. **Success Confirmation**:
+   - Show modal with runner's assigned temp number (large, prominent)
+   - Message: "Your number is XXX - tell this to the timekeeper at the finish"
+   - Confirmation that they've been checked in
+
+**Data Structure Changes**:
+
+**Race Interface** (src/types.ts):
+```typescript
+interface Race {
+  // ... existing fields
+  next_temp_number: number  // NEW: track next available temp number (starts at 999)
+}
+```
+
+**No changes needed to Runner interface** - temporary members are identified by:
+- `member_number >= 900` (temp number range)
+- `is_official_5k: false` AND `is_official_10k: false`
+
+**New Runner Defaults**:
+- `member_number`: race.next_temp_number (999, 998, 997...)
+- `full_name`: user-entered name
+- `is_financial_member: false`
+- `distance: '5km'`
+- `current_handicap_5k: '00:00'`
+- `current_handicap_10k: '00:00'`
+- `checked_in: true` (auto check-in)
+- `is_official_5k: false` (provisional)
+- `is_official_10k: false` (provisional)
+
+**Export Behavior**:
+- Temporary members included in both CSV exports (results and next race)
+- No special distinction needed (handled as provisional runners)
+- Can be promoted to regular members in future races
+
+**Implementation Plan**:
+
+**Phase 1: Data Structure** (src/types.ts)
+- Add `next_temp_number: number` to Race interface (default: 999)
+- No changes needed to Runner interface
+
+**Phase 2: Dialog Component** (src/components/forms/NewMemberDialog.tsx)
+- Create new modal component
+- Single name input field
+- Form validation (non-empty name)
+- Success screen showing assigned temp number
+
+**Phase 3: Check-in View Integration** (src/components/views/CheckinView.tsx)
+- Add "New" button to number pad area
+- Add dialog visibility state
+- Wire up button to open dialog
+- Handle registration submission:
+  - Create new Runner object with temp number
+  - Add to race.runners array
+  - Decrement race.next_temp_number
+  - Save to database
+  - Show success with temp number
+
+**Phase 4: Race Initialization** (race setup/creation logic)
+- Initialize `next_temp_number: 999` when creating new races
+- Add migration/default for existing races
+
+**Files to Create/Modify**:
+1. `src/types.ts` - Add new fields to interfaces
+2. `src/components/forms/NewMemberDialog.tsx` - NEW component
+3. `src/components/views/CheckinView.tsx` - Add button and integration
+4. Race initialization logic - Set next_temp_number default
+
+**UI/UX Requirements**:
+- Quick and easy registration (minimal fields)
+- Add storybook story for the new dialog as sample 
+- Clear display of assigned temp number
+- Accessible button placement on check-in screen
+- Confirmation that runner is checked in
+- Mobile-friendly dialog design
+
+**Acceptance Criteria**:
+- [ ] "New" button appears on check-in view number pad
+- [ ] Clicking "New" opens registration dialog
+- [ ] Name field is required and validated
+- [ ] First new member gets number 999, second gets 998, etc.
+- [ ] New member is automatically checked in with 5km/00:00 defaults
+- [ ] Success screen prominently displays assigned temp number
+- [ ] Temporary members appear in runner lists (marked as provisional)
+- [ ] CSV exports include temporary members
+- [ ] Temp numbers don't conflict with regular member numbers
+- [ ] Works on mobile devices used during race day
+
+**Edge Cases to Handle**:
+- Empty name field (show validation error)
+- Multiple new members registered in quick succession (proper number tracking)
+- Temp number reaches low limit (e.g., below 900) - what happens?
+- Race data persistence across app restarts
+- Temporary members showing in various race views
+
+**Testing Requirements**:
+- Unit tests for temp number assignment logic
+- Component tests for NewMemberDialog
+- E2E test for complete registration flow
+- CSV export validation with temp members
+- Mobile device testing
+
+**Priority**: Medium (Nice-to-have for race day operations)
+**Effort**: Small-Medium (new dialog component + check-in integration)
+**User Impact**: Medium (helps with occasional new runner registrations)
+**Dependencies**: Current check-in system, Runner/Race data structures
+
+**Notes**:
+- Temporary members are identified by: `member_number >= 900` AND `is_official_5k: false` AND `is_official_10k: false`
+- No new Runner interface field needed - existing fields are sufficient
+- Temporary members are treated as provisional (can't get podium)
+- They start with 00:00 handicap (no start delay)
+- Can be promoted to regular members in future races (update member number and official status)
+- Typically only 2-3 new members per race day
+- Registration must be quick (race day time pressure)
+- CSV structure remains unchanged - no new columns
 
 ---
 
