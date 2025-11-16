@@ -1,14 +1,14 @@
 # Deployment Guide
 
-## GitHub Pages (Recommended - Easiest)
+## GitHub Pages (Automatic Deployment)
 
-Your app is configured to automatically deploy to GitHub Pages.
+Your app is configured to automatically deploy to GitHub Pages with semantic versioning.
 
 **Live URL:** https://ahmad2x4.github.io/bushrun-race-day/
 
 ### Quick Start
 
-1. **Enable GitHub Pages** (one-time setup):
+1. **Enable GitHub Pages** (one-time setup - already done):
    - Go to repository Settings → Pages
    - Source: Select "GitHub Actions"
    - Save
@@ -16,13 +16,25 @@ Your app is configured to automatically deploy to GitHub Pages.
 2. **Deploy**:
    ```bash
    git add .
-   git commit -m "Deploy to GitHub Pages"
+   git commit -m "feat: your changes here"
    git push origin main
    ```
 
-3. **Done!** Your app will be live in 1-2 minutes
+3. **Done!**
+   - GitHub Actions will automatically build and deploy
+   - Semantic version will be calculated and tagged
+   - Release will be created with changelog
+   - App will be live in 2-3 minutes
 
-See [GITHUB-PAGES-DEPLOYMENT.md](GITHUB-PAGES-DEPLOYMENT.md) for detailed instructions.
+### Versioning
+
+- Every push automatically bumps the **patch** version (1.0.1 → 1.0.2)
+- Include `(MINOR)` in commit message for minor version bump (1.0.2 → 1.1.0)
+- Include `(MAJOR)` in commit message for major version bump (1.1.0 → 2.0.0)
+
+See [VERSIONING.md](VERSIONING.md) for detailed versioning guide.
+
+See [GITHUB-PAGES-DEPLOYMENT.md](GITHUB-PAGES-DEPLOYMENT.md) for detailed deployment instructions.
 
 ---
 
@@ -41,27 +53,3 @@ Once deployed to GitHub Pages, embed in WordPress:
 ```
 
 See [GITHUB-PAGES-DEPLOYMENT.md](GITHUB-PAGES-DEPLOYMENT.md) for WordPress embedding details.
-
----
-
-## WordPress Plugin (Alternative)
-
-If you prefer a WordPress plugin instead:
-
-```bash
-npm run build:wp-plugin
-```
-
-See [WORDPRESS-PLUGIN.md](WORDPRESS-PLUGIN.md) for details.
-
----
-
-## AWS CloudFront (Current Production)
-
-Your existing AWS infrastructure deployment:
-
-```bash
-npm run deploy:build
-```
-
-See `iac/` folder for infrastructure code.
