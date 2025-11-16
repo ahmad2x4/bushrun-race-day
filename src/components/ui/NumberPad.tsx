@@ -11,9 +11,9 @@ function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, b
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-5 md:p-6">
       {/* Number Grid */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
         {numbers.slice(0, 9).map((num) => (
           <button
             key={num}
@@ -26,7 +26,7 @@ function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, b
       </div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
         <button
           onClick={onClear}
           className="btn-touch-lg bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 focus:ring-red-200 dark:focus:ring-red-800"

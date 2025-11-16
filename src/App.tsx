@@ -322,9 +322,14 @@ function App() {
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-bold" style={{color: clubConfig.primary_color}}>
-              {clubConfig.name}
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold" style={{color: clubConfig.primary_color}}>
+                {clubConfig.name}
+              </h1>
+              {currentView === 'checkin' && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">Runner Check-in</p>
+              )}
+            </div>
             
             {/* Desktop Navigation - Hidden on mobile */}
             <nav className="hidden md:flex space-x-1">
@@ -499,7 +504,7 @@ function App() {
       )}
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
+      <main className="max-w-7xl mx-auto py-3 sm:py-4 md:py-6 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
         {renderView()}
       </main>
       
