@@ -2,6 +2,8 @@
 
 A Progressive Web App (PWA) for managing race day operations for running clubs, including runner check-in, race timing, and results calculation with handicap system.
 
+**Live App:** [https://ahmad2x4.github.io/bushrun-race-day/](https://ahmad2x4.github.io/bushrun-race-day/)
+
 ## Features
 
 - **Runner Management**: Import runner data via CSV with automatic validation
@@ -12,6 +14,7 @@ A Progressive Web App (PWA) for managing race day operations for running clubs, 
 - **Dark Mode**: Full dark mode support for better visibility in various conditions
 - **Offline-First**: Built with IndexedDB for reliable offline operation
 - **Responsive Design**: Mobile-first design optimized for race day conditions
+- **PWA**: Installable on iOS and Android with custom branding
 
 ## Technology Stack
 
@@ -69,8 +72,35 @@ npm run storybook
 npm run build
 
 # Preview production build
-npm preview
+npm run preview
 ```
+
+## Deployment
+
+The app automatically deploys to GitHub Pages when you push to the main branch.
+
+### Quick Deploy
+
+```bash
+git add .
+git commit -m "feat: your changes here"
+git push origin main
+```
+
+GitHub Actions will:
+- Calculate semantic version (auto-increments patch: 1.0.1 → 1.0.2)
+- Create a git tag and GitHub Release with changelog
+- Build and deploy to GitHub Pages
+- App goes live in 2-3 minutes
+
+### Version Control
+
+Versions are automatically calculated from your commits:
+- **Patch** (default): `1.0.1 → 1.0.2`
+- **Minor**: Add `(MINOR)` to commit message → `1.0.2 → 1.1.0`
+- **Major**: Add `(MAJOR)` to commit message → `1.1.0 → 2.0.0`
+
+Check current version in the Settings page or at [GitHub tags](https://github.com/ahmad2x4/bushrun-race-day/tags).
 
 ## Project Structure
 

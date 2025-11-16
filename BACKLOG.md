@@ -22,8 +22,6 @@
 
 **Live URL**: https://ahmad2x4.github.io/bushrun-race-day/
 
-**See**: [DEPLOYMENT.md](DEPLOYMENT.md) and [VERSIONING.md](VERSIONING.md)
-
 ---
 
 ## User Experience Improvements
