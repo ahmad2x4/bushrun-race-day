@@ -2,14 +2,14 @@
   "name": "Bushrun Race Day",
   "short_name": "Bushrun",
   "description": "Race day management system for running clubs with handicap timing and results tracking",
-  "start_url": "/",
+  "start_url": "/bushrun-race-day/",
   "display": "standalone",
   "background_color": "#f3f4f6",
   "theme_color": "#3b82f6",
   "orientation": "any",
   "categories": ["sports", "utilities"],
   "lang": "en",
-  "scope": "/",
+  "scope": "/bushrun-race-day/",
   "keywords": [
     "bushrun",
     "bush runner",
@@ -59,15 +59,15 @@
       "name": "Check-in Runners",
       "short_name": "Check-in",
       "description": "Quick access to runner check-in",
-      "url": "/#checkin",
-      "icons": [{ "src": "/favicon/web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "url": "/bushrun-race-day/#checkin",
+      "icons": [{ "src": "/bushrun-race-day/favicon/web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Race Director",
       "short_name": "Timer",
       "description": "Race timing and finish recording",
-      "url": "/#race-director",
-      "icons": [{ "src": "/favicon/web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png" }]
+      "url": "/bushrun-race-day/#race-director",
+      "icons": [{ "src": "/bushrun-race-day/favicon/web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
