@@ -288,14 +288,9 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
             Enter Member Number
           </label>
           <div className="relative">
-            <input
-              type="text"
-              value={memberNumber}
-              onChange={(e) => setMemberNumber(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full text-center text-2xl sm:text-3xl md:text-4xl font-bold py-3 sm:py-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none"
-              placeholder="000"
-              maxLength={6}
-            />
+            <div className="w-full text-center text-2xl sm:text-3xl md:text-4xl font-bold py-3 sm:py-4 text-gray-400 dark:text-gray-500">
+              {memberNumber || '000'}
+            </div>
           </div>
 
           {/* Status Messages */}
