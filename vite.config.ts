@@ -14,6 +14,10 @@ export default defineConfig({
   plugins: [react()],
   // Base path for GitHub Pages: https://ahmad2x4.github.io/bushrun-race-day/
   base: '/bushrun-race-day/',
+  server: {
+    host: '0.0.0.0', // Expose to local network
+    port: 5174,
+  },
   define: {
     __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION || 'dev'),
   },

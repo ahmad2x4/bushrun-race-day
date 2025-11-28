@@ -22,8 +22,9 @@
 }
 
 .btn-touch-lg {
-  width: 72px;
-  height: 72px;
+  width: min(max(64px, 20vw), min(15vh, 100px));
+  height: min(max(64px, 20vw), min(15vh, 100px));
+  aspect-ratio: 1;
 }
 
 .btn-touch-xl {

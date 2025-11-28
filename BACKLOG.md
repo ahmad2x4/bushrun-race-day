@@ -33,6 +33,170 @@
 
 ### UI/UX Improvements
 
+#### ✅ Mobile Optimization for Check-in View
+- [x] Optimize vertical space usage on mobile devices for check-in screen
+- [x] Move "Runner Check-in" title to app header bar
+- [x] Reduce progress bar size and show only checked-in count (not total/percentage)
+- [x] Reduce spacing and padding throughout the view
+- [x] Ensure entire number pad is visible on standard mobile screens without scrolling
+
+**Status**: ✅ **COMPLETED**
+
+**Description**: The check-in view was using excessive vertical space (~1000px+) which caused scrolling issues on mobile devices (typically 844px viewport height). Most of the number pad was hidden below the fold, requiring constant scrolling during race day operations.
+
+**User Story**:
+"As a race volunteer doing check-ins on my phone, I need to see the entire number pad and 'Find Runner' button without scrolling so I can quickly check in runners during the busy pre-race period."
+
+**Current Issues**:
+- Page title "Runner Check-in" takes up ~70px with large font and excessive margin
+- Progress bar showing "0 of 147 runners checked in - 0%" takes up ~104px
+- Multiple padding/margin layers consume 150+ pixels
+- Number pad and action button extend below viewport, requiring scrolling
+- Total vertical space needed exceeds typical mobile screen height by 200px+
+
+**Proposed Improvements**:
+
+1. **Move Title to App Header**:
+   - Remove standalone h2 "Runner Check-in" title from page body
+   - Add it to the app header bar (currently shows "Berowra Bushrunners")
+   - This saves ~70px of vertical space
+
+2. **Compact Progress/Status Bar**:
+   - Remove "X of total" and percentage display
+   - Show only: Race name + checked-in count in single compact line
+   - Example: "Bushrun 16/11/2025 • 5 checked in"
+   - Reduce padding from p-4 to p-2 or p-3
+   - Reduce bottom margin from mb-6 to mb-3 or mb-4
+   - Target: reduce from ~104px to ~50-60px
+
+3. **Reduce Page Padding**:
+   - Main content: Change py-6 to py-3 or py-4 on mobile (save 24-48px)
+   - Number pad wrapper: Change p-6 to p-4 on mobile (save 16px)
+   - Member input card: Optimize padding
+
+4. **Tighten Button Spacing**:
+   - Reduce gap between number buttons slightly (gap-3 → gap-2)
+   - Keep touch target size (72px) but reduce visual spacing
+   - Save ~12-18px total
+
+5. **Responsive Classes**:
+   - Use Tailwind responsive classes (sm:, md:) to apply tighter spacing only on mobile
+   - Keep current spacious layout on tablets/desktop
+
+**Space Savings Calculation**:
+
+| Optimization | Current | Optimized | Savings |
+|--------------|---------|-----------|---------|
+| Page title | 70px | 0px (moved to header) | 70px |
+| Progress bar | 104px | 55px | 49px |
+| Main padding (vertical) | 48px | 24px | 24px |
+| NumberPad padding | 48px (top+bottom) | 32px | 16px |
+| Button gaps | ~36px | ~24px | 12px |
+| Title/input margins | ~44px | ~28px | 16px |
+| **Total Savings** | | | **~187px** |
+| **New Total Height** | ~1000px | **~813px** | **Fits on screen!** |
+
+**Implementation Plan**:
+
+**Phase 1: Move Title to Header** (src/App.tsx)
+- Modify app header to show current view name
+- Add logic to display "Runner Check-in" when on check-in view
+- Could show race name in subtitle or breadcrumb
+
+**Phase 2: Compact Progress Bar** (src/components/views/CheckinView.tsx, lines 238-251)
+- Simplify to single line: `{raceName} • {checkedInCount} checked in`
+- Change padding: `p-4` → `p-2 sm:p-3`
+- Change margin: `mb-6` → `mb-3 sm:mb-4`
+- Keep color scheme but make more compact
+
+**Phase 3: Reduce Main Padding** (src/App.tsx, line 502)
+- Change `py-6` → `py-3 sm:py-4 md:py-6`
+- Reduces top/bottom padding on mobile only
+
+**Phase 4: Optimize NumberPad** (src/components/ui/NumberPad.tsx)
+- Change wrapper padding: `p-6` → `p-4 sm:p-5 md:p-6`
+- Change button gaps: `gap-3` → `gap-2 sm:gap-3`
+- Keep btn-touch-lg size (72px) for accessibility
+
+**Phase 5: Tighten Input Section** (src/components/views/CheckinView.tsx)
+- Reduce margins on input card
+- Optimize label/input spacing
+- Consider making label smaller or less prominent
+
+**Files to Modify**:
+1. `src/App.tsx` - Add view title to header, reduce main padding
+2. `src/components/views/CheckinView.tsx` - Remove h2 title, compact progress bar, tighten spacing
+3. `src/components/ui/NumberPad.tsx` - Reduce padding and gaps on mobile
+4. Potentially: Create reusable mobile-optimized spacing utilities
+
+**UI/UX Requirements**:
+- Entire number pad + action button visible without scrolling on iPhone 12/13/14 (844px)
+- Maintain 44px minimum touch targets for accessibility
+- Responsive design: tighter on mobile, spacious on tablet/desktop
+- Dark mode support maintained
+- Smooth visual hierarchy despite reduced spacing
+- Quick scanning during busy check-in periods
+
+**Acceptance Criteria**:
+- [ ] Complete number pad visible on mobile screens (390x844px) without scrolling
+- [ ] "Runner Check-in" title appears in app header instead of page body
+- [ ] Progress bar shows only: race name + checked-in count (compact, single line)
+- [ ] Vertical space reduced by at least 150px on mobile
+- [ ] Touch targets remain 44px minimum (accessibility)
+- [ ] Desktop/tablet layout maintains comfortable spacing
+- [ ] Dark mode styling preserved
+- [ ] No layout shift or jank during check-in process
+- [ ] Works on common mobile devices (iPhone 12-15, Android equivalents)
+
+**Testing Requirements**:
+- Visual regression tests for mobile viewport (390x844px)
+- Test on real devices (iOS and Android)
+- Accessibility audit (touch target sizes)
+- Dark mode verification
+- Responsive breakpoints testing (mobile, tablet, desktop)
+
+**Priority**: High (Critical for mobile race day check-in operations)
+**Effort**: Small-Medium (mostly CSS/Tailwind class changes, some layout restructuring)
+**User Impact**: High (enables efficient mobile check-in workflow)
+**Dependencies**: Current CheckinView, NumberPad, App header structure
+
+**Implementation Summary**:
+
+Successfully optimized check-in view for mobile screens with ~187px vertical space savings:
+
+1. **Header Integration** (src/App.tsx):
+   - Added view subtitle to app header showing "Runner Check-in" when on check-in view
+   - Reduced main content padding: `py-6` → `py-3 sm:py-4 md:py-6`
+
+2. **Compact Progress Bar** (src/components/views/CheckinView.tsx):
+   - Removed h2 page title (moved to header)
+   - Simplified status bar to single centered line: "Race name • X checked in"
+   - Removed "of total" count and percentage display
+   - Reduced padding: `p-4` → `p-2 sm:p-3`
+   - Reduced margin: `mb-6` → `mb-3 sm:mb-4`
+
+3. **NumberPad Optimization** (src/components/ui/NumberPad.tsx):
+   - Reduced wrapper padding: `p-6` → `p-4 sm:p-5 md:p-6`
+   - Tightened button gaps: `gap-3` → `gap-2 sm:gap-3`
+   - Reduced grid margins: `mb-4` → `mb-3 sm:mb-4`
+
+4. **Input Section** (src/components/views/CheckinView.tsx):
+   - Reduced card padding: `p-6` → `p-4 sm:p-5 md:p-6`
+   - Reduced margins: `mb-6` → `mb-4 sm:mb-5 md:mb-6`
+
+**Results**:
+- Total height reduced from ~1000px to ~813px
+- Entire number pad now visible on iPhone 12-15 (844px viewport)
+- Maintains 72px touch targets for accessibility
+- Responsive classes preserve spacious layout on desktop/tablet
+- Dark mode support maintained
+- Zero linting errors
+- Build successful
+
+**Commit**: `e7dd4a5` - feat: optimize check-in view for mobile screens
+
+---
+
 #### Race Director UI Optimization for Active Race State
 - [ ] Implement simplified layout during active race to focus on critical information
 
