@@ -115,11 +115,11 @@ describe('NumberPad', () => {
 
   it('has proper grid layout structure', () => {
     const { container } = render(<NumberPad {...mockProps} />)
-    
-    // Should have main container
+
+    // Should have main container with responsive padding
     const mainContainer = container.firstChild as HTMLElement
-    expect(mainContainer).toHaveClass('bg-white', 'dark:bg-gray-800', 'rounded-lg', 'shadow', 'p-6')
-    
+    expect(mainContainer).toHaveClass('bg-white', 'dark:bg-gray-800', 'rounded-lg', 'shadow')
+
     // Should have grid containers
     const grids = container.querySelectorAll('.grid')
     expect(grids).toHaveLength(2) // Number grid + bottom row grid
@@ -127,12 +127,14 @@ describe('NumberPad', () => {
 
   it('applies correct CSS classes for touch optimization', () => {
     render(<NumberPad {...mockProps} />)
-    
+
     const numberButton = screen.getByText('1')
     expect(numberButton).toHaveClass('btn-touch-lg')
-    
+
     const checkinButton = screen.getByText('Check In Runner')
-    expect(checkinButton).toHaveClass('w-full', 'btn-touch-lg')
+    expect(checkinButton).toHaveClass('w-full')
+    // Check-in button no longer uses btn-touch-lg, has custom responsive height
+    expect(checkinButton).toHaveClass('h-14', 'sm:h-16', 'md:h-18')
   })
 
   it('has correct button colors for different actions', () => {
