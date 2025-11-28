@@ -36,6 +36,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   const [selectedDistance, setSelectedDistance] = useState<'5km' | '10km'>('5km')
   const [showProvisionalConfirm, setShowProvisionalConfirm] = useState(false)
   const [isCalculatedHandicap, setIsCalculatedHandicap] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Helper function for time adjustment
   const handleTimeAdjustment = async (adjustment: number) => {
@@ -172,9 +173,22 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
     }
 
     setShowProvisionalConfirm(false)
+    setIsSubmitting(true)
 
-    // Proceed with check-in
-    await performCheckin(foundRunner, selectedDistance)
+    // Proceed with check-in with minimum loading time
+    const minLoadingTime = 500
+    const startTime = Date.now()
+    try {
+      await performCheckin(foundRunner, selectedDistance)
+
+      // Ensure minimum display time for loading indicator
+      const elapsedTime = Date.now() - startTime
+      if (elapsedTime < minLoadingTime) {
+        await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // Handle provisional runner check-in as unofficial
@@ -182,9 +196,22 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
     if (!foundRunner || !currentRace) return
 
     setShowProvisionalConfirm(false)
+    setIsSubmitting(true)
 
     // Proceed with check-in but keep runner as provisional (don't update official status)
-    await performCheckin(foundRunner, selectedDistance)
+    const minLoadingTime = 500
+    const startTime = Date.now()
+    try {
+      await performCheckin(foundRunner, selectedDistance)
+
+      // Ensure minimum display time for loading indicator
+      const elapsedTime = Date.now() - startTime
+      if (elapsedTime < minLoadingTime) {
+        await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
 
@@ -193,7 +220,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
       if (!memberNumber.trim()) return
 
       const runner = currentRace.runners.find(r => r.member_number.toString() === memberNumber)
-      
+
       if (!runner) {
         setCheckinStatus('error')
         setStatusMessage(`Member number ${memberNumber} not found in race registration.`)
@@ -224,47 +251,46 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
       }
 
       // Proceed with normal check-in for official runners
-      await performCheckin(foundRunner, selectedDistance)
+      setIsSubmitting(true)
+      const minLoadingTime = 500
+      const startTime = Date.now()
+      try {
+        await performCheckin(foundRunner, selectedDistance)
+
+        // Ensure minimum display time for loading indicator
+        const elapsedTime = Date.now() - startTime
+        if (elapsedTime < minLoadingTime) {
+          await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
+        }
+      } finally {
+        setIsSubmitting(false)
+      }
     }
   }
 
   const checkedInCount = currentRace.runners.filter(r => r.checked_in).length
-  const totalRunners = currentRace.runners.length
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6 text-center">Runner Check-in</h2>
-      
-      {/* Status Bar */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="font-semibold text-blue-800 dark:text-blue-200">{currentRace.name}</p>
-            <p className="text-sm text-blue-600 dark:text-blue-300">
-              {checkedInCount} of {totalRunners} runners checked in
-            </p>
-          </div>
-          <div className="text-2xl font-bold text-blue-600">
-            {Math.round((checkedInCount / totalRunners) * 100)}%
-          </div>
-        </div>
+    <div className="w-full max-w-md mx-auto px-2 sm:px-0">
+      {/* Compact Status Bar */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+        <p className="text-sm text-center text-blue-800 dark:text-blue-200">
+          <span className="font-semibold">{currentRace.name}</span>
+          <span className="mx-2">•</span>
+          <span>{checkedInCount} checked in</span>
+        </p>
       </div>
 
       {/* Step 1: Member Number Input */}
       {checkinStep === 'member_number' && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-5 md:p-6 mb-4 sm:mb-5 md:mb-6">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Enter Member Number
           </label>
           <div className="relative">
-            <input
-              type="text"
-              value={memberNumber}
-              onChange={(e) => setMemberNumber(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full text-center text-3xl font-bold py-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none"
-              placeholder="000"
-              maxLength={6}
-            />
+            <div className="w-full text-center text-2xl sm:text-3xl md:text-4xl font-bold py-3 sm:py-4 text-gray-400 dark:text-gray-500">
+              {memberNumber || '000'}
+            </div>
           </div>
 
           {/* Status Messages */}
@@ -284,7 +310,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
 
       {/* Step 2: Distance Selection */}
       {checkinStep === 'distance_selection' && foundRunner && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4 md:p-6 mb-4 sm:mb-5 md:mb-6">
           <div className="text-center mb-6">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {foundRunner.full_name}
@@ -299,36 +325,36 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
             )}
             
             {/* Handicap Start Time - Prominent Display */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-xl p-6 mb-6 shadow-lg">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-xl p-3 sm:p-4 md:p-6 mb-4 sm:mb-5 md:mb-6 shadow-lg">
               <div className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2 uppercase tracking-wide">
                 🏃‍♂️ YOUR START DELAY TIME 🏃‍♀️
               </div>
 
               {/* Time Display with +/- Buttons (conditionally) */}
               {clubConfig.enable_time_adjustment ?? true ? (
-                <div className="flex items-center justify-center gap-4 mb-3">
+                <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3">
                   <button
                     {...decreaseTimeHandlers}
-                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center select-none"
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xl sm:text-2xl font-bold shadow-lg transition-colors flex items-center justify-center select-none flex-shrink-0"
                     title="Tap: -5 seconds, Hold: -5 seconds (faster)"
                   >
                     −
                   </button>
 
-                  <div className="text-5xl font-black text-blue-900 dark:text-blue-100 font-mono min-w-[140px] text-center">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-blue-900 dark:text-blue-100 font-mono min-w-0 flex-shrink text-center px-2">
                     {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '00:00' : foundRunner.current_handicap_10k || '00:00'}
                   </div>
 
                   <button
                     {...increaseTimeHandlers}
-                    className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-2xl font-bold shadow-lg transition-colors flex items-center justify-center select-none"
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xl sm:text-2xl font-bold shadow-lg transition-colors flex items-center justify-center select-none flex-shrink-0"
                     title="Tap: +5 seconds, Hold: +5 seconds (faster)"
                   >
                     +
                   </button>
                 </div>
               ) : (
-                <div className="text-5xl font-black text-blue-900 dark:text-blue-100 mb-3 font-mono text-center">
+                <div className="text-3xl sm:text-4xl md:text-5xl font-black text-blue-900 dark:text-blue-100 mb-2 sm:mb-3 font-mono text-center">
                   {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '00:00' : foundRunner.current_handicap_10k || '00:00'}
                 </div>
               )}
@@ -407,20 +433,31 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
           <div className="flex gap-3">
             <button
               onClick={handleClear}
-              className="flex-1 px-4 py-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Back
             </button>
             <button
               onClick={handleCheckin}
-              className="flex-1 btn-primary px-4 py-3 rounded-lg"
+              disabled={isSubmitting}
+              className="flex-1 btn-primary px-4 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {foundRunner.checked_in 
-                ? (foundRunner.distance === selectedDistance 
-                    ? `Confirm ${selectedDistance}` 
-                    : `Change to ${selectedDistance}`)
-                : `Check In for ${selectedDistance}`
-              }
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Checking in...</span>
+                </>
+              ) : (
+                foundRunner.checked_in
+                  ? (foundRunner.distance === selectedDistance
+                      ? `Confirm ${selectedDistance}`
+                      : `Change to ${selectedDistance}`)
+                  : `Check In for ${selectedDistance}`
+              )}
             </button>
           </div>
         </div>
