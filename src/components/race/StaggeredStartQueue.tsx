@@ -41,8 +41,9 @@ function StaggeredStartQueue({
         ? runner.current_handicap_5k
         : runner.current_handicap_10k
 
-      if (!handicapStr || handicapStr === '00:00') return
-      
+      if (!handicapStr) return
+
+      // Allow zero-delay runners to appear in the queue (start at 00:00)
       const handicapMs = timeStringToMs(handicapStr)
       
       if (!startGroups.has(handicapMs)) {

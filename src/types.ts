@@ -26,6 +26,7 @@ export interface Race {
   // Both races run simultaneously but tracked separately
   race_5k_active: boolean;
   race_10k_active: boolean;
+  next_temp_number: number; // Track next available temp number for new members (starts at 999, decrements)
 }
 
 export interface RaceResults {
