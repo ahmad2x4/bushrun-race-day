@@ -223,7 +223,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
 
       if (!runner) {
         setCheckinStatus('error')
-        setStatusMessage(`Member number ${memberNumber} not found in race registration.`)
+        setStatusMessage(`Member #${memberNumber} not found in registration.`)
         return
       }
 
