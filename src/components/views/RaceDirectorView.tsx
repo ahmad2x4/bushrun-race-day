@@ -207,7 +207,7 @@ function RaceDirectorView({
           </span>
           <button
             type="button"
-            onClick={() => setIsFocusMode(prev => !prev)}
+            onClick={() => setIsFocusMode((prev: boolean) => !prev)}
             disabled={!isActiveRaceState && !isFocusMode}
             className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs sm:text-sm font-medium transition ${
               isFocusMode
