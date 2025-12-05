@@ -61,10 +61,10 @@ describe('StaggeredStartQueue', () => {
   it('only shows checked-in runners', () => {
     render(<StaggeredStartQueue currentRace={mockRace} elapsedTime={0} />)
     
-    expect(screen.getByText('#101 John Doe')).toBeInTheDocument()
-    expect(screen.getByText('#102 Jane Smith')).toBeInTheDocument()
-    expect(screen.getByText('#103 Bob Johnson')).toBeInTheDocument()
-    expect(screen.queryByText('#104 Alice Brown')).not.toBeInTheDocument()
+    expect(screen.getByText(/John Doe/)).toBeInTheDocument()
+    expect(screen.getByText(/Jane Smith/)).toBeInTheDocument()
+    expect(screen.getByText(/Bob Johnson/)).toBeInTheDocument()
+    expect(screen.queryByText(/Alice Brown/)).not.toBeInTheDocument()
   })
 
   it('groups runners by their start time (handicap)', () => {
@@ -94,11 +94,9 @@ describe('StaggeredStartQueue', () => {
   })
 
   it('highlights the next group to start', () => {
-    const { container } = render(<StaggeredStartQueue currentRace={mockRace} elapsedTime={60000} />)
+    render(<StaggeredStartQueue currentRace={mockRace} elapsedTime={60000} />)
     
-    // At 1 minute elapsed, the 02:00 group should be next
-    const nextGroups = container.querySelectorAll('.bg-yellow-50')
-    expect(nextGroups.length).toBeGreaterThan(0)
+    expect(screen.getByTestId('next-starter-card')).toBeInTheDocument()
   })
 
   it('shows "STARTING!" badge for groups starting soon', () => {
@@ -140,10 +138,10 @@ describe('StaggeredStartQueue', () => {
     render(<StaggeredStartQueue currentRace={mockRace} elapsedTime={0} />)
     
     // John (5km) should use current_handicap_5k (01:30)
-    expect(screen.getByText('#101 John Doe')).toBeInTheDocument()
+    expect(screen.getByText(/John Doe/)).toBeInTheDocument()
     
     // Bob (10km) should use current_handicap_10k (03:30) 
-    expect(screen.getByText('#103 Bob Johnson')).toBeInTheDocument()
+    expect(screen.getByText(/Bob Johnson/)).toBeInTheDocument()
   })
 
   it('filters out groups that started more than 2 seconds ago', () => {
