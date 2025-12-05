@@ -131,6 +131,12 @@ function App() {
         // Try to load current race
         const race = await db.getCurrentRace()
         if (race) {
+          // Migration: add next_temp_number if not present
+          if (race.next_temp_number === undefined) {
+            race.next_temp_number = 999
+            await db.saveRace(race)
+          }
+
           console.log('Loaded existing race:', {
             name: race.name,
             status: race.status,
