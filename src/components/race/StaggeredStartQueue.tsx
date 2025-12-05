@@ -8,9 +8,18 @@ interface StaggeredStartQueueProps {
   elapsedTime: number
   showPreRace?: boolean
   audioEnabled?: boolean
+  isActiveRace?: boolean
+  isFocusMode?: boolean
 }
 
-function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, audioEnabled = true }: StaggeredStartQueueProps) {
+function StaggeredStartQueue({
+  currentRace,
+  elapsedTime,
+  showPreRace = false,
+  audioEnabled = true,
+  isActiveRace = false,
+  isFocusMode = false
+}: StaggeredStartQueueProps) {
 
   // Audio and visual alert state
   const [audioState, setAudioState] = useState<AudioState>(getAudioState())
@@ -62,6 +71,15 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
       }))
       .sort((a, b) => a.startTime - b.startTime)
   }, [checkedInRunners, elapsedTime, showPreRace])
+
+  const highlightGroup = !showPreRace ? upcomingGroups.find(group => !group.hasStarted) ?? null : null
+  const highlightStartTime = highlightGroup ? highlightGroup.startTime : null
+  const queueGroups = highlightStartTime !== null
+    ? upcomingGroups.filter(group => group.startTime !== highlightStartTime)
+    : upcomingGroups
+  const shouldShowNextBadge = showPreRace || highlightStartTime === null
+  const nextBadgeStartTime = shouldShowNextBadge ? upcomingGroups[0]?.startTime ?? null : null
+  const highlightIsStartingSoon = !!highlightGroup && highlightGroup.timeUntilStart <= 3000 && highlightGroup.timeUntilStart > 0
 
   // Track audio trigger attempts and successful plays separately
   const audioTriggeredRef = useRef<Set<number>>(new Set()) // Successfully triggered audio
@@ -190,6 +208,17 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
   }
 
+  const isLiveMode = isActiveRace && !showPreRace
+  const containerClasses = `rounded-lg flex flex-col flex-1 transition-all duration-300 ${
+    showPreRace
+      ? 'bg-white dark:bg-gray-800 shadow-lg p-4'
+      : isFocusMode
+        ? 'bg-gray-900 text-white border border-yellow-500/70 shadow-2xl p-4'
+        : isLiveMode
+          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 shadow-lg'
+          : 'bg-white dark:bg-gray-900/40 border border-blue-200 dark:border-blue-800 shadow-lg p-4'
+  }`
+
   if (upcomingGroups.length === 0) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
@@ -201,19 +230,19 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col flex-1">
-      <h3 className="font-semibold text-lg mb-3 text-center">
-        Staggered Start Queue
-        {/* Debug info - remove in production */}
+    <div className={containerClasses}>
+      <div className={`flex items-center justify-between ${showPreRace ? 'mb-3' : 'mb-2'}`}>
+        <h3 className={`font-semibold ${showPreRace ? 'text-lg text-center w-full' : 'text-sm uppercase tracking-wide text-blue-700 dark:text-blue-200'}`}>
+          Staggered Start Queue
+        </h3>
         {process.env.NODE_ENV === 'development' && (
-          <div className="text-xs text-gray-500 mt-1">
+          <div className={`text-xs ${isFocusMode ? 'text-yellow-200' : 'text-gray-500 dark:text-gray-400'}`}>
             Audio: {audioState.isInitialized ? '✅' : '❌'} |
             Mobile: {audioState.isMobile ? '📱' : '💻'} |
             Gesture: {audioState.requiresUserGesture ? '👆' : '🔄'}
           </div>
         )}
-      </h3>
-
+      </div>
 
       {/* Visual alert overlay */}
       {visualAlert && (
@@ -228,33 +257,84 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
           </div>
         </div>
       )}
-      
-      <div className="space-y-3 flex-1 overflow-y-auto">
-        {upcomingGroups.map((group, index) => {
-          const isNext = !group.hasStarted && index === upcomingGroups.findIndex(g => !g.hasStarted)
+
+      {!showPreRace && highlightGroup && (
+        <div
+          data-testid="next-starter-card"
+          className={`mb-4 rounded-2xl border-2 p-4 transition-all duration-300 ${
+            isFocusMode
+              ? 'bg-yellow-300 text-gray-900 border-yellow-400 shadow-xl'
+              : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600'
+          }`}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-yellow-700 dark:text-yellow-200">
+                  Next Starter
+                </p>
+                {highlightIsStartingSoon && (
+                  <span className="bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 text-[10px] px-2 py-0.5 rounded-full font-black tracking-wide">
+                    STARTING!
+                  </span>
+                )}
+              </div>
+              <p className={`font-black ${isFocusMode ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'} leading-tight`}>
+                {highlightGroup.runners.length === 1 ? 'Next Runner' : `${highlightGroup.runners.length} Runners`}
+              </p>
+              <p className="text-sm font-medium mt-1">
+                Start Delay: {msToTimeString(highlightGroup.startTime)}
+              </p>
+            </div>
+            <div className={`text-right font-mono font-bold ${isFocusMode ? 'text-5xl sm:text-6xl' : 'text-4xl'} text-yellow-900 dark:text-yellow-100`}>
+              {formatCountdown(highlightGroup.timeUntilStart)}
+            </div>
+          </div>
+          <div className={`mt-4 grid gap-2 ${highlightGroup.runners.length > 2 ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
+            {highlightGroup.runners.map(runner => (
+              <div
+                key={runner.member_number}
+                className={`px-3 py-3 rounded-xl text-lg font-semibold flex items-center gap-3 ${
+                  runner.distance === '5km'
+                    ? 'bg-blue-500/10 text-blue-900 dark:text-blue-100'
+                    : 'bg-purple-500/10 text-purple-900 dark:text-purple-100'
+                }`}
+              >
+                <span className="text-sm font-bold opacity-70">#{runner.member_number}</span>
+                <span className="truncate">{runner.full_name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+        {queueGroups.map((group) => {
+          const isNext = nextBadgeStartTime !== null && group.startTime === nextBadgeStartTime && !group.hasStarted
           const isStarting = group.timeUntilStart <= 3000 && group.timeUntilStart > 0
-          
+
           return (
-            <div 
+            <div
               key={group.startTime}
-              className={`p-3 rounded-lg border-2 transition-all duration-300 ${
+              data-testid="start-group-card"
+              className={`p-3 rounded-xl border-2 transition-all duration-300 ${
                 group.hasStarted
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 opacity-75'
                   : isStarting
-                  ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600 animate-pulse'
-                  : isNext
-                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600'
-                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600 animate-pulse'
+                    : isNext
+                      ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600'
+                      : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
               }`}
             >
-              <div className="flex justify-between items-center mb-2">
+              <div className="flex flex-wrap justify-between gap-2 items-center mb-2">
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-medium ${
                     group.hasStarted ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'
                   }`}>
                     Start Delay: {msToTimeString(group.startTime)}
                   </span>
-                  {isNext && !group.hasStarted && (
+                  {isNext && (
                     <span className="bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-xs px-2 py-1 rounded-full font-bold">
                       NEXT
                     </span>
@@ -265,13 +345,13 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
                     </span>
                   )}
                 </div>
-                
+
                 <div className={`text-lg font-bold tabular-nums ${
                   group.hasStarted
                     ? 'text-green-600 dark:text-green-400'
                     : isStarting
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-blue-600 dark:text-blue-400'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-blue-600 dark:text-blue-400'
                 }`}>
                   {showPreRace
                     ? `Starts at ${msToTimeString(group.startTime)}`
@@ -279,10 +359,10 @@ function StaggeredStartQueue({ currentRace, elapsedTime, showPreRace = false, au
                   }
                 </div>
               </div>
-              
+
               <div className="grid gap-2" style={{gridTemplateColumns: `repeat(${Math.min(group.runners.length, 3)}, 1fr)`}}>
                 {group.runners.map(runner => (
-                  <div 
+                  <div
                     key={runner.member_number}
                     className={`px-3 py-2 rounded-lg text-sm font-medium ${
                       runner.distance === '5km'
