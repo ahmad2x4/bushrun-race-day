@@ -13,7 +13,7 @@ import {
 
 test.describe('Race Scenarios', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('./');
     await page.waitForLoadState('networkidle');
     await expect(page.locator('h1')).toContainText('Berowra Bushrunners');
   });

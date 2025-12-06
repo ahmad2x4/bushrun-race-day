@@ -12,7 +12,8 @@ export class BushrunTestHelpers {
    * Navigate to the application and wait for it to load
    */
   async navigateToApp() {
-    await this.page.goto('/');
+    // Use relative navigation so baseURL path is preserved (GitHub Pages hosted under /bushrun-race-day/)
+    await this.page.goto('./');
     await this.page.waitForLoadState('networkidle');
     
     // Wait for the app to be fully loaded

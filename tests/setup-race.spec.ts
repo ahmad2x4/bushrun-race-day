@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Race Setup Workflow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('./');
   });
 
   test('should upload CSV and configure race', async ({ page }) => {

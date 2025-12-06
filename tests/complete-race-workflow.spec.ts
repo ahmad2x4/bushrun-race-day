@@ -10,7 +10,7 @@ import { VALID_TEST_CSV } from './fixtures/test-data';
 test.describe('Complete Race Workflow', () => {
   test.beforeEach(async ({ page }) => {
     // Given I am on the Bushrun Race Day application
-    await page.goto('/');
+    await page.goto('./'); // Preserve base path for GitHub Pages
     await page.waitForLoadState('networkidle');
     
     // Verify the application loaded successfully

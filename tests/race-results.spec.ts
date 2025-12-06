@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Race Results Workflow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('./');
     // Navigate to results view
     await page.click('button:has-text("Results")');
   });
