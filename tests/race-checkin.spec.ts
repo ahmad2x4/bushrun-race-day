@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Runner Check-in Workflow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('./');
     // Navigate to check-in view
     await page.click('button:has-text("Check-in")');
   });

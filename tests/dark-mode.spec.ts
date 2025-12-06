@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Dark Mode and Theme Switching', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('./'); // Preserve base path for GitHub Pages
   });
 
   test('should toggle between light and dark mode', async ({ page }) => {
@@ -211,7 +211,7 @@ test.describe('Dark Mode and Theme Switching', () => {
     });
     
     // When I visit the site for the first time
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await page.goto('./', { waitUntil: 'networkidle' });
     
     // Then dark mode should be enabled automatically
     // Note: This test might need adjustment based on actual implementation
