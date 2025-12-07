@@ -50,19 +50,20 @@ function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, b
 
       {/* Action Buttons Row */}
       {onNewMember ? (
-        <div className="grid grid-cols-2 gap-3 sm:gap-3.5 md:gap-4">
-          {/* New Member Button */}
+        <div className="flex gap-3 sm:gap-3.5 md:gap-4">
+          {/* New Member Button - Compact */}
           <button
             onClick={onNewMember}
-            className="h-14 sm:h-16 md:h-18 text-lg sm:text-xl md:text-2xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 bg-green-600 hover:bg-green-700 text-white focus:ring-green-200 dark:focus:ring-green-800"
+            aria-label="Register new member"
+            className="w-14 sm:w-16 md:w-18 h-14 sm:h-16 md:h-18 text-2xl sm:text-3xl md:text-4xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 bg-green-600 hover:bg-green-700 text-white focus:ring-green-200 dark:focus:ring-green-800"
           >
-            New
+            +
           </button>
-          {/* Find Runner Button */}
+          {/* Find Runner Button - Takes remaining space */}
           <button
             onClick={onCheckin}
             disabled={disabled}
-            className={`h-14 sm:h-16 md:h-18 text-lg sm:text-xl md:text-2xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 ${
+            className={`flex-1 h-14 sm:h-16 md:h-18 text-lg sm:text-xl md:text-2xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 ${
               disabled
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                 : 'btn-primary focus:ring-blue-200 dark:focus:ring-blue-800'
