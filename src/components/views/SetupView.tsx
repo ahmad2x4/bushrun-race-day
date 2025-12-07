@@ -40,7 +40,8 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
         status: 'setup',
         runners: parsedRunners,
         race_5k_active: false,
-        race_10k_active: false
+        race_10k_active: false,
+        next_temp_number: 999 // Initialize temp number for new members
       }
       
       // Save to database

@@ -5,9 +5,10 @@ interface NumberPadProps {
   onCheckin: () => void
   disabled: boolean
   buttonText?: string
+  onNewMember?: () => void // Optional callback for new member registration
 }
 
-function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, buttonText = "Check In Runner" }: NumberPadProps) {
+function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, buttonText = "Check In Runner", onNewMember }: NumberPadProps) {
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 
   return (
@@ -47,18 +48,44 @@ function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, b
         </button>
       </div>
 
-      {/* Check-in Button - Full Width */}
-      <button
-        onClick={onCheckin}
-        disabled={disabled}
-        className={`w-full h-14 sm:h-16 md:h-18 text-lg sm:text-xl md:text-2xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 ${
-          disabled
-            ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-            : 'btn-primary focus:ring-blue-200 dark:focus:ring-blue-800'
-        }`}
-      >
-        {buttonText}
-      </button>
+      {/* Action Buttons Row */}
+      {onNewMember ? (
+        <div className="flex gap-3 sm:gap-3.5 md:gap-4">
+          {/* New Member Button - Compact */}
+          <button
+            onClick={onNewMember}
+            aria-label="Register new member"
+            className="w-14 sm:w-16 md:w-18 h-14 sm:h-16 md:h-18 text-2xl sm:text-3xl md:text-4xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 bg-green-600 hover:bg-green-700 text-white focus:ring-green-200 dark:focus:ring-green-800"
+          >
+            +
+          </button>
+          {/* Find Runner Button - Takes remaining space */}
+          <button
+            onClick={onCheckin}
+            disabled={disabled}
+            className={`flex-1 h-14 sm:h-16 md:h-18 text-lg sm:text-xl md:text-2xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 ${
+              disabled
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                : 'btn-primary focus:ring-blue-200 dark:focus:ring-blue-800'
+            }`}
+          >
+            {buttonText}
+          </button>
+        </div>
+      ) : (
+        /* Check-in Button - Full Width (when onNewMember is not provided) */
+        <button
+          onClick={onCheckin}
+          disabled={disabled}
+          className={`w-full h-14 sm:h-16 md:h-18 text-lg sm:text-xl md:text-2xl font-bold rounded-lg transition-colors focus:outline-none focus:ring-4 ${
+            disabled
+              ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+              : 'btn-primary focus:ring-blue-200 dark:focus:ring-blue-800'
+          }`}
+        >
+          {buttonText}
+        </button>
+      )}
     </div>
   )
 }

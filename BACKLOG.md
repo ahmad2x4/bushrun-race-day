@@ -28,7 +28,6 @@
 
 ## Future Features
 
-
 ---
 
 ### UI/UX Improvements

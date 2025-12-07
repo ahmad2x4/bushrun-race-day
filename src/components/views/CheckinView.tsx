@@ -3,6 +3,7 @@ import type { Race, Runner, ClubConfig } from '../../types'
 import { db } from '../../db'
 import NumberPad from '../ui/NumberPad'
 import ConfirmDialog from '../ui/ConfirmDialog'
+import NewMemberDialog from '../forms/NewMemberDialog'
 import { useTapAndHold } from '../../hooks'
 import { getHandicapForDistance } from '../../raceLogic'
 
@@ -37,6 +38,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   const [showProvisionalConfirm, setShowProvisionalConfirm] = useState(false)
   const [isCalculatedHandicap, setIsCalculatedHandicap] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showNewMemberDialog, setShowNewMemberDialog] = useState(false)
 
   // Helper function for time adjustment
   const handleTimeAdjustment = async (adjustment: number) => {
@@ -214,6 +216,39 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
     }
   }
 
+  // Handle new member registration
+  const handleNewMemberRegistration = async (name: string, distance: '5km' | '10km'): Promise<number> => {
+    if (!currentRace) throw new Error('No race configured')
+
+    // Get next available temp number
+    const tempNumber = currentRace.next_temp_number
+
+    // Create new runner with temp number
+    const newRunner: Runner = {
+      member_number: tempNumber,
+      full_name: name,
+      is_financial_member: false,
+      distance: distance,
+      current_handicap_5k: '00:00',
+      current_handicap_10k: '00:00',
+      checked_in: true, // Auto check-in
+      is_official_5k: false, // Provisional
+      is_official_10k: false // Provisional
+    }
+
+    // Add to race and decrement next temp number
+    const updatedRace = {
+      ...currentRace,
+      runners: [...currentRace.runners, newRunner],
+      next_temp_number: tempNumber - 1
+    }
+
+    // Save to database
+    await db.saveRace(updatedRace)
+    setCurrentRace(updatedRace)
+
+    return tempNumber
+  }
 
   const handleCheckin = async () => {
     if (checkinStep === 'member_number') {
@@ -485,8 +520,16 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
           onCheckin={handleCheckin}
           disabled={!memberNumber.trim()}
           buttonText="Find Runner"
+          onNewMember={() => setShowNewMemberDialog(true)}
         />
       )}
+
+      {/* New Member Registration Dialog */}
+      <NewMemberDialog
+        isOpen={showNewMemberDialog}
+        onClose={() => setShowNewMemberDialog(false)}
+        onRegister={handleNewMemberRegistration}
+      />
 
       {/* Provisional Runner Confirmation Dialog */}
       <ConfirmDialog
