@@ -32,7 +32,7 @@ test.describe('New Member Registration', () => {
   test('should register a new member for 5km race', async ({ page }) => {
     // Given I am on the check-in page
     // When I click the "New" button
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // Then the registration dialog should appear
     await expect(page.getByText('New Member Registration')).toBeVisible();
@@ -69,7 +69,7 @@ test.describe('New Member Registration', () => {
   test('should register a new member for 10km race', async ({ page }) => {
     // Given I am on the check-in page
     // When I click the "New" button
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // Then the registration dialog should appear
     await expect(page.getByText('New Member Registration')).toBeVisible();
@@ -101,7 +101,7 @@ test.describe('New Member Registration', () => {
   test('should show validation error for empty name', async ({ page }) => {
     // Given I am on the check-in page
     // When I click the "New" button
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // And I click Register without entering a name
     await page.click('button:has-text("Register")');
@@ -116,7 +116,7 @@ test.describe('New Member Registration', () => {
   test('should cancel registration and close dialog', async ({ page }) => {
     // Given I am on the check-in page
     // When I click the "New" button
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // Then the registration dialog should appear
     await expect(page.getByText('New Member Registration')).toBeVisible();
@@ -134,7 +134,7 @@ test.describe('New Member Registration', () => {
   test('should assign decrementing temp numbers', async ({ page }) => {
     // Given I am on the check-in page
     // When I register the first new member
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
     await page.fill('input[type="text"]', 'First Runner');
     await page.click('button:has-text("Register")');
 
@@ -147,7 +147,7 @@ test.describe('New Member Registration', () => {
     await page.click('button:has-text("Done")');
     await page.waitForTimeout(500); // Wait for dialog to close
 
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
     await page.fill('input[type="text"]', 'Second Runner');
     await page.click('button:has-text("Register")');
 
@@ -161,7 +161,7 @@ test.describe('New Member Registration', () => {
 
   test('should disable form inputs while submitting', async ({ page }) => {
     // Given I am on the check-in page
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // When I enter a name and start registration
     await page.fill('input[type="text"]', 'Test Disabled');
@@ -183,7 +183,7 @@ test.describe('New Member Registration', () => {
     await page.click('[aria-label="Toggle dark mode"]');
 
     // When I click the "New" button
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // Then the dialog should appear with dark mode styling
     const dialog = page.locator('.dark\\:bg-gray-800').first();
@@ -198,13 +198,13 @@ test.describe('New Member Registration', () => {
 
   test('should reset form state when reopening dialog', async ({ page }) => {
     // Given I have entered data in the form
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
     await page.fill('input[type="text"]', 'Test Reset');
     await page.click('button:has-text("10km")');
 
     // When I cancel and reopen
     await page.click('button:has-text("Cancel")');
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // Then the form should be reset
     const nameInput = page.locator('input[type="text"]');
@@ -219,7 +219,7 @@ test.describe('New Member Registration', () => {
     await page.setViewportSize({ width: 375, height: 667 });
 
     // When I open the registration dialog
-    await page.click('button:has-text("New")');
+    await page.click('button[aria-label="Register new member"]');
 
     // Then all interactive elements should meet accessibility standards
     const buttons = page.locator('button:visible');
