@@ -144,4 +144,80 @@
 
 ---
 
+### Race Day New Member Registration ✅ COMPLETED
+- [x] Add "+" button on check-in view for registering new members on race day
+- [x] Implement temporary member number assignment (starting from 999, decreasing)
+- [x] Add distance selection (5km/10km) during registration
+- [x] Auto-check-in new members after registration
+- [x] Display assigned temp number prominently to new member
+- [x] Include temporary members in runner lists and CSV exports
+- [x] Create comprehensive E2E test suite
+- [x] Add Storybook documentation
+
+**Description**: Allows race directors to quickly register new members on race day who are trying the club for the first time. These new members receive temporary member numbers (999, 998, 997...) and are immediately checked in to participate in the race.
+
+**User Story**:
+"As a race director, when someone shows up on race day who isn't a member yet, I need to quickly register them with a temporary number so they can participate. They need to know their temp number to tell the timekeeper at the finish line."
+
+**Implementation Details**:
+
+1. **Data Structure Changes**:
+   - Added `next_temp_number: number` to Race interface (starts at 999, decrements)
+   - Temporary members identified by: `member_number >= 900` AND provisional status
+   - Migration added for existing races to initialize field
+
+2. **UI Components**:
+   - Compact "+" button on number pad (green, accessible with aria-label)
+   - NewMemberDialog with two screens:
+     - Registration form (name input + distance selection)
+     - Success screen showing large temp number
+   - Mobile-friendly responsive design with dark mode support
+
+3. **User Flow**:
+   - Click "+" button → Opens registration dialog
+   - Enter name → Select distance (5km/10km) → Click Register
+   - Success screen shows assigned number (999, 998, etc.)
+   - Click "Done" → Dialog closes, member is checked in
+
+4. **New Member Defaults**:
+   - `member_number`: Next temp number (999, 998, 997...)
+   - `checked_in: true` (auto check-in)
+   - `current_handicap_5k/10k: '00:00'` (no start delay)
+   - `is_official_5k/10k: false` (provisional status)
+   - `is_financial_member: false`
+
+5. **Bug Fixes**:
+   - Fixed dialog closing issue by removing premature state reset
+   - Simplified handleClose to only call onClose() and let useEffect handle cleanup
+
+**Files Created**:
+- `src/components/forms/NewMemberDialog.tsx` - Main registration dialog component
+- `src/components/forms/NewMemberDialog.stories.tsx` - Storybook documentation
+- `tests/new-member-registration.spec.ts` - Comprehensive E2E test suite (9 test scenarios)
+
+**Files Modified**:
+- `src/types.ts` - Added next_temp_number to Race interface
+- `src/components/ui/NumberPad.tsx` - Added compact "+" button with flex layout
+- `src/components/views/CheckinView.tsx` - Integrated registration flow
+- `src/components/views/SetupView.tsx` - Initialize next_temp_number for new races
+- `src/App.tsx` - Migration for existing races
+
+**Testing**:
+- 9 comprehensive E2E test scenarios covering:
+  - Registration for both 5km and 10km
+  - Form validation and error handling
+  - Cancel/close dialog functionality
+  - Decrementing temp number sequence
+  - Form state management
+  - Dark mode compatibility
+  - Mobile accessibility (touch targets)
+  - State reset between registrations
+
+**Priority**: Medium (Nice-to-have for race day operations)
+**Effort**: Medium (new dialog component + check-in integration + E2E tests)
+**User Impact**: Medium (helps with occasional new runner registrations)
+**Completed**: 2025-12-07
+
+---
+
 *This document tracks completed features that have been implemented and deployed.*
