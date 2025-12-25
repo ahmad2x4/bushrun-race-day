@@ -13,7 +13,13 @@ import {
   parseCSV,
   validateRunnerData,
   generateNextRaceCSV,
-  generateResultsCSV
+  generateResultsCSV,
+  getChampionshipPoints,
+  parseChampionshipRaceHistory,
+  formatChampionshipRaceHistory,
+  calculateBest8Total,
+  appendRaceToHistory,
+  updateChampionshipData
 } from './raceLogic';
 import type { Runner } from './types';
 
@@ -593,10 +599,10 @@ describe('CSV export functionality', () => {
     it('should generate CSV for next race with updated handicaps', () => {
       const csv = generateNextRaceCSV(runners);
       const lines = csv.split('\n');
-      
-      expect(lines[0]).toBe('member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k,is_official_5k,is_official_10k');
-      expect(lines[1]).toBe('331,"John Smith",true,5km,02:30,,true,true'); // Uses new_handicap
-      expect(lines[2]).toBe('200,"Jane Doe",false,10km,,10:00,true,true'); // Uses new_handicap
+
+      expect(lines[0]).toBe('member_number,full_name,is_financial_member,distance,current_handicap_5k,current_handicap_10k,is_official_5k,is_official_10k,championship_races_5k,championship_races_10k,championship_points_5k,championship_points_10k');
+      expect(lines[1]).toBe('331,"John Smith",true,5km,02:30,,true,true,"","",0,0'); // Uses new_handicap + championship columns
+      expect(lines[2]).toBe('200,"Jane Doe",false,10km,,10:00,true,true,"","",0,0'); // Uses new_handicap + championship columns
     });
   });
 
@@ -604,11 +610,11 @@ describe('CSV export functionality', () => {
     it('should generate results CSV with race data', () => {
       const csv = generateResultsCSV(runners);
       const lines = csv.split('\n');
-      
-      expect(lines[0]).toBe('member_number,full_name,distance,status,finish_position,finish_time,old_handicap,new_handicap,is_official_5k,is_official_10k');
+
+      expect(lines[0]).toBe('member_number,full_name,distance,status,finish_position,finish_time,old_handicap,new_handicap,is_official_5k,is_official_10k,championship_points_earned,championship_races_5k,championship_races_10k,championship_points_5k,championship_points_10k');
       // 5km comes first due to localeCompare sorting
-      expect(lines[1]).toContain('331,"John Smith",5km,finished,1,2:30.0,02:15,02:30,true,true');
-      expect(lines[2]).toContain('200,"Jane Doe",10km,finished,1,10:00.0,09:30,10:00,true,true');
+      expect(lines[1]).toContain('331,"John Smith",5km,finished,1,2:30.0,02:15,02:30,true,true,20,"","",0,0');
+      expect(lines[2]).toContain('200,"Jane Doe",10km,finished,1,10:00.0,09:30,10:00,true,true,20,"","",0,0');
     });
 
     it('should sort results by distance then position', () => {
@@ -932,6 +938,386 @@ describe('DNF and Early Start functionality', () => {
       expect(lines[1]).toContain('starter_timekeeper');
       expect(lines[1]).toContain('07:30'); // Handicap decreased by 30s
       expect(lines[1]).toMatch(/,,/); // Empty position and finish_time
+    });
+  });
+});
+
+describe('Championship System', () => {
+  describe('getChampionshipPoints', () => {
+    it('should return correct points for positions 1-10', () => {
+      expect(getChampionshipPoints(1)).toBe(20);
+      expect(getChampionshipPoints(2)).toBe(15);
+      expect(getChampionshipPoints(3)).toBe(11);
+      expect(getChampionshipPoints(4)).toBe(8);
+      expect(getChampionshipPoints(5)).toBe(6);
+      expect(getChampionshipPoints(6)).toBe(5);
+      expect(getChampionshipPoints(7)).toBe(4);
+      expect(getChampionshipPoints(8)).toBe(3);
+      expect(getChampionshipPoints(9)).toBe(2);
+      expect(getChampionshipPoints(10)).toBe(1);
+    });
+
+    it('should return 1 point for 10th place and beyond', () => {
+      expect(getChampionshipPoints(11)).toBe(1);
+      expect(getChampionshipPoints(15)).toBe(1);
+      expect(getChampionshipPoints(100)).toBe(1);
+    });
+
+    it('should return special case points for status', () => {
+      expect(getChampionshipPoints(5, 'starter_timekeeper')).toBe(4);
+      expect(getChampionshipPoints(10, 'dnf')).toBe(1);
+      expect(getChampionshipPoints(null, 'early_start')).toBe(1);
+    });
+
+    it('should return 0 points for null position with no status', () => {
+      expect(getChampionshipPoints(null)).toBe(0);
+      expect(getChampionshipPoints(undefined)).toBe(0);
+    });
+  });
+
+  describe('parseChampionshipRaceHistory', () => {
+    it('should parse valid race history string', () => {
+      const history = '2:1:20:895|3:2:15:920|4:3:11:940';
+      const entries = parseChampionshipRaceHistory(history);
+
+      expect(entries).toHaveLength(3);
+      expect(entries[0]).toEqual({ month: 2, position: '1', points: 20, time: 895 });
+      expect(entries[1]).toEqual({ month: 3, position: '2', points: 15, time: 920 });
+      expect(entries[2]).toEqual({ month: 4, position: '3', points: 11, time: 940 });
+    });
+
+    it('should handle empty string', () => {
+      expect(parseChampionshipRaceHistory('')).toEqual([]);
+      expect(parseChampionshipRaceHistory('   ')).toEqual([]);
+    });
+
+    it('should handle special positions', () => {
+      const history = '2:ST:4:0|3:DNF:1:0|4:ES:1:0';
+      const entries = parseChampionshipRaceHistory(history);
+
+      expect(entries[0].position).toBe('ST');
+      expect(entries[1].position).toBe('DNF');
+      expect(entries[2].position).toBe('ES');
+    });
+
+    it('should throw error for invalid format', () => {
+      expect(() => parseChampionshipRaceHistory('2:1:20')).toThrow('Invalid race history format');
+      expect(() => parseChampionshipRaceHistory('2:1:20:895:extra')).toThrow('Invalid race history format');
+    });
+
+    it('should throw error for invalid month', () => {
+      expect(() => parseChampionshipRaceHistory('1:1:20:895')).toThrow('Invalid month');
+      expect(() => parseChampionshipRaceHistory('12:1:20:895')).toThrow('Invalid month');
+    });
+
+    it('should throw error for invalid points', () => {
+      expect(() => parseChampionshipRaceHistory('2:1:25:895')).toThrow('Invalid points');
+      expect(() => parseChampionshipRaceHistory('2:1:-1:895')).toThrow('Invalid points');
+    });
+
+    it('should throw error for invalid time', () => {
+      expect(() => parseChampionshipRaceHistory('2:1:20:-100')).toThrow('Invalid time');
+    });
+  });
+
+  describe('formatChampionshipRaceHistory', () => {
+    it('should format array to string correctly', () => {
+      const entries = [
+        { month: 2, position: '1', points: 20, time: 895 },
+        { month: 3, position: '2', points: 15, time: 920 }
+      ];
+
+      const result = formatChampionshipRaceHistory(entries);
+      expect(result).toBe('2:1:20:895|3:2:15:920');
+    });
+
+    it('should handle empty array', () => {
+      expect(formatChampionshipRaceHistory([])).toBe('');
+    });
+
+    it('should preserve special positions', () => {
+      const entries = [
+        { month: 2, position: 'ST', points: 4, time: 0 },
+        { month: 3, position: 'DNF', points: 1, time: 0 }
+      ];
+
+      const result = formatChampionshipRaceHistory(entries);
+      expect(result).toBe('2:ST:4:0|3:DNF:1:0');
+    });
+  });
+
+  describe('calculateBest8Total', () => {
+    it('should return 0 for empty history', () => {
+      expect(calculateBest8Total('')).toBe(0);
+      expect(calculateBest8Total('   ')).toBe(0);
+    });
+
+    it('should sum all races when less than 8', () => {
+      const history = '2:1:20:895|3:2:15:920|4:3:11:940';
+      expect(calculateBest8Total(history)).toBe(46); // 20+15+11
+    });
+
+    it('should sum best 8 when exactly 8 races', () => {
+      const history = '2:1:20:895|3:2:15:920|4:3:11:940|5:4:8:960|6:5:6:900|7:6:5:910|8:7:4:920|9:8:3:930';
+      expect(calculateBest8Total(history)).toBe(72); // 20+15+11+8+6+5+4+3
+    });
+
+    it('should sum best 8 when more than 8 races', () => {
+      const history = '2:1:20:895|3:2:15:920|4:3:11:940|5:4:8:960|6:5:6:900|7:6:5:910|8:7:4:920|9:8:3:930|10:10:1:940|11:9:2:950';
+      // Best 8: 20,15,11,8,6,5,4,3 = 72
+      expect(calculateBest8Total(history)).toBe(72);
+    });
+
+    it('should handle races with same points', () => {
+      const history = '2:1:20:895|3:1:20:920|4:1:20:940|5:10:1:960|6:10:1:900|7:10:1:910|8:10:1:920|9:10:1:930|10:10:1:940|11:10:1:950';
+      // Best 8: three 20s and five 1s = 60+5 = 65
+      expect(calculateBest8Total(history)).toBe(65);
+    });
+  });
+
+  describe('appendRaceToHistory', () => {
+    it('should append to empty history', () => {
+      const result = appendRaceToHistory('', 2, 1, 20, 895);
+      expect(result).toBe('2:1:20:895');
+    });
+
+    it('should append to existing history', () => {
+      const result = appendRaceToHistory('2:1:20:895', 3, 2, 15, 920);
+      expect(result).toBe('2:1:20:895|3:2:15:920');
+    });
+
+    it('should update existing month entry', () => {
+      const result = appendRaceToHistory('2:1:20:895', 2, 2, 15, 920);
+      expect(result).toBe('2:2:15:920');
+    });
+
+    it('should validate month range', () => {
+      expect(() => appendRaceToHistory('', 1, 1, 20, 895)).toThrow('Invalid month');
+      expect(() => appendRaceToHistory('', 12, 1, 20, 895)).toThrow('Invalid month');
+    });
+
+    it('should validate points range', () => {
+      expect(() => appendRaceToHistory('', 2, 1, 25, 895)).toThrow('Invalid points');
+      expect(() => appendRaceToHistory('', 2, 1, -1, 895)).toThrow('Invalid points');
+    });
+
+    it('should validate time', () => {
+      expect(() => appendRaceToHistory('', 2, 1, 20, -100)).toThrow('Invalid time');
+    });
+
+    it('should sort by month before formatting', () => {
+      const result = appendRaceToHistory('4:3:11:940', 2, 1, 20, 895);
+      expect(result).toBe('2:1:20:895|4:3:11:940');
+    });
+  });
+
+  describe('updateChampionshipData', () => {
+    it('should not update non-official runner', () => {
+      const runner: Runner = {
+        member_number: 1,
+        full_name: 'Test',
+        is_financial_member: true,
+        distance: '5km',
+        is_official_5k: false,
+        finish_position: 1,
+        finish_time: 895000
+      };
+
+      const result = updateChampionshipData(runner, 2);
+      expect(result.championship_races_5k).toBeUndefined();
+      expect(result.championship_points_5k).toBeUndefined();
+    });
+
+    it('should update official 5k runner', () => {
+      const runner: Runner = {
+        member_number: 1,
+        full_name: 'Test',
+        is_financial_member: true,
+        distance: '5km',
+        is_official_5k: true,
+        finish_position: 1,
+        finish_time: 895000
+      };
+
+      const result = updateChampionshipData(runner, 2);
+      expect(result.championship_races_5k).toBe('2:1:20:895');
+      expect(result.championship_points_5k).toBe(20);
+    });
+
+    it('should update official 10k runner', () => {
+      const runner: Runner = {
+        member_number: 1,
+        full_name: 'Test',
+        is_financial_member: true,
+        distance: '10km',
+        is_official_10k: true,
+        finish_position: 2,
+        finish_time: 920000
+      };
+
+      const result = updateChampionshipData(runner, 3);
+      expect(result.championship_races_10k).toBe('3:2:15:920');
+      expect(result.championship_points_10k).toBe(15);
+    });
+
+    it('should handle special positions', () => {
+      const starterRunner: Runner = {
+        member_number: 1,
+        full_name: 'Starter',
+        is_financial_member: true,
+        distance: '5km',
+        is_official_5k: true,
+        status: 'starter_timekeeper'
+      };
+
+      const result = updateChampionshipData(starterRunner, 2);
+      expect(result.championship_races_5k).toBe('2:ST:4:0');
+      expect(result.championship_points_5k).toBe(4);
+    });
+
+    it('should recalculate best 8 when adding race', () => {
+      const runner: Runner = {
+        member_number: 1,
+        full_name: 'Test',
+        is_financial_member: true,
+        distance: '5km',
+        is_official_5k: true,
+        championship_races_5k: '2:1:20:895|3:2:15:920|4:3:11:940|5:4:8:960|6:5:6:900|7:6:5:910|8:7:4:920|9:8:3:930',
+        championship_points_5k: 72,
+        finish_position: 10,
+        finish_time: 940000
+      };
+
+      const result = updateChampionshipData(runner, 10);
+      // After adding 10th race with 1 point: should keep best 8 = 72
+      expect(result.championship_points_5k).toBe(72);
+    });
+  });
+
+  describe('Championship CSV integration', () => {
+    it('should parse CSV with championship fields', () => {
+      const csv = `member_number,full_name,is_financial_member,distance,current_handicap_5k,championship_races_5k,championship_points_5k
+123,"John Smith",true,5km,02:15,"2:1:20:895|3:2:15:920",35`;
+
+      const runners = parseCSV(csv);
+      expect(runners[0].championship_races_5k).toBe('2:1:20:895|3:2:15:920');
+      expect(runners[0].championship_points_5k).toBe(35);
+    });
+
+    it('should handle CSV without championship fields', () => {
+      const csv = `member_number,full_name,is_financial_member,distance,current_handicap_5k
+123,"John Smith",true,5km,02:15`;
+
+      const runners = parseCSV(csv);
+      expect(runners[0].championship_races_5k).toBeUndefined();
+      expect(runners[0].championship_points_5k).toBeUndefined();
+    });
+
+    it('should export championship data in next race CSV', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 123,
+          full_name: 'John Smith',
+          is_financial_member: true,
+          distance: '5km',
+          current_handicap_5k: '02:15',
+          new_handicap: '02:30',
+          championship_races_5k: '2:1:20:895|3:2:15:920',
+          championship_points_5k: 35
+        }
+      ];
+
+      const csv = generateNextRaceCSV(runners);
+      expect(csv).toContain('championship_races_5k');
+      expect(csv).toContain('championship_points_5k');
+      expect(csv).toContain('"2:1:20:895|3:2:15:920"'); // Should be quoted
+      expect(csv).toContain('35');
+    });
+
+    it('should export championship points earned in results CSV', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 123,
+          full_name: 'John Smith',
+          is_financial_member: true,
+          distance: '5km',
+          current_handicap_5k: '02:15',
+          new_handicap: '02:30',
+          finish_position: 1,
+          finish_time: 895000,
+          status: 'finished',
+          championship_races_5k: '2:1:20:895',
+          championship_points_5k: 20
+        }
+      ];
+
+      const csv = generateResultsCSV(runners);
+      expect(csv).toContain('championship_points_earned');
+      expect(csv).toContain('20'); // Points earned
+    });
+  });
+
+  describe('Championship system integration with race calculation', () => {
+    it('should update championship data when calculateHandicaps is called with raceMonth', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 1,
+          full_name: 'Runner 1',
+          is_financial_member: true,
+          distance: '5km',
+          current_handicap_5k: '02:00',
+          is_official_5k: true,
+          checked_in: true,
+          finish_time: 1800000, // 30:00
+          finish_position: 1
+        }
+      ];
+
+      const results = calculateHandicaps(runners, 2); // February race
+      expect(results[0].championship_races_5k).toBe('2:1:20:1800');
+      expect(results[0].championship_points_5k).toBe(20);
+    });
+
+    it('should not update championship without raceMonth parameter', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 1,
+          full_name: 'Runner 1',
+          is_financial_member: true,
+          distance: '5km',
+          current_handicap_5k: '02:00',
+          is_official_5k: true,
+          checked_in: true,
+          finish_time: 1800000,
+          finish_position: 1
+        }
+      ];
+
+      const results = calculateHandicaps(runners); // No raceMonth
+      expect(results[0].championship_races_5k).toBeUndefined();
+      expect(results[0].championship_points_5k).toBeUndefined();
+    });
+
+    it('should handle multiple races across months', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 1,
+          full_name: 'Runner 1',
+          is_financial_member: true,
+          distance: '5km',
+          current_handicap_5k: '02:00',
+          is_official_5k: true,
+          championship_races_5k: '2:2:15:920',
+          championship_points_5k: 15,
+          checked_in: true,
+          finish_time: 1800000,
+          finish_position: 1
+        }
+      ];
+
+      const results = calculateHandicaps(runners, 3); // March race
+      expect(results[0].championship_races_5k).toBe('2:2:15:920|3:1:20:1800');
+      expect(results[0].championship_points_5k).toBe(35); // 15 + 20
     });
   });
 });

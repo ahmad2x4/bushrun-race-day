@@ -1,4 +1,4 @@
-import type { Runner, RaceResults, ValidationError } from './types';
+import type { Runner, RaceResults, ValidationError, RunnerStatus, RaceHistoryEntry } from './types';
 
 // Time conversion utilities
 export function timeStringToMs(timeStr: string): number {
@@ -173,7 +173,8 @@ export function formatFinishTime(ms: number): string {
 // - Starters/Timekeepers get -30s (10km only, N/A for 5km)
 // - 4th-9th place: no change
 // - 10th+ place: penalty reduction (-30s for 10km, -15s for 5km)
-export function calculateHandicaps(runners: Runner[]): Runner[] {
+// - Also updates championship points if raceMonth is provided
+export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runner[] {
   const results = [...runners]; // Create copy to avoid mutation
   const distances = ['5km', '10km'] as const;
   
@@ -271,7 +272,12 @@ export function calculateHandicaps(runners: Runner[]): Runner[] {
       runner.finish_position = position;
     });
   });
-  
+
+  // Update championship data if raceMonth is provided
+  if (raceMonth !== undefined && raceMonth >= 2 && raceMonth <= 11) {
+    return results.map(runner => updateChampionshipData(runner, raceMonth));
+  }
+
   return results;
 }
 
@@ -305,6 +311,203 @@ export function generateResults(runners: Runner[]): { fiveKm: RaceResults; tenKm
       all_finishers: tenKmRunners,
     },
   };
+}
+
+// ============================================================================
+// Championship System Functions
+// ============================================================================
+
+/**
+ * Calculate championship points based on finish position and status
+ * @param position Finish position (1st, 2nd, etc.) or null if no position
+ * @param status Runner status (finished, dnf, early_start, starter_timekeeper)
+ * @returns Points earned (0-20)
+ */
+export function getChampionshipPoints(position: number | null, status?: RunnerStatus): number {
+  // Handle special cases first
+  if (status === 'starter_timekeeper') return 4;
+  if (status === 'early_start' || status === 'dnf') return 1;
+  if (position === null || position === undefined) return 0;
+
+  // Position-based points
+  const pointsTable = [20, 15, 11, 8, 6, 5, 4, 3, 2, 1];
+  if (position >= 1 && position <= 10) {
+    return pointsTable[position - 1];
+  }
+  // 10th place and beyond: 1 point
+  return 1;
+}
+
+/**
+ * Parse race history string into structured array
+ * Format: "MONTH:POSITION:POINTS:TIME|MONTH:POSITION:POINTS:TIME|..."
+ * Example: "2:1:20:895|3:2:15:920|4:3:11:940"
+ */
+export function parseChampionshipRaceHistory(history: string): RaceHistoryEntry[] {
+  if (!history || history.trim() === '') {
+    return [];
+  }
+
+  const entries: RaceHistoryEntry[] = [];
+  const parts = history.split('|').filter(p => p.trim());
+
+  for (const part of parts) {
+    const fields = part.split(':');
+    if (fields.length !== 4) {
+      throw new Error(`Invalid race history format: "${part}". Expected "MONTH:POSITION:POINTS:TIME"`);
+    }
+
+    const [monthStr, positionStr, pointsStr, timeStr] = fields;
+    const month = parseInt(monthStr, 10);
+    const points = parseInt(pointsStr, 10);
+    const time = parseInt(timeStr, 10);
+
+    // Validation
+    if (isNaN(month) || month < 2 || month > 11) {
+      throw new Error(`Invalid month: ${month}. Expected 2-11 (Feb-Nov)`);
+    }
+    if (isNaN(points) || points < 0 || points > 20) {
+      throw new Error(`Invalid points: ${points}. Expected 0-20`);
+    }
+    if (isNaN(time) || time < 0) {
+      throw new Error(`Invalid time: ${time}. Expected non-negative number`);
+    }
+
+    entries.push({
+      month,
+      position: positionStr,
+      points,
+      time
+    });
+  }
+
+  return entries;
+}
+
+/**
+ * Format race history array back to string
+ */
+export function formatChampionshipRaceHistory(entries: RaceHistoryEntry[]): string {
+  return entries.map(e => `${e.month}:${e.position}:${e.points}:${e.time}`).join('|');
+}
+
+/**
+ * Calculate total points from best 8 races
+ */
+export function calculateBest8Total(history: string): number {
+  if (!history || history.trim() === '') {
+    return 0;
+  }
+
+  try {
+    const entries = parseChampionshipRaceHistory(history);
+    if (entries.length === 0) return 0;
+
+    // Sort by points descending and take top 8
+    const sorted = [...entries].sort((a, b) => b.points - a.points);
+    const best8 = sorted.slice(0, 8);
+
+    return best8.reduce((sum, entry) => sum + entry.points, 0);
+  } catch (error) {
+    console.error('Error calculating best 8 total:', error);
+    return 0;
+  }
+}
+
+/**
+ * Append a new race result to race history
+ * Updates existing month if it already exists, appends if new
+ */
+export function appendRaceToHistory(
+  existingHistory: string,
+  month: number,
+  position: string | number,
+  points: number,
+  time: number
+): string {
+  if (month < 2 || month > 11) {
+    throw new Error(`Invalid month: ${month}. Expected 2-11 (Feb-Nov)`);
+  }
+  if (points < 0 || points > 20) {
+    throw new Error(`Invalid points: ${points}. Expected 0-20`);
+  }
+  if (time < 0) {
+    throw new Error(`Invalid time: ${time}. Expected non-negative number`);
+  }
+
+  const entries = parseChampionshipRaceHistory(existingHistory);
+  const positionStr = String(position);
+
+  // Check if this month already exists and update it
+  const existingIndex = entries.findIndex(e => e.month === month);
+  const newEntry: RaceHistoryEntry = { month, position: positionStr, points, time };
+
+  if (existingIndex >= 0) {
+    entries[existingIndex] = newEntry;
+  } else {
+    entries.push(newEntry);
+  }
+
+  // Sort by month before formatting
+  entries.sort((a, b) => a.month - b.month);
+  return formatChampionshipRaceHistory(entries);
+}
+
+/**
+ * Update runner's championship data after race completion
+ * Called after race results are finalized
+ */
+export function updateChampionshipData(runner: Runner, currentMonth: number): Runner {
+  // Only update if runner is official for their distance
+  const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k;
+  if (!isOfficial) {
+    return runner;
+  }
+
+  // Get championship points for this race
+  const pointsEarned = getChampionshipPoints(runner.finish_position ?? null, runner.status);
+
+  // Get finish time in seconds (convert from milliseconds)
+  const timeInSeconds = runner.finish_time ? Math.round(runner.finish_time / 1000) : 0;
+
+  // Determine position string
+  let positionStr: string;
+  if (runner.status === 'starter_timekeeper') {
+    positionStr = 'ST';
+  } else if (runner.status === 'dnf') {
+    positionStr = 'DNF';
+  } else if (runner.status === 'early_start') {
+    positionStr = 'ES';
+  } else {
+    positionStr = String(runner.finish_position || 0);
+  }
+
+  // Update the appropriate distance history
+  const updatedRunner = { ...runner };
+
+  if (runner.distance === '5km') {
+    const currentHistory = runner.championship_races_5k || '';
+    updatedRunner.championship_races_5k = appendRaceToHistory(
+      currentHistory,
+      currentMonth,
+      positionStr,
+      pointsEarned,
+      timeInSeconds
+    );
+    updatedRunner.championship_points_5k = calculateBest8Total(updatedRunner.championship_races_5k);
+  } else {
+    const currentHistory = runner.championship_races_10k || '';
+    updatedRunner.championship_races_10k = appendRaceToHistory(
+      currentHistory,
+      currentMonth,
+      positionStr,
+      pointsEarned,
+      timeInSeconds
+    );
+    updatedRunner.championship_points_10k = calculateBest8Total(updatedRunner.championship_races_10k);
+  }
+
+  return updatedRunner;
 }
 
 // Simple CSV parser that handles quoted fields
@@ -426,7 +629,35 @@ export function parseCSV(csvText: string): Runner[] {
         }
         runner.current_handicap_10k = handicap10k;
       }
-      
+
+      // Parse championship fields if present
+      const championshipRaces5kIndex = headers.indexOf('championship_races_5k');
+      const championshipRaces10kIndex = headers.indexOf('championship_races_10k');
+      const championshipPoints5kIndex = headers.indexOf('championship_points_5k');
+      const championshipPoints10kIndex = headers.indexOf('championship_points_10k');
+
+      if (championshipRaces5kIndex !== -1 && values[championshipRaces5kIndex]) {
+        runner.championship_races_5k = values[championshipRaces5kIndex];
+      }
+
+      if (championshipRaces10kIndex !== -1 && values[championshipRaces10kIndex]) {
+        runner.championship_races_10k = values[championshipRaces10kIndex];
+      }
+
+      if (championshipPoints5kIndex !== -1 && values[championshipPoints5kIndex]) {
+        const points = parseInt(values[championshipPoints5kIndex], 10);
+        if (!isNaN(points) && points >= 0) {
+          runner.championship_points_5k = points;
+        }
+      }
+
+      if (championshipPoints10kIndex !== -1 && values[championshipPoints10kIndex]) {
+        const points = parseInt(values[championshipPoints10kIndex], 10);
+        if (!isNaN(points) && points >= 0) {
+          runner.championship_points_10k = points;
+        }
+      }
+
       runners.push(runner);
     } catch (error) {
       throw new Error(`Error parsing row ${i + 1}: ${(error as Error).message}`);
@@ -472,11 +703,15 @@ export function generateNextRaceCSV(runners: Runner[]): string {
     'current_handicap_5k',
     'current_handicap_10k',
     'is_official_5k',
-    'is_official_10k'
+    'is_official_10k',
+    'championship_races_5k',
+    'championship_races_10k',
+    'championship_points_5k',
+    'championship_points_10k'
   ];
-  
+
   const csvRows = [headers.join(',')];
-  
+
   runners.forEach(runner => {
     const row = [
       runner.member_number.toString(),
@@ -488,11 +723,15 @@ export function generateNextRaceCSV(runners: Runner[]): string {
       runner.distance === '10km' && runner.new_handicap ?
         runner.new_handicap : (runner.current_handicap_10k || ''),
       (runner.is_official_5k ?? true).toString(),
-      (runner.is_official_10k ?? true).toString()
+      (runner.is_official_10k ?? true).toString(),
+      `"${runner.championship_races_5k || ''}"`,
+      `"${runner.championship_races_10k || ''}"`,
+      (runner.championship_points_5k ?? 0).toString(),
+      (runner.championship_points_10k ?? 0).toString()
     ];
     csvRows.push(row.join(','));
   });
-  
+
   return csvRows.join('\n');
 }
 
@@ -507,11 +746,16 @@ export function generateResultsCSV(runners: Runner[]): string {
     'old_handicap',
     'new_handicap',
     'is_official_5k',
-    'is_official_10k'
+    'is_official_10k',
+    'championship_points_earned',
+    'championship_races_5k',
+    'championship_races_10k',
+    'championship_points_5k',
+    'championship_points_10k'
   ];
-  
+
   const csvRows = [headers.join(',')];
-  
+
   // Include all processed runners (finished, DNF, Early Start, Starter/Timekeeper)
   const processedRunners = runners
     .filter(r => r.finish_time !== undefined || r.status === 'dnf' || r.status === 'early_start' || r.status === 'starter_timekeeper')
@@ -528,12 +772,15 @@ export function generateResultsCSV(runners: Runner[]): string {
       if (!a.finish_position && b.finish_position) return 1;
       return a.member_number - b.member_number;
     });
-  
+
   processedRunners.forEach(runner => {
     const handicapKey = runner.distance === '5km' ? 'current_handicap_5k' : 'current_handicap_10k';
     const status = runner.status || (runner.finish_time ? 'finished' : '');
     const finishTimeStr = runner.finish_time ? formatFinishTime(runner.finish_time) : '';
-    
+
+    // Calculate points earned in this race
+    const pointsEarned = getChampionshipPoints(runner.finish_position ?? null, runner.status);
+
     const row = [
       runner.member_number.toString(),
       `"${runner.full_name}"`,
@@ -544,11 +791,16 @@ export function generateResultsCSV(runners: Runner[]): string {
       runner[handicapKey] || '',
       runner.new_handicap || '',
       (runner.is_official_5k ?? true).toString(),
-      (runner.is_official_10k ?? true).toString()
+      (runner.is_official_10k ?? true).toString(),
+      pointsEarned.toString(),
+      `"${runner.championship_races_5k || ''}"`,
+      `"${runner.championship_races_10k || ''}"`,
+      (runner.championship_points_5k ?? 0).toString(),
+      (runner.championship_points_10k ?? 0).toString()
     ];
     csvRows.push(row.join(','));
   });
-  
+
   return csvRows.join('\n');
 }
 
