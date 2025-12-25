@@ -220,4 +220,77 @@
 
 ---
 
+### Championship System Phase 1 - CSV Integration & Core Calculation ✅ COMPLETED
+- [x] Implement championship data structure with race history tracking
+- [x] Implement BBR official points calculation engine
+- [x] Update CSV parsing to handle championship fields
+- [x] Update CSV export functions for championship data
+- [x] Integrate championship updates into race calculation workflow
+- [x] Comprehensive test suite with 72+ championship-specific tests
+
+**Description**: Phase 1 of the Championship System implementation adds comprehensive championship tracking to the Bushrun Race Day application. Runners' race participation and points are now tracked across the season (February-November) with automatic best-8 race selection.
+
+**Key Features**:
+- **Race History Format**: `MONTH:POSITION:POINTS:TIME` pipe-delimited (e.g., "2:1:20:895|3:2:15:920")
+- **Points System**: BBR official scoring (1st=20, 2nd=15, 3rd=11, 4th=8, 5th=6, 6th=5, 7th=4, 8th=3, 9th=2, 10th+=1)
+- **Special Cases**: Starter/Timekeeper=4pts, Early Start=1pt, DNF=1pt
+- **Best 8 Logic**: Unlimited participation, only best 8 races count toward championship
+- **Official Eligibility**: Only runners with `is_official_5k`/`is_official_10k=true` earn points
+- **Race Months**: 2-11 (February through November)
+- **Backward Compatible**: All new fields optional; existing CSVs work unchanged
+
+**Implementation Details**:
+
+**Type System (src/types.ts)**:
+- Added `RaceHistoryEntry` interface for structured race data
+- Extended `Runner` interface with 4 championship fields:
+  - `championship_races_5k/10k`: Serialized race history
+  - `championship_points_5k/10k`: Best 8 totals
+
+**Championship Functions (src/raceLogic.ts)**:
+- `getChampionshipPoints()`: Position→Points conversion
+- `parseChampionshipRaceHistory()`: Deserialize race history with validation
+- `formatChampionshipRaceHistory()`: Serialize race data to string
+- `calculateBest8Total()`: Sum best 8 races
+- `appendRaceToHistory()`: Add/update race result
+- `updateChampionshipData()`: Integrate after race completion
+
+**CSV Integration**:
+- `parseCSV()`: Parse championship fields from uploaded CSVs
+- `generateNextRaceCSV()`: Export championship data for next season
+- `generateResultsCSV()`: Export race results with points earned
+- Graceful degradation for CSVs without championship fields
+
+**Test Coverage**:
+- 72+ championship-specific test cases
+- Edge cases: special positions, 9th race, empty histories
+- Integration tests with full race flow
+- CSV parsing/export validation
+- 100% test pass rate (165/165 tests)
+
+**Files Modified**:
+- `src/types.ts` - New `RaceHistoryEntry` interface, Runner championship fields
+- `src/raceLogic.ts` - 6 championship functions, CSV integration, calculateHandicaps enhancement
+- `src/raceLogic.test.ts` - 72+ championship test cases
+
+**Quality Metrics**:
+- ✅ 165/165 tests passing
+- ✅ Zero linting errors
+- ✅ Clean TypeScript compilation
+- ✅ Successful production build
+
+**Priority**: High (Core championship functionality)
+**Effort**: Medium (200+ lines of logic, comprehensive testing)
+**User Impact**: High (enables season-long championship tracking)
+**Completed**: 2025-12-25
+**Commit**: `5bc7d53`
+
+**Future Phases** (Deferred):
+- Phase 2: Championship UI & Results Integration
+- Phase 3: Championship Dashboard View
+- Phase 4: Advanced Tie-Breaking Logic
+- Phase 5: Annual Rollover & Season Transition
+
+---
+
 *This document tracks completed features that have been implemented and deployed.*
