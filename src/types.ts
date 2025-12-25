@@ -1,5 +1,13 @@
 export type RunnerStatus = 'finished' | 'dnf' | 'early_start' | 'starter_timekeeper';
 
+// Championship race history entry
+export interface RaceHistoryEntry {
+  month: number; // Race month (2-11 for Feb-Nov)
+  position: string; // Finish position as string: "1", "2", "ST", "DNF", "ES", etc.
+  points: number; // Points earned (0-20)
+  time: number; // Finish time in seconds (0 for ST/DNF/ES)
+}
+
 export interface Runner {
   member_number: number; // Numeric: 331, 200, etc.
   full_name: string;
@@ -14,6 +22,12 @@ export interface Runner {
   status?: RunnerStatus; // Track DNF, Early Start, or normal finish
   is_official_5k?: boolean; // Default: true - Has participated in 2+ 5km handicaps (including Starter/Timekeeper)
   is_official_10k?: boolean; // Default: true - Has participated in 2+ 10km handicaps (including Starter/Timekeeper)
+
+  // Championship tracking fields
+  championship_races_5k?: string; // Race history "MONTH:POSITION:POINTS:TIME|..." e.g., "2:1:20:895|3:2:15:920"
+  championship_races_10k?: string; // Race history "MONTH:POSITION:POINTS:TIME|..."
+  championship_points_5k?: number; // Total points from best 8 races
+  championship_points_10k?: number; // Total points from best 8 races
 }
 
 export interface Race {
