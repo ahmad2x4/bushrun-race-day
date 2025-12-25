@@ -5,6 +5,7 @@ import { db } from '../../db'
 import PodiumDisplay from '../race/PodiumDisplay'
 import ResultsTable from '../race/ResultsTable'
 import ExportSection from '../race/ExportSection'
+import { ChampionshipLeaderboard } from '../race/ChampionshipLeaderboard'
 
 interface ResultsViewProps {
   currentRace: Race | null
@@ -32,9 +33,12 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
 
   const handleCalculateHandicaps = async () => {
     if (!currentRace) return
-    
-    // Calculate new handicaps
-    const runnersWithNewHandicaps = calculateHandicaps(currentRace.runners)
+
+    // Extract race month from race date (1-12)
+    const raceMonth = new Date(currentRace.date).getMonth() + 1
+
+    // Calculate new handicaps with championship support
+    const runnersWithNewHandicaps = calculateHandicaps(currentRace.runners, raceMonth)
     
     // Generate results
     const results = generateResults(runnersWithNewHandicaps)
@@ -84,8 +88,11 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
       return runner
     })
 
-    // Recalculate handicaps and positions
-    const runnersWithNewHandicaps = calculateHandicaps(updatedRunners)
+    // Extract race month for championship updates
+    const raceMonth = new Date(currentRace.date).getMonth() + 1
+
+    // Recalculate handicaps and positions with championship support
+    const runnersWithNewHandicaps = calculateHandicaps(updatedRunners, raceMonth)
     
     // Update race
     const updatedRace = { 
@@ -181,13 +188,30 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
           </div>
 
           {/* Comprehensive Results Table */}
-          <ResultsTable 
+          <ResultsTable
             currentRace={currentRace}
             setCurrentRace={setCurrentRace}
             editingRunnerTime={editingRunnerTime}
             setEditingRunnerTime={setEditingRunnerTime}
             handleTimeAdjustment={handleTimeAdjustment}
           />
+
+          {/* Championship Leaderboards */}
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-4 dark:text-white">Championship Standings</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ChampionshipLeaderboard
+                runners={currentRace.runners}
+                distance="5km"
+                color="blue"
+              />
+              <ChampionshipLeaderboard
+                runners={currentRace.runners}
+                distance="10km"
+                color="purple"
+              />
+            </div>
+          </div>
 
           {/* Export Section */}
           <ExportSection currentRace={currentRace} />
