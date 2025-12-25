@@ -285,8 +285,90 @@
 **Completed**: 2025-12-25
 **Commit**: `5bc7d53`
 
+### Championship System Phase 2 - UI & Results Integration ✅ COMPLETED
+- [x] Create ChampionshipLeaderboard component for standings display
+- [x] Integrate leaderboards into ResultsView (5km & 10km separate)
+- [x] Enhance ResultsTable with championship badges and season totals
+- [x] Fix race month integration in all calculation entry points
+- [x] Remove off-season restrictions to allow testing any month
+- [x] Fix month validation in race history functions
+- [x] Only record championship for runners who actually participated
+- [x] Add comprehensive debug logging for troubleshooting
+- [x] Update test cases for new month validation (1-12)
+
+**Description**: Phase 2 of the Championship System implementation completes the UI and results integration. Championship standings are now displayed in the results view, and the system properly handles championship data for any race date (not just Feb-Nov).
+
+**Key Fixes**:
+- **Month Validation**: Removed 2-11 restriction from `appendRaceToHistory()` and `parseChampionshipRaceHistory()` - now accepts any month (1-12)
+- **Race Month Integration**: Pass `raceMonth` to `calculateHandicaps()` in all 4 call sites (ResultsView x2, useRaceLogic x2)
+- **Conditional Removal**: Removed "if month 2-11" gate - always calculate when `raceMonth` provided
+- **Participant Filtering**: Only record championship for runners with `finish_position` or special status (DNF, early_start, starter_timekeeper)
+
+**UI Components Created**:
+- **ChampionshipLeaderboard**: Reusable component for distance-specific standings with:
+  - Medal indicators (🥇🥈🥉) for top 3
+  - Podium highlighting with color-coded backgrounds
+  - Race count and point totals
+  - Top 10 filtering
+  - Dark mode support
+  - Responsive card layout
+
+**ResultsTable Enhancements**:
+- Championship points earned badge (color-coded by points: 15+ yellow, 8+ green, <8 gray)
+- Season total card showing cumulative points and race count
+- Only displayed for official runners
+
+**ResultsView Integration**:
+- Championship Standings section with grid layout
+- Side-by-side 5km/10km leaderboards
+- Responsive design (stacks on mobile)
+- Positioned after podium and results table
+
+**Debug Logging Added**:
+- `[Championship] Calculating handicaps for month X`
+- `[Championship] Runners with finish times: Y of Z`
+- `[Championship] After updateChampionshipData: Y runners have championship data`
+- `[Championship] ✅ Sample runner: Name points_10k=15`
+- `[Export] Runners with championship data: X` (validation before export)
+
+**Test Updates**:
+- Updated month validation tests: now test boundaries (0, 13) instead of (1, 12)
+- All 165 tests passing
+- Zero linting errors
+
+**Files Created**:
+- `src/components/race/ChampionshipLeaderboard.tsx` - Championship standings component
+
+**Files Modified**:
+- `src/raceLogic.ts` - Month validation fixes, debug logging, participation filtering
+- `src/components/views/ResultsView.tsx` - Integration of leaderboards and race month extraction
+- `src/components/race/ResultsTable.tsx` - Championship badges and season totals
+- `src/hooks/useRaceLogic.ts` - Race month extraction in both calculation functions
+- `src/components/race/ExportSection.tsx` - Debug logging for export validation
+- `src/raceLogic.test.ts` - Updated month validation tests
+
+**Quality Metrics**:
+- ✅ 165/165 tests passing
+- ✅ Zero linting errors
+- ✅ Clean TypeScript compilation
+- ✅ Successful production build
+
+**Priority**: High (Completes Phase 2 of Championship System)
+**Effort**: Medium (Component creation + validation fixes + integration)
+**User Impact**: High (Full championship tracking with visual standings)
+**Completed**: 2025-12-25
+**Commit**: `80bea74`
+
+**Testing Notes**:
+- Championship data properly calculated for any race date
+- December races now work (previously blocked)
+- Debug console logs help diagnose championship flow
+- Only runners who actually finished get championship recorded
+- No spurious `12:0:0:0` entries for non-participants
+
+---
+
 **Future Phases** (Deferred):
-- Phase 2: Championship UI & Results Integration
 - Phase 3: Championship Dashboard View
 - Phase 4: Advanced Tie-Breaking Logic
 - Phase 5: Annual Rollover & Season Transition
