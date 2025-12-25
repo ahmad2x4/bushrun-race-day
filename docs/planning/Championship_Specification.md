@@ -180,5 +180,9 @@ member_number,name,handicap_5k,handicap_10k,is_official_5k,is_official_10k,champ
 - Only runners with is_official status (true) earn championship points
 - App does not automatically promote runners; promotion is a manual process
 
+### Testability and unit tests
+- Make sure the championship is a testable unit (code)
+- Unit test when possible
+
 ---
 *Future enhancement specification - to be implemented after core functionality is complete*
