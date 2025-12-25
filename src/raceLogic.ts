@@ -177,6 +177,16 @@ export function formatFinishTime(ms: number): string {
 export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runner[] {
   const results = [...runners]; // Create copy to avoid mutation
   const distances = ['5km', '10km'] as const;
+
+  // Debug logging for championship system
+  if (raceMonth !== undefined) {
+    console.log(`[Championship] Calculating handicaps for month ${raceMonth}`);
+    const runnersWithFinish = runners.filter(r => r.finish_time !== undefined);
+    console.log(`[Championship] Runners with finish times: ${runnersWithFinish.length} of ${runners.length}`);
+    if (runnersWithFinish.length === 0) {
+      console.warn('[Championship] ⚠️  No runners have finish_time! Championship data will be empty.');
+    }
+  }
   
   // BBR target finish times from race start (everyone should finish at these times)
   const TARGET_5KM_MS = 50 * 60 * 1000; // 50 minutes = 8:05am
@@ -274,8 +284,22 @@ export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runne
   });
 
   // Update championship data if raceMonth is provided
-  if (raceMonth !== undefined && raceMonth >= 2 && raceMonth <= 11) {
-    return results.map(runner => updateChampionshipData(runner, raceMonth));
+  if (raceMonth !== undefined) {
+    const updatedResults = results.map(runner => updateChampionshipData(runner, raceMonth));
+
+    // Debug: Check if championship data was set
+    const runnersWithChampionship = updatedResults.filter(r =>
+      (r.distance === '5km' && (r.championship_points_5k || r.championship_races_5k)) ||
+      (r.distance === '10km' && (r.championship_points_10k || r.championship_races_10k))
+    );
+    console.log(`[Championship] After updateChampionshipData: ${runnersWithChampionship.length} runners have championship data`);
+    if (runnersWithChampionship.length > 0) {
+      console.log(`[Championship] ✅ Sample runner:`, runnersWithChampionship[0].full_name,
+        `points_5k=${runnersWithChampionship[0].championship_points_5k}, ` +
+        `points_10k=${runnersWithChampionship[0].championship_points_10k}`);
+    }
+
+    return updatedResults;
   }
 
   return results;
@@ -363,8 +387,8 @@ export function parseChampionshipRaceHistory(history: string): RaceHistoryEntry[
     const time = parseInt(timeStr, 10);
 
     // Validation
-    if (isNaN(month) || month < 2 || month > 11) {
-      throw new Error(`Invalid month: ${month}. Expected 2-11 (Feb-Nov)`);
+    if (isNaN(month) || month < 1 || month > 12) {
+      throw new Error(`Invalid month: ${month}. Expected 1-12`);
     }
     if (isNaN(points) || points < 0 || points > 20) {
       throw new Error(`Invalid points: ${points}. Expected 0-20`);
@@ -425,8 +449,9 @@ export function appendRaceToHistory(
   points: number,
   time: number
 ): string {
-  if (month < 2 || month > 11) {
-    throw new Error(`Invalid month: ${month}. Expected 2-11 (Feb-Nov)`);
+  // Validate month is valid (1-12)
+  if (month < 1 || month > 12) {
+    throw new Error(`Invalid month: ${month}. Expected 1-12`);
   }
   if (points < 0 || points > 20) {
     throw new Error(`Invalid points: ${points}. Expected 0-20`);
@@ -461,11 +486,24 @@ export function updateChampionshipData(runner: Runner, currentMonth: number): Ru
   // Only update if runner is official for their distance
   const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k;
   if (!isOfficial) {
+    console.debug(`[Championship] ${runner.full_name} (${runner.distance}) - Not official, skipping`);
+    return runner;
+  }
+
+  // Only update if runner actually participated (finished, DNF, early start, or starter/timekeeper)
+  if (!runner.finish_position && !runner.status) {
+    console.debug(`[Championship] ${runner.full_name} (${runner.distance}) - Did not participate, skipping`);
     return runner;
   }
 
   // Get championship points for this race
   const pointsEarned = getChampionshipPoints(runner.finish_position ?? null, runner.status);
+
+  // Debug: Log what's being calculated
+  if (runner.finish_position !== undefined || runner.status) {
+    const posStr = runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'ES' : runner.finish_position || '?';
+    console.debug(`[Championship] ${runner.full_name} (${runner.distance}): Position ${posStr} = ${pointsEarned} pts`);
+  }
 
   // Get finish time in seconds (convert from milliseconds)
   const timeInSeconds = runner.finish_time ? Math.round(runner.finish_time / 1000) : 0;

@@ -12,6 +12,23 @@ export default function ExportSection({ currentRace }: ExportSectionProps) {
   }
 
   const handleExportNextRace = () => {
+    // Debug: Check championship data before export
+    const runnersWithChampionship = currentRace.runners.filter(r =>
+      (r.distance === '5km' && (r.championship_points_5k || r.championship_races_5k)) ||
+      (r.distance === '10km' && (r.championship_points_10k || r.championship_races_10k))
+    );
+    console.log(`[Export] Generating Next Race CSV for "${currentRace.name}"`);
+    console.log(`[Export] Total runners: ${currentRace.runners.length}`);
+    console.log(`[Export] Runners with championship data: ${runnersWithChampionship.length}`);
+    if (runnersWithChampionship.length === 0) {
+      console.warn('[Export] ⚠️  No runners have championship data! Did you calculate handicaps?');
+      currentRace.runners.slice(0, 3).forEach(r => {
+        console.log(`  - ${r.full_name} (${r.distance}): ` +
+          `points_5k=${r.championship_points_5k || 'undefined'}, ` +
+          `points_10k=${r.championship_points_10k || 'undefined'}`);
+      });
+    }
+
     const csvContent = generateNextRaceCSV(currentRace.runners)
     downloadCSV(`${currentRace.name}-next-race-handicaps.csv`, csvContent)
   }

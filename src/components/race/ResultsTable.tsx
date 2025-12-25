@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Race, Runner, RunnerStatus } from '../../types'
 import { db } from '../../db'
+import { getChampionshipPoints, parseChampionshipRaceHistory } from '../../raceLogic'
 
 interface ResultsTableProps {
   currentRace: Race
@@ -67,16 +68,23 @@ export default function ResultsTable({
   }
 
   const handleStatusChange = async (runner: Runner, status: RunnerStatus) => {
-    const updatedRunners = currentRace.runners.map(r => 
-      r.member_number === runner.member_number 
+    const updatedRunners = currentRace.runners.map(r =>
+      r.member_number === runner.member_number
         ? { ...r, status, finish_time: status === 'dnf' || status === 'early_start' ? undefined : r.finish_time, finish_position: status === 'dnf' || status === 'early_start' ? undefined : r.finish_position }
         : r
     )
-    
+
     const updatedRace = { ...currentRace, runners: updatedRunners }
     await db.saveRace(updatedRace)
     setCurrentRace(updatedRace)
     setEditingRunnerTime(null)
+  }
+
+  const getRaceCount = (runner: Runner): number => {
+    const history = runner.distance === '5km'
+      ? runner.championship_races_5k
+      : runner.championship_races_10k
+    return history ? parseChampionshipRaceHistory(history).length : 0
   }
 
   return (
@@ -159,6 +167,24 @@ export default function ResultsTable({
                       {runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'Early Start' : ''}
                     </span>
                   )}
+
+                  {/* Championship points badge (if official runner) */}
+                  {(() => {
+                    const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k
+                    if (!isOfficial || !runner.finish_position) return null
+                    const pointsEarned = getChampionshipPoints(runner.finish_position ?? null, runner.status)
+                    return (
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        pointsEarned >= 15
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
+                          : pointsEarned >= 8
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200'
+                      }`}>
+                        Points: {pointsEarned}
+                      </span>
+                    )
+                  })()}
                 </div>
                 
                 <div className="text-right">
@@ -252,6 +278,27 @@ export default function ResultsTable({
                     {runner.new_handicap}
                   </div>
                 </div>
+
+                {/* Championship Season Total Card */}
+                {(() => {
+                  const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k
+                  if (!isOfficial) return null
+
+                  const seasonTotal = runner.distance === '5km' ? runner.championship_points_5k || 0 : runner.championship_points_10k || 0
+                  const raceCount = getRaceCount(runner)
+
+                  return (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Season Total</div>
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {seasonTotal}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {raceCount} race{raceCount !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           )

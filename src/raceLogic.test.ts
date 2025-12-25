@@ -1006,8 +1006,8 @@ describe('Championship System', () => {
     });
 
     it('should throw error for invalid month', () => {
-      expect(() => parseChampionshipRaceHistory('1:1:20:895')).toThrow('Invalid month');
-      expect(() => parseChampionshipRaceHistory('12:1:20:895')).toThrow('Invalid month');
+      expect(() => parseChampionshipRaceHistory('0:1:20:895')).toThrow('Invalid month');
+      expect(() => parseChampionshipRaceHistory('13:1:20:895')).toThrow('Invalid month');
     });
 
     it('should throw error for invalid points', () => {
@@ -1092,8 +1092,8 @@ describe('Championship System', () => {
     });
 
     it('should validate month range', () => {
-      expect(() => appendRaceToHistory('', 1, 1, 20, 895)).toThrow('Invalid month');
-      expect(() => appendRaceToHistory('', 12, 1, 20, 895)).toThrow('Invalid month');
+      expect(() => appendRaceToHistory('', 0, 1, 20, 895)).toThrow('Invalid month');
+      expect(() => appendRaceToHistory('', 13, 1, 20, 895)).toThrow('Invalid month');
     });
 
     it('should validate points range', () => {
