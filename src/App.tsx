@@ -13,6 +13,7 @@ const SetupView = lazy(() => import('./components/views/SetupView'))
 const CheckinView = lazy(() => import('./components/views/CheckinView'))
 const RaceDirectorView = lazy(() => import('./components/views/RaceDirectorView'))
 const ResultsView = lazy(() => import('./components/views/ResultsView'))
+const ChampionshipView = lazy(() => import('./components/views/ChampionshipView'))
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('setup')
@@ -284,11 +285,21 @@ function App() {
         )
       case 'results':
         return (
-          <ErrorBoundary 
+          <ErrorBoundary
             fallback={<ViewErrorFallback viewName="Results" onNavigateHome={() => setCurrentView('setup')} />}
           >
             <Suspense fallback={<LoadingView />}>
               <ResultsView currentRace={currentRace} setCurrentRace={setCurrentRace} />
+            </Suspense>
+          </ErrorBoundary>
+        )
+      case 'championship':
+        return (
+          <ErrorBoundary
+            fallback={<ViewErrorFallback viewName="Championship" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <Suspense fallback={<LoadingView />}>
+              <ChampionshipView currentRace={currentRace} setCurrentRace={setCurrentRace} />
             </Suspense>
           </ErrorBoundary>
         )
@@ -372,12 +383,22 @@ function App() {
               <button
                 onClick={() => setCurrentView('results')}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  currentView === 'results' 
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                  currentView === 'results'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                 }`}
               >
                 Results
+              </button>
+              <button
+                onClick={() => setCurrentView('championship')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'championship'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Championship
               </button>
             </nav>
 
@@ -472,12 +493,25 @@ function App() {
                   setIsMobileMenuOpen(false)
                 }}
                 className={`w-full text-left px-4 py-3 rounded-md text-base font-medium ${
-                  currentView === 'results' 
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100' 
+                  currentView === 'results'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
                     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}
               >
                 Results
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView('championship')
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-md text-base font-medium ${
+                  currentView === 'championship'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Championship
               </button>
               <hr className="my-4 border-gray-200 dark:border-gray-600" />
               <button

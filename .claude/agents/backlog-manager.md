@@ -1,7 +1,7 @@
 ---
 name: backlog-manager
 description: Use this agent when you need to manage work items in your project backlog, including adding new tasks, updating existing ones, moving completed work to the done list, or organizing backlog items. Examples: <example>Context: User has just completed implementing a new feature and wants to mark it as done. user: 'I finished implementing the user authentication feature' assistant: 'Let me use the backlog-manager agent to verify the implementation and move this item to the done backlog' <commentary>Since the user completed work, use the backlog-manager agent to verify the implementation meets requirements and move it to docs/history/Backlog_done.md</commentary></example> <example>Context: User wants to add a new task to the backlog. user: 'We need to add error handling for the API calls' assistant: 'I'll use the backlog-manager agent to add this task to the backlog with proper details' <commentary>Since the user wants to add work to the backlog, use the backlog-manager agent to create a well-defined backlog item</commentary></example>
-model: sonnet
+model: haiku
 color: cyan
 ---
 

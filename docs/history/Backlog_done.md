@@ -220,4 +220,159 @@
 
 ---
 
+### Championship System Phase 1 - CSV Integration & Core Calculation ✅ COMPLETED
+- [x] Implement championship data structure with race history tracking
+- [x] Implement BBR official points calculation engine
+- [x] Update CSV parsing to handle championship fields
+- [x] Update CSV export functions for championship data
+- [x] Integrate championship updates into race calculation workflow
+- [x] Comprehensive test suite with 72+ championship-specific tests
+
+**Description**: Phase 1 of the Championship System implementation adds comprehensive championship tracking to the Bushrun Race Day application. Runners' race participation and points are now tracked across the season (February-November) with automatic best-8 race selection.
+
+**Key Features**:
+- **Race History Format**: `MONTH:POSITION:POINTS:TIME` pipe-delimited (e.g., "2:1:20:895|3:2:15:920")
+- **Points System**: BBR official scoring (1st=20, 2nd=15, 3rd=11, 4th=8, 5th=6, 6th=5, 7th=4, 8th=3, 9th=2, 10th+=1)
+- **Special Cases**: Starter/Timekeeper=4pts, Early Start=1pt, DNF=1pt
+- **Best 8 Logic**: Unlimited participation, only best 8 races count toward championship
+- **Official Eligibility**: Only runners with `is_official_5k`/`is_official_10k=true` earn points
+- **Race Months**: 2-11 (February through November)
+- **Backward Compatible**: All new fields optional; existing CSVs work unchanged
+
+**Implementation Details**:
+
+**Type System (src/types.ts)**:
+- Added `RaceHistoryEntry` interface for structured race data
+- Extended `Runner` interface with 4 championship fields:
+  - `championship_races_5k/10k`: Serialized race history
+  - `championship_points_5k/10k`: Best 8 totals
+
+**Championship Functions (src/raceLogic.ts)**:
+- `getChampionshipPoints()`: Position→Points conversion
+- `parseChampionshipRaceHistory()`: Deserialize race history with validation
+- `formatChampionshipRaceHistory()`: Serialize race data to string
+- `calculateBest8Total()`: Sum best 8 races
+- `appendRaceToHistory()`: Add/update race result
+- `updateChampionshipData()`: Integrate after race completion
+
+**CSV Integration**:
+- `parseCSV()`: Parse championship fields from uploaded CSVs
+- `generateNextRaceCSV()`: Export championship data for next season
+- `generateResultsCSV()`: Export race results with points earned
+- Graceful degradation for CSVs without championship fields
+
+**Test Coverage**:
+- 72+ championship-specific test cases
+- Edge cases: special positions, 9th race, empty histories
+- Integration tests with full race flow
+- CSV parsing/export validation
+- 100% test pass rate (165/165 tests)
+
+**Files Modified**:
+- `src/types.ts` - New `RaceHistoryEntry` interface, Runner championship fields
+- `src/raceLogic.ts` - 6 championship functions, CSV integration, calculateHandicaps enhancement
+- `src/raceLogic.test.ts` - 72+ championship test cases
+
+**Quality Metrics**:
+- ✅ 165/165 tests passing
+- ✅ Zero linting errors
+- ✅ Clean TypeScript compilation
+- ✅ Successful production build
+
+**Priority**: High (Core championship functionality)
+**Effort**: Medium (200+ lines of logic, comprehensive testing)
+**User Impact**: High (enables season-long championship tracking)
+**Completed**: 2025-12-25
+**Commit**: `5bc7d53`
+
+### Championship System Phase 2 - UI & Results Integration ✅ COMPLETED
+- [x] Create ChampionshipLeaderboard component for standings display
+- [x] Integrate leaderboards into ResultsView (5km & 10km separate)
+- [x] Enhance ResultsTable with championship badges and season totals
+- [x] Fix race month integration in all calculation entry points
+- [x] Remove off-season restrictions to allow testing any month
+- [x] Fix month validation in race history functions
+- [x] Only record championship for runners who actually participated
+- [x] Add comprehensive debug logging for troubleshooting
+- [x] Update test cases for new month validation (1-12)
+
+**Description**: Phase 2 of the Championship System implementation completes the UI and results integration. Championship standings are now displayed in the results view, and the system properly handles championship data for any race date (not just Feb-Nov).
+
+**Key Fixes**:
+- **Month Validation**: Removed 2-11 restriction from `appendRaceToHistory()` and `parseChampionshipRaceHistory()` - now accepts any month (1-12)
+- **Race Month Integration**: Pass `raceMonth` to `calculateHandicaps()` in all 4 call sites (ResultsView x2, useRaceLogic x2)
+- **Conditional Removal**: Removed "if month 2-11" gate - always calculate when `raceMonth` provided
+- **Participant Filtering**: Only record championship for runners with `finish_position` or special status (DNF, early_start, starter_timekeeper)
+
+**UI Components Created**:
+- **ChampionshipLeaderboard**: Reusable component for distance-specific standings with:
+  - Medal indicators (🥇🥈🥉) for top 3
+  - Podium highlighting with color-coded backgrounds
+  - Race count and point totals
+  - Top 10 filtering
+  - Dark mode support
+  - Responsive card layout
+
+**ResultsTable Enhancements**:
+- Championship points earned badge (color-coded by points: 15+ yellow, 8+ green, <8 gray)
+- Season total card showing cumulative points and race count
+- Only displayed for official runners
+
+**ResultsView Integration**:
+- Championship Standings section with grid layout
+- Side-by-side 5km/10km leaderboards
+- Responsive design (stacks on mobile)
+- Positioned after podium and results table
+
+**Debug Logging Added**:
+- `[Championship] Calculating handicaps for month X`
+- `[Championship] Runners with finish times: Y of Z`
+- `[Championship] After updateChampionshipData: Y runners have championship data`
+- `[Championship] ✅ Sample runner: Name points_10k=15`
+- `[Export] Runners with championship data: X` (validation before export)
+
+**Test Updates**:
+- Updated month validation tests: now test boundaries (0, 13) instead of (1, 12)
+- All 165 tests passing
+- Zero linting errors
+
+**Files Created**:
+- `src/components/race/ChampionshipLeaderboard.tsx` - Championship standings component
+
+**Files Modified**:
+- `src/raceLogic.ts` - Month validation fixes, debug logging, participation filtering
+- `src/components/views/ResultsView.tsx` - Integration of leaderboards and race month extraction
+- `src/components/race/ResultsTable.tsx` - Championship badges and season totals
+- `src/hooks/useRaceLogic.ts` - Race month extraction in both calculation functions
+- `src/components/race/ExportSection.tsx` - Debug logging for export validation
+- `src/raceLogic.test.ts` - Updated month validation tests
+
+**Quality Metrics**:
+- ✅ 165/165 tests passing
+- ✅ Zero linting errors
+- ✅ Clean TypeScript compilation
+- ✅ Successful production build
+
+**Priority**: High (Completes Phase 2 of Championship System)
+**Effort**: Medium (Component creation + validation fixes + integration)
+**User Impact**: High (Full championship tracking with visual standings)
+**Completed**: 2025-12-25
+**Commit**: `80bea74`
+
+**Testing Notes**:
+- Championship data properly calculated for any race date
+- December races now work (previously blocked)
+- Debug console logs help diagnose championship flow
+- Only runners who actually finished get championship recorded
+- No spurious `12:0:0:0` entries for non-participants
+
+---
+
+**Future Phases** (Deferred):
+- Phase 3: Championship Dashboard View
+- Phase 4: Advanced Tie-Breaking Logic
+- Phase 5: Annual Rollover & Season Transition
+
+---
+
 *This document tracks completed features that have been implemented and deployed.*

@@ -15,7 +15,12 @@ export function useHandicapCalculations() {
     setIsCalculating(true)
     try {
       const finishedRunners = race.runners.filter(r => r.finish_time !== undefined)
-      const updatedRunners = calculateHandicaps(finishedRunners)
+
+      // Extract race month for championship updates
+      const raceMonth = new Date(race.date).getMonth() + 1
+
+      // Calculate handicaps with championship support
+      const updatedRunners = calculateHandicaps(finishedRunners, raceMonth)
       
       return {
         ...race,
@@ -55,9 +60,12 @@ export function useTimeAdjustment() {
           : runner
       )
 
-      // Recalculate positions and handicaps
+      // Extract race month for championship updates
+      const raceMonth = new Date(race.date).getMonth() + 1
+
+      // Recalculate positions and handicaps with championship support
       const finishedRunners = updatedRunners.filter(r => r.finish_time !== undefined)
-      const runnersWithHandicaps = calculateHandicaps(finishedRunners)
+      const runnersWithHandicaps = calculateHandicaps(finishedRunners, raceMonth)
 
       // Merge back with all runners
       const finalRunners = updatedRunners.map(runner => {
