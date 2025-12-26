@@ -21,7 +21,10 @@ import {
   appendRaceToHistory,
   updateChampionshipData,
   identifyBest8Races,
-  formatMonthName
+  formatMonthName,
+  countRaceWins,
+  countTotalParticipations,
+  compareRunnersWithTieBreaking
 } from './raceLogic';
 import type { Runner } from './types';
 
@@ -1397,6 +1400,182 @@ describe('Championship System', () => {
       expect(formatMonthName(13)).toBe('Unknown');
       expect(formatMonthName(-1)).toBe('Unknown');
       expect(formatMonthName(100)).toBe('Unknown');
+    });
+  });
+
+  describe('countRaceWins', () => {
+    it('should count number of 1st place finishes', () => {
+      const history = '2:1:20:895|3:2:15:920|4:1:20:940|5:3:11:960'
+      expect(countRaceWins(history)).toBe(2) // 2 first-place finishes
+    });
+
+    it('should return 0 for empty history', () => {
+      expect(countRaceWins('')).toBe(0)
+    });
+
+    it('should not count special positions (ST, DNF, ES) as wins', () => {
+      const history = '2:ST:4:0|3:DNF:1:0|4:ES:1:0|5:1:20:960'
+      expect(countRaceWins(history)).toBe(1) // Only the 1st place counts
+    });
+
+    it('should handle history with no wins', () => {
+      const history = '2:2:15:895|3:3:11:920|4:4:8:940'
+      expect(countRaceWins(history)).toBe(0)
+    });
+
+    it('should handle multiple consecutive wins', () => {
+      const history = '2:1:20:895|3:1:20:920|4:1:20:940'
+      expect(countRaceWins(history)).toBe(3)
+    });
+  });
+
+  describe('countTotalParticipations', () => {
+    it('should count total race entries', () => {
+      const history = '2:1:20:895|3:2:15:920|4:3:11:940'
+      expect(countTotalParticipations(history)).toBe(3)
+    });
+
+    it('should return 0 for empty history', () => {
+      expect(countTotalParticipations('')).toBe(0)
+    });
+
+    it('should count special positions (ST, DNF, ES)', () => {
+      const history = '2:ST:4:0|3:DNF:1:0|4:ES:1:0|5:1:20:960'
+      expect(countTotalParticipations(history)).toBe(4)
+    });
+
+    it('should count all participations including low placements', () => {
+      const history = '2:10:1:1200|3:15:1:1300|4:20:1:1400'
+      expect(countTotalParticipations(history)).toBe(3)
+    });
+  });
+
+  describe('compareRunnersWithTieBreaking', () => {
+    it('should rank by points when different', () => {
+      const runner1: Runner = {
+        member_number: 1,
+        full_name: 'Runner 1',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '2:1:20:895'
+      }
+      const runner2: Runner = {
+        member_number: 2,
+        full_name: 'Runner 2',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 40,
+        championship_races_5k: '2:2:15:920'
+      }
+
+      expect(compareRunnersWithTieBreaking(runner1, runner2, '5km')).toBeLessThan(0) // runner1 ranks higher
+    });
+
+    it('should break tie by most wins when points equal', () => {
+      const runner1: Runner = {
+        member_number: 1,
+        full_name: 'Runner 1',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '2:1:20:895|3:2:15:920' // 1 win
+      }
+      const runner2: Runner = {
+        member_number: 2,
+        full_name: 'Runner 2',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '2:1:20:900|3:1:20:925' // 2 wins
+      }
+
+      expect(compareRunnersWithTieBreaking(runner1, runner2, '5km')).toBeGreaterThan(0) // runner2 ranks higher
+    });
+
+    it('should break tie by most participations when points and wins equal', () => {
+      const runner1: Runner = {
+        member_number: 1,
+        full_name: 'Runner 1',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '2:1:20:895|3:2:15:920|4:3:11:940' // 1 win, 3 races
+      }
+      const runner2: Runner = {
+        member_number: 2,
+        full_name: 'Runner 2',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '2:1:20:900|3:2:15:925' // 1 win, 2 races
+      }
+
+      expect(compareRunnersWithTieBreaking(runner1, runner2, '5km')).toBeLessThan(0) // runner1 ranks higher (more races)
+    });
+
+    it('should return 0 when all criteria equal (true tie)', () => {
+      const runner1: Runner = {
+        member_number: 1,
+        full_name: 'Runner 1',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '2:1:20:895|3:2:15:920'
+      }
+      const runner2: Runner = {
+        member_number: 2,
+        full_name: 'Runner 2',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '4:1:20:900|5:2:15:925'
+      }
+
+      expect(compareRunnersWithTieBreaking(runner1, runner2, '5km')).toBe(0) // True tie
+    });
+
+    it('should handle runners with no championship data', () => {
+      const runner1: Runner = {
+        member_number: 1,
+        full_name: 'Runner 1',
+        distance: '5km',
+        is_financial_member: true
+      }
+      const runner2: Runner = {
+        member_number: 2,
+        full_name: 'Runner 2',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 20,
+        championship_races_5k: '2:1:20:895'
+      }
+
+      expect(compareRunnersWithTieBreaking(runner1, runner2, '5km')).toBeGreaterThan(0) // runner2 ranks higher
+    });
+
+    it('should handle 5km vs 10km distances separately', () => {
+      const runner: Runner = {
+        member_number: 1,
+        full_name: 'Runner 1',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 50,
+        championship_races_5k: '2:1:20:895',
+        championship_points_10k: 30,
+        championship_races_10k: '2:2:15:1800'
+      }
+      const runner2: Runner = {
+        member_number: 2,
+        full_name: 'Runner 2',
+        distance: '5km',
+        is_financial_member: true,
+        championship_points_5k: 40,
+        championship_races_5k: '2:2:15:920'
+      }
+
+      // For 5km, runner1 should rank higher
+      expect(compareRunnersWithTieBreaking(runner, runner2, '5km')).toBeLessThan(0)
     });
   });
 });
