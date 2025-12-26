@@ -29,10 +29,6 @@ export function ChampionshipLeaderboard({
     })
     .slice(0, 10) // Top 10
 
-  if (championshipRunners.length === 0) {
-    return null // No championship data yet
-  }
-
   const colorClasses = {
     blue: {
       bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -62,6 +58,30 @@ export function ChampionshipLeaderboard({
     if (index === 1) return '🥈'
     if (index === 2) return '🥉'
     return ''
+  }
+
+  // Empty state when no championship data exists
+  if (championshipRunners.length === 0) {
+    return (
+      <Card padding="md" shadow="md">
+        <h3 className={`text-lg font-semibold mb-4 ${classes.title}`}>
+          {distance} Championship Standings
+        </h3>
+        <div className={`${classes.bg} ${classes.border} border rounded-lg p-8`}>
+          <div className="text-center text-gray-600 dark:text-gray-400">
+            <div className="text-4xl mb-3">📊</div>
+            <p className="font-medium mb-2">No championship data yet</p>
+            <p className="text-sm">
+              Championship standings will appear here after:
+            </p>
+            <ul className="text-sm mt-2 space-y-1">
+              <li>• Uploading a CSV file with existing championship data, OR</li>
+              <li>• Completing a race and calculating results</li>
+            </ul>
+          </div>
+        </div>
+      </Card>
+    )
   }
 
   return (
