@@ -858,3 +858,31 @@ export function downloadCSV(filename: string, csvContent: string): void {
     URL.revokeObjectURL(url); // Clean up
   }
 }
+
+// ============================================================================
+// Championship Dashboard Helper Functions
+// ============================================================================
+
+/**
+ * Identify which races count toward best 8 championship total
+ * Returns set of month numbers that are in best 8
+ * @param history Race history string in format "MONTH:POSITION:POINTS:TIME|..."
+ * @returns Set of month numbers (1-12) that are in the best 8
+ */
+export function identifyBest8Races(history: string): Set<number> {
+  const races = parseChampionshipRaceHistory(history);
+  const sorted = [...races].sort((a, b) => b.points - a.points);
+  const best8 = sorted.slice(0, 8);
+  return new Set(best8.map(r => r.month));
+}
+
+/**
+ * Format month number to month abbreviation
+ * @param month Month number (1-12)
+ * @returns Month abbreviation (e.g., "Jan", "Feb", "Dec")
+ */
+export function formatMonthName(month: number): string {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return months[month - 1] || 'Unknown';
+}

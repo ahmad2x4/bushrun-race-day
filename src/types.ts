@@ -65,7 +65,7 @@ export interface ClubConfig {
   audio_volume?: number; // Default: 0.5 - Volume level (0.0 to 1.0)
 }
 
-export type AppView = 'setup' | 'checkin' | 'race-director' | 'results' | 'settings';
+export type AppView = 'setup' | 'checkin' | 'race-director' | 'results' | 'settings' | 'championship';
 
 // UI State interfaces
 export interface RaceDirectorState {

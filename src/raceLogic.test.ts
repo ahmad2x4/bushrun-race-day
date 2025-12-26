@@ -19,7 +19,9 @@ import {
   formatChampionshipRaceHistory,
   calculateBest8Total,
   appendRaceToHistory,
-  updateChampionshipData
+  updateChampionshipData,
+  identifyBest8Races,
+  formatMonthName
 } from './raceLogic';
 import type { Runner } from './types';
 
@@ -1318,6 +1320,83 @@ describe('Championship System', () => {
       const results = calculateHandicaps(runners, 3); // March race
       expect(results[0].championship_races_5k).toBe('2:2:15:920|3:1:20:1800');
       expect(results[0].championship_points_5k).toBe(35); // 15 + 20
+    });
+  });
+
+  describe('identifyBest8Races', () => {
+    it('should identify top 8 races by points', () => {
+      const history = '2:1:20:895|3:2:15:920|4:3:10:950|5:4:8:1000|6:5:6:1050|7:6:5:1100|8:7:3:1150|9:8:2:1200|10:10:1:1250';
+      const best8 = identifyBest8Races(history);
+
+      expect(best8.has(2)).toBe(true); // 20 points
+      expect(best8.has(3)).toBe(true); // 15 points
+      expect(best8.has(4)).toBe(true); // 10 points
+      expect(best8.has(5)).toBe(true); // 8 points
+      expect(best8.has(6)).toBe(true); // 6 points
+      expect(best8.has(7)).toBe(true); // 5 points
+      expect(best8.has(8)).toBe(true); // 3 points
+      expect(best8.has(9)).toBe(true); // 2 points
+      expect(best8.has(10)).toBe(false); // 1 point - not in top 8
+      expect(best8.size).toBe(8);
+    });
+
+    it('should handle fewer than 8 races', () => {
+      const history = '2:1:20:895|3:2:15:920|4:3:10:950|5:4:8:1000';
+      const best8 = identifyBest8Races(history);
+
+      expect(best8.has(2)).toBe(true);
+      expect(best8.has(3)).toBe(true);
+      expect(best8.has(4)).toBe(true);
+      expect(best8.has(5)).toBe(true);
+      expect(best8.size).toBe(4);
+    });
+
+    it('should handle empty race history', () => {
+      const best8 = identifyBest8Races('');
+      expect(best8.size).toBe(0);
+    });
+
+    it('should correctly identify best 8 when points vary', () => {
+      // Create 10 races with varying points
+      const history = '2:1:20:895|3:2:18:920|4:3:16:950|5:4:14:1000|6:5:12:1050|7:6:10:1100|8:7:8:1150|9:8:6:1200|10:9:4:1250|11:10:2:1300';
+      const best8 = identifyBest8Races(history);
+
+      // Best 8 should be months 2-9 (points: 20,18,16,14,12,10,8,6)
+      expect(best8.size).toBe(8);
+      expect(best8.has(10)).toBe(false); // 4 points
+      expect(best8.has(11)).toBe(false); // 2 points
+    });
+
+    it('should handle races with same points', () => {
+      const history = '2:1:20:895|3:2:20:920|4:3:15:950|5:4:15:1000|6:5:10:1050|7:6:10:1100|8:7:10:1150|9:8:10:1200';
+      const best8 = identifyBest8Races(history);
+
+      // All 8 races should be in best 8
+      expect(best8.size).toBe(8);
+    });
+  });
+
+  describe('formatMonthName', () => {
+    it('should format valid month numbers to names', () => {
+      expect(formatMonthName(1)).toBe('Jan');
+      expect(formatMonthName(2)).toBe('Feb');
+      expect(formatMonthName(3)).toBe('Mar');
+      expect(formatMonthName(4)).toBe('Apr');
+      expect(formatMonthName(5)).toBe('May');
+      expect(formatMonthName(6)).toBe('Jun');
+      expect(formatMonthName(7)).toBe('Jul');
+      expect(formatMonthName(8)).toBe('Aug');
+      expect(formatMonthName(9)).toBe('Sep');
+      expect(formatMonthName(10)).toBe('Oct');
+      expect(formatMonthName(11)).toBe('Nov');
+      expect(formatMonthName(12)).toBe('Dec');
+    });
+
+    it('should return Unknown for invalid month numbers', () => {
+      expect(formatMonthName(0)).toBe('Unknown');
+      expect(formatMonthName(13)).toBe('Unknown');
+      expect(formatMonthName(-1)).toBe('Unknown');
+      expect(formatMonthName(100)).toBe('Unknown');
     });
   });
 });

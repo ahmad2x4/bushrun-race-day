@@ -6,12 +6,14 @@ interface ChampionshipLeaderboardProps {
   runners: Runner[]
   distance: '5km' | '10km'
   color: 'blue' | 'purple'
+  onRunnerClick?: (runner: Runner) => void
 }
 
 export function ChampionshipLeaderboard({
   runners,
   distance,
-  color
+  color,
+  onRunnerClick
 }: ChampionshipLeaderboardProps) {
   // Filter official runners for this distance with championship points
   const championshipRunners = runners
@@ -77,16 +79,21 @@ export function ChampionshipLeaderboard({
           return (
             <div
               key={runner.member_number}
+              onClick={() => onRunnerClick?.(runner)}
               className={`p-3 rounded border ${
                 isPodium ? classes.podium : classes.bg
-              } ${classes.border} flex justify-between items-center`}
+              } ${classes.border} flex justify-between items-center ${
+                onRunnerClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
+              }`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-lg font-bold w-8">
                   {getMedalEmoji(index) || `${index + 1}.`}
                 </span>
                 <div>
-                  <div className="font-medium">{runner.full_name}</div>
+                  <div className={`font-medium ${onRunnerClick ? 'hover:underline' : ''}`}>
+                    {runner.full_name}
+                  </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     #{runner.member_number} • {raceCount} race{raceCount !== 1 ? 's' : ''}
                   </div>
