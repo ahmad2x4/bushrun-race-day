@@ -14,10 +14,11 @@ function ChampionshipView({ currentRace }: ChampionshipViewProps) {
 
   if (!currentRace) {
     return (
-      <div className="text-center">
+      <div className="text-center py-12">
+        <div className="text-6xl mb-4">🏆</div>
         <h2 className="text-2xl font-bold mb-4">Championship Standings</h2>
         <p className="text-gray-600 dark:text-gray-400">
-          No race data available. Please complete a race first.
+          No race data available. Please upload a CSV file in the Setup view to get started.
         </p>
       </div>
     )
