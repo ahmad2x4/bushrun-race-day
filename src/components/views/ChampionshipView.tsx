@@ -10,7 +10,7 @@ interface ChampionshipViewProps {
 
 function ChampionshipView({ currentRace }: ChampionshipViewProps) {
   const [selectedRunner, setSelectedRunner] = useState<Runner | null>(null)
-  const [distanceFilter, setDistanceFilter] = useState<'5km' | '10km' | 'both'>('both')
+  const [distanceFilter, setDistanceFilter] = useState<'5km' | '10km'>('5km')
 
   if (!currentRace) {
     return (
@@ -44,16 +44,6 @@ function ChampionshipView({ currentRace }: ChampionshipViewProps) {
           5km
         </button>
         <button
-          onClick={() => setDistanceFilter('both')}
-          className={`px-4 py-2 rounded-md font-medium transition-colors ${
-            distanceFilter === 'both'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-          }`}
-        >
-          Both
-        </button>
-        <button
           onClick={() => setDistanceFilter('10km')}
           className={`px-4 py-2 rounded-md font-medium transition-colors ${
             distanceFilter === '10km'
@@ -66,14 +56,8 @@ function ChampionshipView({ currentRace }: ChampionshipViewProps) {
       </div>
 
       {/* Championship Leaderboards */}
-      <div
-        className={`${
-          distanceFilter === 'both'
-            ? 'grid grid-cols-1 lg:grid-cols-2 gap-6'
-            : 'flex justify-center'
-        }`}
-      >
-        {(distanceFilter === '5km' || distanceFilter === 'both') && (
+      <div className="flex justify-center">
+        {distanceFilter === '5km' && (
           <ChampionshipLeaderboard
             runners={currentRace.runners}
             distance="5km"
@@ -81,7 +65,7 @@ function ChampionshipView({ currentRace }: ChampionshipViewProps) {
             onRunnerClick={(runner) => setSelectedRunner(runner)}
           />
         )}
-        {(distanceFilter === '10km' || distanceFilter === 'both') && (
+        {distanceFilter === '10km' && (
           <ChampionshipLeaderboard
             runners={currentRace.runners}
             distance="10km"
