@@ -24,7 +24,9 @@ import {
   formatMonthName,
   countRaceWins,
   countTotalParticipations,
-  compareRunnersWithTieBreaking
+  compareRunnersWithTieBreaking,
+  applySeasonHandicapReduction,
+  generateSeasonRolloverCSV
 } from './raceLogic';
 import type { Runner } from './types';
 
@@ -1578,4 +1580,111 @@ describe('Championship System', () => {
       expect(compareRunnersWithTieBreaking(runner, runner2, '5km')).toBeLessThan(0)
     });
   });
+
+  describe('applySeasonHandicapReduction', () => {
+    it('should reduce 10km handicap by 30 seconds', () => {
+      expect(applySeasonHandicapReduction('05:00', '10km')).toBe('04:30')
+      expect(applySeasonHandicapReduction('02:15', '10km')).toBe('01:45')
+    })
+
+    it('should reduce 5km handicap by 15 seconds', () => {
+      expect(applySeasonHandicapReduction('03:00', '5km')).toBe('02:45')
+      expect(applySeasonHandicapReduction('01:30', '5km')).toBe('01:15')
+    })
+
+    it('should not go below 00:00', () => {
+      expect(applySeasonHandicapReduction('00:20', '10km')).toBe('00:00')
+      expect(applySeasonHandicapReduction('00:10', '5km')).toBe('00:00')
+    })
+
+    it('should handle edge case at exactly reduction amount', () => {
+      expect(applySeasonHandicapReduction('00:30', '10km')).toBe('00:00')
+      expect(applySeasonHandicapReduction('00:15', '5km')).toBe('00:00')
+    })
+
+    it('should return 00:00 for empty handicap', () => {
+      expect(applySeasonHandicapReduction(undefined, '10km')).toBe('00:00')
+      expect(applySeasonHandicapReduction('', '5km')).toBe('00:00')
+    })
+
+    it('should handle invalid time format gracefully', () => {
+      expect(() => applySeasonHandicapReduction('invalid', '10km')).toThrow()
+    })
+  })
+
+  describe('generateSeasonRolloverCSV', () => {
+    it('should reduce handicaps and clear championship data', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 123,
+          full_name: 'John Smith',
+          is_financial_member: true,
+          distance: '10km',
+          current_handicap_5k: '02:00',
+          current_handicap_10k: '05:00',
+          is_official_5k: true,
+          is_official_10k: true,
+          championship_races_5k: '2:1:20:895',
+          championship_points_5k: 20,
+          championship_races_10k: '2:1:20:1800|3:2:15:1850',
+          championship_points_10k: 35
+        }
+      ]
+
+      const csv = generateSeasonRolloverCSV(runners)
+      const lines = csv.split('\n')
+
+      // Check headers
+      expect(lines[0]).toContain('member_number')
+      expect(lines[0]).toContain('championship_races_5k')
+
+      // Check data row
+      expect(lines[1]).toContain('123')
+      expect(lines[1]).toContain('"John Smith"')
+      expect(lines[1]).toContain('01:45') // 2:00 - 0:15 = 1:45
+      expect(lines[1]).toContain('04:30') // 5:00 - 0:30 = 4:30
+      expect(lines[1]).toContain('true,true') // is_official preserved
+      expect(lines[1]).toContain('"",0,"",0') // Championship data cleared
+    })
+
+    it('should preserve official status for continuing members', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 456,
+          full_name: 'Jane Doe',
+          is_financial_member: true,
+          distance: '5km',
+          current_handicap_5k: '03:00',
+          is_official_5k: true,
+          is_official_10k: false
+        }
+      ]
+
+      const csv = generateSeasonRolloverCSV(runners)
+      expect(csv).toContain('true,false') // Official status preserved
+    })
+
+    it('should handle multiple runners', () => {
+      const runners: Runner[] = [
+        {
+          member_number: 1,
+          full_name: 'Runner 1',
+          is_financial_member: true,
+          distance: '5km',
+          current_handicap_5k: '02:00'
+        },
+        {
+          member_number: 2,
+          full_name: 'Runner 2',
+          is_financial_member: true,
+          distance: '10km',
+          current_handicap_10k: '06:00'
+        }
+      ]
+
+      const csv = generateSeasonRolloverCSV(runners)
+      const lines = csv.split('\n')
+      expect(lines.length).toBe(3) // Header + 2 runners
+    })
+  })
 });

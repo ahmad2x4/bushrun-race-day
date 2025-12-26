@@ -955,3 +955,84 @@ export function compareRunnersWithTieBreaking(
 
   return bRaces - aRaces
 }
+
+/**
+ * Apply annual handicap reduction for new season
+ * - 10km: -30 seconds
+ * - 5km: -15 seconds
+ *
+ * @param handicap Current handicap in MM:SS format
+ * @param distance Distance to determine reduction amount
+ * @returns New handicap after reduction, or original if invalid
+ */
+export function applySeasonHandicapReduction(
+  handicap: string | undefined,
+  distance: '5km' | '10km'
+): string {
+  if (!handicap) return '00:00'
+
+  // Convert to milliseconds
+  const currentMs = timeStringToMs(handicap)
+  if (currentMs === null) return handicap
+
+  // Apply reduction
+  const reductionSeconds = distance === '10km' ? 30 : 15
+  const reductionMs = reductionSeconds * 1000
+  const newMs = Math.max(0, currentMs - reductionMs)
+
+  // Convert back to MM:SS
+  return msToTimeString(newMs)
+}
+
+/**
+ * Generate CSV for new season with handicap reductions and cleared championship data
+ *
+ * Changes from current season:
+ * - 10km handicaps reduced by 30 seconds
+ * - 5km handicaps reduced by 15 seconds
+ * - Championship race history cleared
+ * - Championship points reset to 0
+ * - is_official_5k/10k status PRESERVED (continuing members remain official)
+ *
+ * @param runners Current season runners
+ * @returns CSV string ready for new season
+ */
+export function generateSeasonRolloverCSV(runners: Runner[]): string {
+  const headers = [
+    'member_number',
+    'full_name',
+    'is_financial_member',
+    'distance',
+    'current_handicap_5k',
+    'current_handicap_10k',
+    'is_official_5k',
+    'is_official_10k',
+    'championship_races_5k',
+    'championship_points_5k',
+    'championship_races_10k',
+    'championship_points_10k'
+  ];
+
+  const rows = runners.map(runner => {
+    // Apply handicap reductions
+    const newHandicap5k = applySeasonHandicapReduction(runner.current_handicap_5k, '5km')
+    const newHandicap10k = applySeasonHandicapReduction(runner.current_handicap_10k, '10km')
+
+    return [
+      runner.member_number,
+      `"${runner.full_name}"`,
+      runner.is_financial_member,
+      runner.distance,
+      newHandicap5k,
+      newHandicap10k,
+      runner.is_official_5k ?? true,
+      runner.is_official_10k ?? true,
+      '""', // Clear 5k race history
+      0,    // Reset 5k points
+      '""', // Clear 10k race history
+      0     // Reset 10k points
+    ].join(',');
+  });
+
+  return [headers.join(','), ...rows].join('\n');
+}
