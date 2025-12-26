@@ -1,6 +1,6 @@
 import Card from '../ui/Card'
 import type { Runner } from '../../types'
-import { parseChampionshipRaceHistory } from '../../raceLogic'
+import { parseChampionshipRaceHistory, compareRunnersWithTieBreaking, countRaceWins } from '../../raceLogic'
 
 interface ChampionshipLeaderboardProps {
   runners: Runner[]
@@ -22,11 +22,7 @@ export function ChampionshipLeaderboard({
       const points = distance === '5km' ? r.championship_points_5k : r.championship_points_10k
       return r.distance === distance && isOfficial && points && points > 0
     })
-    .sort((a, b) => {
-      const aPoints = distance === '5km' ? a.championship_points_5k || 0 : a.championship_points_10k || 0
-      const bPoints = distance === '5km' ? b.championship_points_5k || 0 : b.championship_points_10k || 0
-      return bPoints - aPoints // Descending order
-    })
+    .sort((a, b) => compareRunnersWithTieBreaking(a, b, distance))
     .slice(0, 10) // Top 10
 
   const colorClasses = {
@@ -51,6 +47,13 @@ export function ChampionshipLeaderboard({
       ? runner.championship_races_5k
       : runner.championship_races_10k
     return history ? parseChampionshipRaceHistory(history).length : 0
+  }
+
+  const getWinsCount = (runner: Runner) => {
+    const history = distance === '5km'
+      ? runner.championship_races_5k
+      : runner.championship_races_10k
+    return history ? countRaceWins(history) : 0
   }
 
   const getMedalEmoji = (index: number) => {
@@ -94,6 +97,7 @@ export function ChampionshipLeaderboard({
         {championshipRunners.map((runner, index) => {
           const points = distance === '5km' ? runner.championship_points_5k || 0 : runner.championship_points_10k || 0
           const raceCount = getRaceCount(runner)
+          const winsCount = getWinsCount(runner)
           const isPodium = index < 3
 
           return (
@@ -115,7 +119,7 @@ export function ChampionshipLeaderboard({
                     {runner.full_name}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    #{runner.member_number} • {raceCount} race{raceCount !== 1 ? 's' : ''}
+                    #{runner.member_number} • {raceCount} race{raceCount !== 1 ? 's' : ''} • {winsCount} win{winsCount !== 1 ? 's' : ''}
                   </div>
                 </div>
               </div>

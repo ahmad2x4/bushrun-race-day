@@ -886,3 +886,72 @@ export function formatMonthName(month: number): string {
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return months[month - 1] || 'Unknown';
 }
+
+/**
+ * Count number of race wins (1st place finishes) in championship history
+ * @param history Race history string "MONTH:POSITION:POINTS:TIME|..."
+ * @returns Number of races where position is "1"
+ */
+export function countRaceWins(history: string): number {
+  if (!history) return 0
+
+  const races = parseChampionshipRaceHistory(history)
+  const wins = races.filter(race => race.position === '1')
+  return wins.length
+}
+
+/**
+ * Count total race participations in championship history
+ * @param history Race history string "MONTH:POSITION:POINTS:TIME|..."
+ * @returns Total number of races participated in
+ */
+export function countTotalParticipations(history: string): number {
+  if (!history) return 0
+
+  const races = parseChampionshipRaceHistory(history)
+  return races.length
+}
+
+/**
+ * Compare two runners for championship standings with tie-breaking rules
+ * Tie-breaking order:
+ * 1. Championship points (descending)
+ * 2. Most race wins (descending)
+ * 3. Most participations (descending)
+ *
+ * @param a First runner
+ * @param b Second runner
+ * @param distance Distance to compare ('5km' or '10km')
+ * @returns Negative if a ranks higher, positive if b ranks higher, 0 if tied
+ */
+export function compareRunnersWithTieBreaking(
+  a: Runner,
+  b: Runner,
+  distance: '5km' | '10km'
+): number {
+  // Get championship points for this distance
+  const aPoints = distance === '5km' ? (a.championship_points_5k || 0) : (a.championship_points_10k || 0)
+  const bPoints = distance === '5km' ? (b.championship_points_5k || 0) : (b.championship_points_10k || 0)
+
+  // Primary sort: Championship points (descending)
+  if (bPoints !== aPoints) {
+    return bPoints - aPoints
+  }
+
+  // Tie-breaker 1: Most race wins (descending)
+  const aHistory = distance === '5km' ? (a.championship_races_5k || '') : (a.championship_races_10k || '')
+  const bHistory = distance === '5km' ? (b.championship_races_5k || '') : (b.championship_races_10k || '')
+
+  const aWins = countRaceWins(aHistory)
+  const bWins = countRaceWins(bHistory)
+
+  if (bWins !== aWins) {
+    return bWins - aWins
+  }
+
+  // Tie-breaker 2: Most participations (descending)
+  const aRaces = countTotalParticipations(aHistory)
+  const bRaces = countTotalParticipations(bHistory)
+
+  return bRaces - aRaces
+}
