@@ -140,14 +140,14 @@
     size: A4 portrait;
   }
 
-  /* Show print container only when printing */
-  .print-start-times-container {
-    display: block !important;
+  /* Hide all elements except print container and its contents */
+  body > * {
+    display: none !important;
   }
 
-  /* Hide everything else during print */
-  body > div:first-child {
-    display: none !important;
+  /* Show print container when printing */
+  .print-start-times-container {
+    display: block !important;
   }
 
   /* Page break between 5k and 10k */
