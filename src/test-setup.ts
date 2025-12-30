@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 // jsdom has limited HTMLMediaElement support and throws errors when code tries
 // to use unimplemented features like load(), play(), pause(). Since audio is
 // non-critical in this app (visual alerts are fallback), we mock it globally.
+// @ts-expect-error - Mock Audio object for testing jsdom compatibility
 global.Audio = vi.fn(() => ({
   play: vi.fn(),
   pause: vi.fn(),
@@ -14,4 +15,4 @@ global.Audio = vi.fn(() => ({
   currentTime: 0,
   volume: 0.5,
   src: '',
-})) as any
+}))
