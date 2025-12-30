@@ -22,12 +22,17 @@ export default function PrintStartTimes({ race, isOpen, onClose }: PrintStartTim
         printWindow.document.write(htmlContent)
         printWindow.document.close()
 
-        // Wait for content to load, then trigger print
-        printWindow.onload = () => {
+        // Wait for content to render, then trigger print
+        printWindow.addEventListener('load', () => {
+          printWindow.focus()
           printWindow.print()
-          printWindow.close()
-          onClose()
-        }
+          setTimeout(() => {
+            printWindow.close()
+            onClose()
+          }, 500)
+        }, { once: true })
+      } else {
+        onClose()
       }
     }
   }, [isOpen, onClose, race])
