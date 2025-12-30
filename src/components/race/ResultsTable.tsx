@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Race, Runner, RunnerStatus } from '../../types'
 import { db } from '../../db'
+import { getChampionshipPoints, parseChampionshipRaceHistory } from '../../raceLogic'
 
 interface ResultsTableProps {
   currentRace: Race
@@ -67,16 +68,23 @@ export default function ResultsTable({
   }
 
   const handleStatusChange = async (runner: Runner, status: RunnerStatus) => {
-    const updatedRunners = currentRace.runners.map(r => 
-      r.member_number === runner.member_number 
+    const updatedRunners = currentRace.runners.map(r =>
+      r.member_number === runner.member_number
         ? { ...r, status, finish_time: status === 'dnf' || status === 'early_start' ? undefined : r.finish_time, finish_position: status === 'dnf' || status === 'early_start' ? undefined : r.finish_position }
         : r
     )
-    
+
     const updatedRace = { ...currentRace, runners: updatedRunners }
     await db.saveRace(updatedRace)
     setCurrentRace(updatedRace)
     setEditingRunnerTime(null)
+  }
+
+  const getRaceCount = (runner: Runner): number => {
+    const history = runner.distance === '5km'
+      ? runner.championship_races_5k
+      : runner.championship_races_10k
+    return history ? parseChampionshipRaceHistory(history).length : 0
   }
 
   return (
@@ -124,23 +132,23 @@ export default function ResultsTable({
                  className={`bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow ${isEditing ? 'ring-2 ring-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' : ''}`}>
               
               {/* Header Row */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl font-bold flex items-center gap-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
+                  <div className="text-2xl font-bold flex items-center gap-0.5 sm:gap-1">
                     {runner.finish_position === 1 && '🥇'}
                     {runner.finish_position === 2 && '🥈'}
                     {runner.finish_position === 3 && '🥉'}
                     {runner.status === 'dnf' && '❌'}
                     {runner.status === 'early_start' && '⚠️'}
-                    <span className="text-lg">
+                    <span className="text-lg sm:text-xl">
                       {runner.finish_position || (runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'Early Start' : '-')}
                     </span>
                   </div>
                   <div className="font-mono font-bold text-blue-600 dark:text-blue-400">
                     #{runner.member_number}
                   </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    runner.distance === '5km' 
+                  <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium ${
+                    runner.distance === '5km'
                       ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200'
                       : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200'
                   }`}>
@@ -149,59 +157,77 @@ export default function ResultsTable({
                   
                   {/* Status badge */}
                   {runner.status && (
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium ${
                       runner.status === 'dnf'
                         ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
                         : runner.status === 'early_start'
                         ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
                         : ''
                     }`}>
-                      {runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'Early Start' : ''}
+                      {runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? <span><span className="hidden sm:inline">Early </span>Start</span> : ''}
                     </span>
                   )}
+
+                  {/* Championship points badge (if official runner) */}
+                  {(() => {
+                    const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k
+                    if (!isOfficial || !runner.finish_position) return null
+                    const pointsEarned = getChampionshipPoints(runner.finish_position ?? null, runner.status)
+                    return (
+                      <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium ${
+                        pointsEarned >= 15
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'
+                          : pointsEarned >= 8
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200'
+                      }`}>
+                        <span className="hidden sm:inline">Points: </span>{pointsEarned}<span className="sm:hidden"> pts</span>
+                      </span>
+                    )
+                  })()}
                 </div>
                 
-                <div className="text-right">
+                <div className="w-full sm:w-auto">
                   {!isEditing && (
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2 w-full sm:w-auto sm:justify-end">
                       {runner.finish_time !== undefined && (
                         <button
                           onClick={() => startEdit(runner)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                          className="flex-1 sm:flex-initial px-2 sm:px-3 py-1 bg-blue-600 text-white rounded text-xs sm:text-sm hover:bg-blue-700 whitespace-nowrap"
                           title="Edit finish time"
                         >
-                          Edit Time
+                          <span className="hidden sm:inline">Edit </span>✏️
                         </button>
                       )}
                       <button
                         onClick={() => handleStatusChange(runner, 'dnf')}
-                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                        className="flex-1 sm:flex-initial px-2 sm:px-3 py-1 bg-red-600 text-white rounded text-xs sm:text-sm hover:bg-red-700"
                         title="Mark as DNF"
                       >
                         DNF
                       </button>
                       <button
                         onClick={() => handleStatusChange(runner, 'early_start')}
-                        className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                        className="flex-1 sm:flex-initial px-2 sm:px-3 py-1 bg-yellow-600 text-white rounded text-xs sm:text-sm hover:bg-yellow-700 whitespace-nowrap"
                         title="Mark as Early Start"
                       >
-                        Early Start
+                        <span className="hidden sm:inline">Early </span>⚠️
                       </button>
                     </div>
                   )}
                   {isEditing && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full">
                       <button
                         onClick={saveEdit}
-                        className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                        className="flex-1 px-2 sm:px-3 py-1 bg-green-600 text-white rounded text-xs sm:text-sm hover:bg-green-700"
                       >
-                        ✓ Save
+                        <span className="hidden sm:inline">Save </span>✓
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
+                        className="flex-1 px-2 sm:px-3 py-1 bg-gray-600 text-white rounded text-xs sm:text-sm hover:bg-gray-700"
                       >
-                        ✗ Cancel
+                        <span className="hidden sm:inline">Cancel </span>✕
                       </button>
                     </div>
                   )}
@@ -252,6 +278,27 @@ export default function ResultsTable({
                     {runner.new_handicap}
                   </div>
                 </div>
+
+                {/* Championship Season Total Card */}
+                {(() => {
+                  const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k
+                  if (!isOfficial) return null
+
+                  const seasonTotal = runner.distance === '5km' ? runner.championship_points_5k || 0 : runner.championship_points_10k || 0
+                  const raceCount = getRaceCount(runner)
+
+                  return (
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Season Total</div>
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {seasonTotal}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {raceCount} race{raceCount !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           )
