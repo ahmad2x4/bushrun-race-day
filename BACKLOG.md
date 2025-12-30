@@ -196,6 +196,55 @@ Successfully optimized check-in view for mobile screens with ~187px vertical spa
 
 ---
 
+#### ✅ Print Start Times List
+- [x] Add print button to Setup View
+- [x] Generate printable start times table
+- [x] Separate 5km and 10km runners on different pages
+- [x] Display member number, name, handicap, championship points, start time
+- [x] Sort runners by start time (handicap)
+
+**Status**: ✅ **COMPLETED**
+
+**Description**: Added a print feature to Setup View that generates a professional printable start times list. The feature displays all runners (checked-in and not checked-in) organized by distance with separate pages for 5km and 10km races.
+
+**Implementation**:
+- New component: `/src/components/race/PrintStartTimes.tsx`
+- Print button added to Setup View after CSV upload
+- Separate tables for 5km and 10km with CSS page break
+- Table columns: Member #, Name, Handicap (MM:SS), Championship Points, Start Time
+- Runners sorted chronologically by handicap (start delay time)
+- Calculates actual clock times if race start_time is available
+- Professional table styling with borders and headers
+- Uses existing `timeStringToMs()` utility for time conversions
+
+**Features**:
+- Triggers browser print dialog (`window.print()`)
+- Handles missing data gracefully (00:00 for no handicap, 0 for no points)
+- Responsive print CSS that hides app UI and shows only tables
+- Page breaks work correctly in all major browsers
+- Accessible HTML with proper table semantics
+
+**User Story**:
+"As a race director, I need to print a list of all runners with their start times before the race begins so I can have a reference for the staggered start sequence."
+
+**Acceptance Criteria**:
+- [x] Print button appears in Setup View after CSV upload
+- [x] Clicking button opens browser print dialog
+- [x] Print preview shows 5km on page 1, 10km on page 2
+- [x] All columns present and accurate: Member #, Name, Handicap, Champ Points, Start Time
+- [x] Runners sorted chronologically by handicap time (earliest first)
+- [x] Professional table formatting with borders and headers
+- [x] Works across major browsers (Chrome, Firefox, Safari)
+- [x] No linting errors, successful build
+- [x] All 202 tests passing
+
+**Files Modified**:
+1. `/src/components/race/PrintStartTimes.tsx` - NEW component
+2. `/src/components/views/SetupView.tsx` - Added print button and state
+3. `/src/index.css` - Added print media CSS styles
+
+---
+
 #### Race Director UI Optimization for Active Race State
 - [ ] Implement simplified layout during active race to focus on critical information
 
