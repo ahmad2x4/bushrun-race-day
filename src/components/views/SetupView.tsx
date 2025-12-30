@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Race, Runner, AppView } from '../../types'
 import { parseCSV, validateRunnerData } from '../../raceLogic'
 import { db } from '../../db'
+import PrintStartTimes from '../race/PrintStartTimes'
 
 interface SetupViewProps {
   currentRace: Race | null
@@ -16,6 +17,7 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [, setRunners] = useState<Runner[]>([])
+  const [showPrintStartTimes, setShowPrintStartTimes] = useState(false)
 
   const handleFileUpload = async (file: File) => {
     setUploadStatus('processing')
@@ -226,6 +228,13 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
                 </button>
               )}
               <button
+                onClick={() => setShowPrintStartTimes(true)}
+                className="px-6 py-3 text-lg font-semibold border border-blue-300 text-blue-700 dark:text-blue-400 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <span>🖨️</span>
+                Print Start Times
+              </button>
+              <button
                 onClick={() => {
                   setUploadStatus('idle')
                   setErrorMessage('')
@@ -339,6 +348,13 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
             </div>
           </div>
         </div>
+      )}
+      {currentRace && (
+        <PrintStartTimes
+          race={currentRace}
+          isOpen={showPrintStartTimes}
+          onClose={() => setShowPrintStartTimes(false)}
+        />
       )}
     </div>
   )
