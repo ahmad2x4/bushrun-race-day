@@ -96,9 +96,9 @@ function generatePrintHTML(race: Race): string {
   const createTableHTML = (distance: '5km' | '10km', runners: Runner[]): string => {
     if (runners.length === 0) {
       return `
-        <div style="margin-bottom: 24px;">
-          <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">${race.name} - ${distance} Start Times</h2>
-          <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Date: ${race.date}</p>
+        <div style="margin-bottom: 12px;">
+          <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">${race.name} - ${distance} Start Times</h2>
+          <p style="font-size: 12px; color: #666; margin: 0 0 8px 0;">Date: ${race.date}</p>
           <p style="color: #999; font-style: italic;">No runners registered for ${distance}</p>
         </div>
       `
@@ -106,26 +106,26 @@ function generatePrintHTML(race: Race): string {
 
     const tableRows = runners.map(runner => `
       <tr>
-        <td style="border: 1px solid #000; padding: 6px 8px;">${runner.member_number}</td>
-        <td style="border: 1px solid #000; padding: 6px 8px;">${runner.full_name}</td>
-        <td style="border: 1px solid #000; padding: 6px 8px;">${getHandicap(runner)}</td>
-        <td style="border: 1px solid #000; padding: 6px 8px;">${getChampionshipPoints(runner)}</td>
-        <td style="border: 1px solid #000; padding: 6px 8px;">${formatStartTime(runner)}</td>
+        <td style="border: 1px solid #000; padding: 4px 6px; font-size: 10pt;">${runner.member_number}</td>
+        <td style="border: 1px solid #000; padding: 4px 6px; font-size: 10pt;">${runner.full_name}</td>
+        <td style="border: 1px solid #000; padding: 4px 6px; font-size: 10pt;">${getHandicap(runner)}</td>
+        <td style="border: 1px solid #000; padding: 4px 6px; font-size: 10pt;">${getChampionshipPoints(runner)}</td>
+        <td style="border: 1px solid #000; padding: 4px 6px; font-size: 10pt;">${formatStartTime(runner)}</td>
       </tr>
     `).join('')
 
     return `
-      <div style="margin-bottom: 24px;">
-        <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 8px;">${race.name} - ${distance} Start Times</h2>
-        <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Date: ${race.date}</p>
-        <table style="width: 100%; border-collapse: collapse; font-size: 11pt; margin-top: 12px;">
+      <div style="margin-bottom: 12px;">
+        <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">${race.name} - ${distance} Start Times</h2>
+        <p style="font-size: 12px; color: #666; margin: 0 0 8px 0;">Date: ${race.date}</p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
           <thead>
             <tr>
-              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Member #</th>
-              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Name</th>
-              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Handicap</th>
-              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Champ Points</th>
-              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 8px; text-align: left; font-weight: bold;">Start Time</th>
+              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; font-size: 10pt;">Member #</th>
+              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; font-size: 10pt;">Name</th>
+              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; font-size: 10pt;">Handicap</th>
+              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; font-size: 10pt;">Champ Points</th>
+              <th style="background-color: #f3f4f6; border: 1px solid #000; padding: 4px 6px; text-align: left; font-weight: bold; font-size: 10pt;">Start Time</th>
             </tr>
           </thead>
           <tbody>
@@ -144,22 +144,28 @@ function generatePrintHTML(race: Race): string {
       <title>${race.name} - Start Times</title>
       <style>
         @page {
-          margin: 1cm;
+          margin: 0.5cm;
           size: A4 portrait;
         }
         body {
           font-family: Arial, sans-serif;
-          margin: 1cm;
+          margin: 0.5cm;
+          padding: 0;
           color: #000;
+          line-height: 1.2;
         }
         h2 {
-          margin: 0 0 8px 0;
+          margin: 0;
+          padding: 0;
         }
         p {
           margin: 0;
+          padding: 0;
         }
         table {
           page-break-inside: avoid;
+          margin: 0;
+          padding: 0;
         }
         tr {
           page-break-inside: avoid;
