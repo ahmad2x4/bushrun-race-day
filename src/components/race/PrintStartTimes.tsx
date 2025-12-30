@@ -44,25 +44,11 @@ export default function PrintStartTimes({ race, isOpen, onClose }: PrintStartTim
 function generatePrintHTML(race: Race): string {
   const runners5k = race.runners
     .filter(r => r.distance === '5km')
-    .sort((a, b) => {
-      const aHandicap = a.current_handicap_5k || '00:00'
-      const bHandicap = b.current_handicap_5k || '00:00'
-      const aMs = timeStringToMs(aHandicap)
-      const bMs = timeStringToMs(bHandicap)
-      if (aMs !== bMs) return aMs - bMs
-      return a.member_number - b.member_number
-    })
+    .sort((a, b) => a.full_name.localeCompare(b.full_name))
 
   const runners10k = race.runners
     .filter(r => r.distance === '10km')
-    .sort((a, b) => {
-      const aHandicap = a.current_handicap_10k || '00:00'
-      const bHandicap = b.current_handicap_10k || '00:00'
-      const aMs = timeStringToMs(aHandicap)
-      const bMs = timeStringToMs(bHandicap)
-      if (aMs !== bMs) return aMs - bMs
-      return a.member_number - b.member_number
-    })
+    .sort((a, b) => a.full_name.localeCompare(b.full_name))
 
   const formatStartTime = (runner: Runner): string => {
     const handicap = runner.distance === '5km'
