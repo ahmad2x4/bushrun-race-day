@@ -19,11 +19,48 @@ export function msToTimeString(ms: number): string {
   if (ms < 0) {
     throw new Error(`Negative time not allowed: ${ms}`);
   }
-  
+
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Championship race history time conversion utilities
+/**
+ * Convert seconds to MM:SS format for championship CSV export
+ * @param seconds - Time in seconds
+ * @returns Time formatted as MM:SS (e.g., "14:55")
+ */
+function secondsToMMSS(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Convert MM:SS format to seconds for championship CSV import
+ * @param mmss - Time in MM:SS format (e.g., "14:55")
+ * @returns Time in seconds
+ * @throws Error if format is invalid
+ */
+function mmssToSeconds(mmss: string): number {
+  if (!mmss || mmss === '00:00' || mmss === '0:00') return 0;
+
+  const match = mmss.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    throw new Error(`Invalid MM:SS format: "${mmss}". Expected format like "14:55"`);
+  }
+
+  const [, mins, secs] = match;
+  const minutes = parseInt(mins, 10);
+  const seconds = parseInt(secs, 10);
+
+  if (seconds >= 60) {
+    throw new Error(`Invalid seconds in time: "${mmss}". Seconds must be 0-59`);
+  }
+
+  return minutes * 60 + seconds;
 }
 
 // BBR handicap adjustments must be in 5-second increments (0:00, 0:05, 0:10, 0:15, 0:20, etc.)
@@ -376,33 +413,55 @@ export function parseChampionshipRaceHistory(history: string): RaceHistoryEntry[
   const parts = history.split('|').filter(p => p.trim());
 
   for (const part of parts) {
-    const fields = part.split(':');
-    if (fields.length !== 4) {
-      throw new Error(`Invalid race history format: "${part}". Expected "MONTH:POSITION:POINTS:TIME"`);
+    // Try new format first (semicolon separator with MM:SS time)
+    const newFormatFields = part.split(';');
+
+    if (newFormatFields.length === 4) {
+      try {
+        const [monthStr, positionStr, pointsStr, timeStr] = newFormatFields;
+        const month = parseInt(monthStr, 10);
+        const points = parseInt(pointsStr, 10);
+        const time = mmssToSeconds(timeStr); // Convert MM:SS to seconds
+
+        if (isNaN(month) || month < 1 || month > 12) {
+          throw new Error(`Invalid month: ${month}`);
+        }
+        if (isNaN(points) || points < 0 || points > 20) {
+          throw new Error(`Invalid points: ${points}`);
+        }
+
+        entries.push({ month, position: positionStr, points, time });
+        continue; // Successfully parsed new format
+      } catch {
+        // If new format fails, try old format below
+      }
     }
 
-    const [monthStr, positionStr, pointsStr, timeStr] = fields;
-    const month = parseInt(monthStr, 10);
-    const points = parseInt(pointsStr, 10);
-    const time = parseInt(timeStr, 10);
+    // Try old format (colon separator with numeric seconds)
+    const oldFormatFields = part.split(':');
+    if (oldFormatFields.length === 4) {
+      const [monthStr, positionStr, pointsStr, timeStr] = oldFormatFields;
+      const month = parseInt(monthStr, 10);
+      const points = parseInt(pointsStr, 10);
+      const time = parseInt(timeStr, 10); // Old format: raw seconds
 
-    // Validation
-    if (isNaN(month) || month < 1 || month > 12) {
-      throw new Error(`Invalid month: ${month}. Expected 1-12`);
-    }
-    if (isNaN(points) || points < 0 || points > 20) {
-      throw new Error(`Invalid points: ${points}. Expected 0-20`);
-    }
-    if (isNaN(time) || time < 0) {
-      throw new Error(`Invalid time: ${time}. Expected non-negative number`);
+      // Validation
+      if (isNaN(month) || month < 1 || month > 12) {
+        throw new Error(`Invalid month: ${month}. Expected 1-12`);
+      }
+      if (isNaN(points) || points < 0 || points > 20) {
+        throw new Error(`Invalid points: ${points}. Expected 0-20`);
+      }
+      if (isNaN(time) || time < 0) {
+        throw new Error(`Invalid time: ${time}. Expected non-negative number`);
+      }
+
+      entries.push({ month, position: positionStr, points, time });
+      continue;
     }
 
-    entries.push({
-      month,
-      position: positionStr,
-      points,
-      time
-    });
+    // Neither format worked
+    throw new Error(`Invalid race history format: "${part}". Expected "MONTH;POSITION;POINTS;MM:SS" or legacy "MONTH:POSITION:POINTS:SECONDS"`);
   }
 
   return entries;
@@ -410,9 +469,13 @@ export function parseChampionshipRaceHistory(history: string): RaceHistoryEntry[
 
 /**
  * Format race history array back to string
+ * New format: "MONTH;POSITION;POINTS;MM:SS|MONTH;POSITION;POINTS;MM:SS|..."
+ * Example: "2;1;20;14:55|3;2;15;15:20"
  */
 export function formatChampionshipRaceHistory(entries: RaceHistoryEntry[]): string {
-  return entries.map(e => `${e.month}:${e.position}:${e.points}:${e.time}`).join('|');
+  return entries
+    .map(e => `${e.month};${e.position};${e.points};${secondsToMMSS(e.time)}`)
+    .join('|');
 }
 
 /**
