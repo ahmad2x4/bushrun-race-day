@@ -1,6 +1,15 @@
 /**
- * WordPress Integration E2E Tests
- * Tests for auto-load, fallback, upload, and error scenarios
+ * WordPress Integration E2E Tests (Real WordPress - Optional)
+ * Tests against a real WordPress site - OPTIONAL, use mocked tests for CI/CD
+ *
+ * These tests require:
+ * - Real WordPress site configured with valid credentials
+ * - VITE_WP_URL, VITE_WP_USERNAME, VITE_WP_APP_PASSWORD environment variables
+ * - WORDPRESS_E2E_LIVE_TESTS=true to explicitly enable
+ *
+ * NOTE: Use wordpress-integration-mocked.spec.ts for normal CI/CD to avoid
+ * polluting real WordPress with test data. Only use this suite for manual
+ * integration testing with a real WordPress environment.
  */
 
 import { test, expect, Page } from '@playwright/test';
@@ -18,8 +27,9 @@ import {
   seasonRolloverTestData,
 } from '../fixtures/wordpress-fixtures';
 
-// Check if WordPress is configured before running tests
-const skipIfNoWordPress = process.env.CI || !isWordPressConfigured();
+// Skip all tests in this suite by default - use mocked tests instead
+// Only run if explicitly enabled via environment variable and not in CI
+const skipByDefault = process.env.WORDPRESS_E2E_LIVE_TESTS !== 'true' || !!process.env.CI;
 
 /**
  * Scenario 1: Auto-load CSV from WordPress on Setup
@@ -27,8 +37,8 @@ const skipIfNoWordPress = process.env.CI || !isWordPressConfigured();
  * And previous race CSV exists in WordPress Media Library
  * Then the CSV should be automatically loaded and displayed
  */
-test.describe('WordPress Auto-Load Integration', () => {
-  test.skip(skipIfNoWordPress, 'WordPress not configured');
+test.describe('WordPress Auto-Load Integration (Live)', () => {
+  test.skip(skipByDefault, 'Real WordPress tests skipped - use mocked tests instead');
 
   test('should auto-load previous race CSV from WordPress on setup page load', async ({
     page,
@@ -200,8 +210,8 @@ test.describe('Fallback to Local CSV Upload', () => {
  * And clicks "Upload to WordPress" for next race
  * Then the CSV should be uploaded to WordPress Media Library
  */
-test.describe('Upload Next Race CSV to WordPress', () => {
-  test.skip(skipIfNoWordPress, 'WordPress not configured');
+test.describe('Upload Next Race CSV to WordPress (Live)', () => {
+  test.skip(skipByDefault, 'Real WordPress tests skipped - use mocked tests instead');
 
   test('should upload next race CSV to WordPress', async ({ page }) => {
     const resultsPage = new ResultsPage(page);
@@ -285,8 +295,8 @@ test.describe('Upload Next Race CSV to WordPress', () => {
  * And clicks "Upload to WordPress" for season rollover
  * Then the CSV should be uploaded with -rollover suffix
  */
-test.describe('Upload Season Rollover CSV to WordPress', () => {
-  test.skip(skipIfNoWordPress, 'WordPress not configured');
+test.describe('Upload Season Rollover CSV to WordPress (Live)', () => {
+  test.skip(skipByDefault, 'Real WordPress tests skipped - use mocked tests instead');
 
   test('should upload season rollover CSV to WordPress', async ({ page }) => {
     const resultsPage = new ResultsPage(page);
@@ -411,8 +421,8 @@ test.describe('WordPress Upload Error Handling', () => {
  * Scenario 6: Complete Race Workflow with WordPress Integration
  * Full end-to-end test combining setup, race execution, and WordPress export
  */
-test.describe('Complete Race Workflow with WordPress Integration', () => {
-  test.skip(skipIfNoWordPress, 'WordPress not configured');
+test.describe('Complete Race Workflow with WordPress Integration (Live)', () => {
+  test.skip(skipByDefault, 'Real WordPress tests skipped - use mocked tests instead');
 
   test('should complete full workflow from setup to WordPress upload', async ({ page }) => {
     const setupPage = new SetupPage(page);
