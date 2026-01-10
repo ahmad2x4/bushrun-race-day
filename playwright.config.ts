@@ -28,6 +28,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Run tests sequentially in CI due to shared WordPress state */
   workers: 1,
+  /* Increase timeout for app load with WordPress auto-load */
+  timeout: 60000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html'],
