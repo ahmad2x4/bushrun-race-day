@@ -4,8 +4,25 @@ This guide covers setting up and running Playwright E2E tests for the WordPress 
 
 ## Overview
 
-The E2E test suite includes comprehensive tests for:
+The E2E test suite includes two test suites with comprehensive coverage:
 
+### Mocked Tests (Default - Use for CI/CD)
+- **File**: `tests/specs/wordpress-integration-mocked.spec.ts`
+- **Coverage**: 22 tests covering all scenarios
+- **Data Safety**: All WordPress API calls are mocked - ZERO pollution of real WordPress
+- **Speed**: Fast execution without network dependencies
+- **CI/CD Ready**: Safe to run without WordPress credentials
+- **Test Scenarios**: Auto-load, upload, error handling, complete workflows, data isolation
+
+### Live Tests (Optional - For Integration Testing)
+- **File**: `tests/specs/wordpress-integration.spec.ts`
+- **Coverage**: 30 tests for real WordPress integration
+- **Requirements**: Real WordPress site with valid credentials
+- **Requires**: `WORDPRESS_E2E_LIVE_TESTS=true` environment variable
+- **Skip in CI**: Automatically skipped in CI/CD to protect real data
+- **Use Case**: Manual integration testing with actual WordPress environment
+
+### What Both Suites Test
 - **Auto-load functionality**: Automatically loading previous race CSV from WordPress
 - **Fallback behavior**: Gracefully falling back to local CSV upload when WordPress is unavailable
 - **CSV upload**: Uploading next race and season rollover CSVs to WordPress Media Library
@@ -56,26 +73,44 @@ The server will run on `http://localhost:5174/bushrun-race-day/`
 
 ### 4. Run E2E Tests
 
-#### Run All E2E Tests
+#### Run Mocked Tests (Default - Recommended for CI/CD)
 
 ```bash
+# Run all mocked tests
 npm run test:e2e
+
+# Run only mocked tests
+npx playwright test wordpress-integration-mocked.spec.ts
 ```
 
-#### Run Specific Test Suite
+Mocked tests run without any WordPress credentials and are safe for CI/CD.
+
+#### Run Live Tests Against Real WordPress (Optional)
 
 ```bash
-# WordPress auto-load tests
-npx playwright test wordpress-integration.spec.ts --grep "Auto-Load"
+# Enable live tests and run
+WORDPRESS_E2E_LIVE_TESTS=true npm run test:e2e
 
-# Fallback tests
-npx playwright test wordpress-integration.spec.ts --grep "Fallback"
+# Or just run the live test file
+WORDPRESS_E2E_LIVE_TESTS=true npx playwright test wordpress-integration.spec.ts
+```
 
-# Upload tests
-npx playwright test wordpress-integration.spec.ts --grep "Upload"
+⚠️ **Warning**: Live tests will create test data in your real WordPress Media Library!
 
-# Error handling tests
-npx playwright test wordpress-integration.spec.ts --grep "Error"
+#### Run Specific Test Scenarios
+
+```bash
+# Mocked auto-load tests
+npx playwright test wordpress-integration-mocked.spec.ts --grep "Auto-Load"
+
+# Mocked upload tests
+npx playwright test wordpress-integration-mocked.spec.ts --grep "Upload"
+
+# Mocked error handling
+npx playwright test wordpress-integration-mocked.spec.ts --grep "Error Handling"
+
+# Mocked data isolation (verifies no real requests)
+npx playwright test wordpress-integration-mocked.spec.ts --grep "Data Isolation"
 ```
 
 #### Run Tests in UI Mode (Interactive)
@@ -132,83 +167,110 @@ cat test-results/test-results.json
 ```
 tests/
 ├── fixtures/
-│   └── wordpress-fixtures.ts          # Mock data and utilities
+│   └── wordpress-fixtures.ts                  # Mock data and utilities
 ├── pages/
-│   ├── SetupPage.ts                   # Setup view page object model
-│   └── ResultsPage.ts                 # Results view page object model
+│   ├── SetupPage.ts                           # Setup view page object model
+│   └── ResultsPage.ts                         # Results view page object model
 └── specs/
-    └── wordpress-integration.spec.ts   # Main E2E test scenarios
+    ├── wordpress-integration-mocked.spec.ts   # Mocked tests (recommended for CI/CD)
+    └── wordpress-integration.spec.ts          # Live tests (optional, manual testing)
 ```
 
 ### Test Scenarios
 
-#### 1. Auto-Load Integration (4 tests)
+#### Mocked Test Suite (`wordpress-integration-mocked.spec.ts`)
 
+All WordPress API endpoints are fully mocked - safe for CI/CD with zero risk of data pollution.
+
+##### 1. Auto-Load Integration (Mocked) (4 tests)
+- Auto-loads CSV from mocked WordPress on page load
+- Shows auto-load success messages
+- Displays runners from mocked CSV data
+- Correct number of runners from mock data
+
+##### 2. Upload Next Race CSV (Mocked) (3 tests)
+- Uploads CSV to mocked WordPress Media Library
+- Generates correct filename (bushrun-next-race-YYYY-MM.csv)
+- Displays upload status messages
+
+##### 3. Upload Season Rollover CSV (Mocked) (2 tests)
+- Uploads CSV with -rollover suffix to mocked WordPress
+- Includes rollover indicator in filename
+
+##### 4. Error Handling (Mocked Failures) (5 tests)
+- Handles WordPress timeout errors gracefully
+- Handles authentication failures
+- Handles network connection errors
+- Allows retry after failed operations
+- Page remains stable during errors
+
+##### 5. Complete Workflow (Mocked) (2 tests)
+- Full end-to-end workflow with mocked WordPress
+- App stability through complete workflow
+
+##### 6. Data Isolation (Mocked) (2 tests)
+- Verifies only mocked data is used
+- Confirms zero requests to real WordPress
+- Mocked responses have correct structure
+
+**All mocked tests run without any WordPress credentials - perfect for CI/CD!**
+
+#### Live Test Suite (`wordpress-integration.spec.ts`)
+
+Optional tests against real WordPress - requires explicit opt-in and valid credentials.
+
+##### 1. Auto-Load Integration (Live) (4 tests)
 ```typescript
-// Loads CSV automatically from WordPress on setup page
+// Loads CSV automatically from real WordPress on setup page
 // Shows success notice when auto-load succeeds
 // Displays runners from current/previous month
 // Handles timeout gracefully
 ```
 
 **Configuration Required**: WordPress URL and credentials
+**Enable With**: `WORDPRESS_E2E_LIVE_TESTS=true`
+**⚠️ Note**: Creates test data in real WordPress Media Library
 
-#### 2. Fallback Behavior (4 tests)
-
+##### 2. Fallback Behavior (Live) (4 tests)
 ```typescript
-// Shows fallback notice when WordPress unavailable
+// Shows fallback notice when real WordPress unavailable
 // Allows local CSV upload as fallback
 // Handles timeout gracefully
 // Handles authentication failures
 ```
 
-**Runs regardless of WordPress configuration**
-
-#### 3. Next Race Upload (3 tests)
-
+##### 3. Next Race Upload (Live) (3 tests)
 ```typescript
-// Uploads next race CSV to WordPress
+// Uploads next race CSV to real WordPress
 // Uses correct filename format (bushrun-next-race-YYYY-MM.csv)
 // Displays upload status during operation
 ```
 
-**Configuration Required**: WordPress URL and credentials
-
-#### 4. Season Rollover Upload (2 tests)
-
+##### 4. Season Rollover Upload (Live) (2 tests)
 ```typescript
-// Uploads season rollover CSV to WordPress
+// Uploads season rollover CSV to real WordPress
 // Includes -rollover suffix in filename
 ```
 
-**Configuration Required**: WordPress URL and credentials
-
-#### 5. Error Handling (3 tests)
-
+##### 5. Error Handling (Live) (3 tests)
 ```typescript
 // Displays error when upload fails
 // Allows retry after failure
 // Handles network errors gracefully
 ```
 
-**Tests failure scenarios without real failures**
-
-#### 6. Complete Workflow (1 test)
-
+##### 6. Complete Workflow (Live) (1 test)
 ```typescript
 // Full end-to-end: setup → auto-load → results → upload
 ```
 
-**Optional tests**: Skipped if WordPress not configured
-
-#### 7. Configuration Display (2 tests)
-
+##### 7. Configuration Display (Live) (2 tests)
 ```typescript
 // Shows WordPress connection status
 // Status reflects actual connectivity
 ```
 
-**Runs regardless of WordPress configuration**
+**All live tests are skipped by default in CI/CD to protect real data!**
 
 ## Playwright Configuration
 
@@ -240,19 +302,43 @@ npx playwright test --project="Mobile Chrome"
 npx playwright test --project="Mobile Safari"
 ```
 
-## Skipped Tests
+## Test Execution Strategy
 
-Tests that require WordPress configuration are automatically skipped if:
-- `VITE_WP_URL` is not set
-- `VITE_WP_USERNAME` is not set
-- `VITE_WP_APP_PASSWORD` is not set
-- Running in CI environment without secrets
+### Mocked Tests (Always Run)
 
-To force run skipped tests:
+Mocked tests (`wordpress-integration-mocked.spec.ts`) run by default:
 
 ```bash
-npx playwright test --run-with-skip-mark
+npm run test:e2e
 ```
+
+These tests:
+- ✅ Don't require WordPress credentials
+- ✅ Don't hit real WordPress endpoints
+- ✅ Don't pollute your WordPress Media Library
+- ✅ Run fast without network latency
+- ✅ Have deterministic outcomes
+- ✅ Perfect for CI/CD pipelines
+
+### Live Tests (Skipped by Default)
+
+Live tests (`wordpress-integration.spec.ts`) are skipped by default because:
+- They require real WordPress credentials
+- They create test data in WordPress Media Library
+- They should only run when explicitly enabled
+- They should never run in CI/CD by default
+
+**To run live tests manually:**
+
+```bash
+# Enable live tests and run
+WORDPRESS_E2E_LIVE_TESTS=true npm run test:e2e
+
+# Or specify just the live test file
+WORDPRESS_E2E_LIVE_TESTS=true npx playwright test wordpress-integration.spec.ts
+```
+
+**Live tests are automatically skipped in CI/CD** (when `CI` environment variable is set) to protect your real WordPress data.
 
 ## CI/CD Setup
 
@@ -260,20 +346,27 @@ npx playwright test --run-with-skip-mark
 
 The workflow (`.github/workflows/e2e-tests.yml`) includes:
 
-1. **E2E Tests**: Run Playwright tests with WordPress credentials
+1. **E2E Tests** (Mocked): Run Playwright tests with fully mocked WordPress - no credentials needed
 2. **Unit Tests**: Run Vitest unit tests
 3. **Linting**: Check code quality
 4. **Build**: Verify production build succeeds
 5. **Results**: Publish test results to GitHub
 
-### Configure Repository Secrets
+**Note**: By default, the workflow runs mocked tests and does NOT require WordPress credentials. This is intentional to keep your real WordPress data safe!
 
-Add these secrets to your GitHub repository:
+### Configure Repository Secrets (Optional)
+
+Only needed if you want to run live tests in CI/CD. Not recommended - use mocked tests instead!
+
+If you do want to enable live tests in CI/CD:
 
 1. Go to Settings → Secrets and variables → Actions
-2. Add `WORDPRESS_URL` secret
-3. Add `WORDPRESS_USERNAME` secret
-4. Add `WORDPRESS_APP_PASSWORD` secret
+2. Add `WORDPRESS_URL` secret (your WordPress site URL)
+3. Add `WORDPRESS_USERNAME` secret (WordPress username)
+4. Add `WORDPRESS_APP_PASSWORD` secret (WordPress Application Password)
+5. Add `WORDPRESS_E2E_LIVE_TESTS` secret with value `true`
+
+⚠️ **Warning**: Enabling live tests in CI/CD will create test data in your real WordPress. Not recommended!
 
 ### Workflow Triggers
 
@@ -285,9 +378,19 @@ The workflow runs on:
 ### Artifacts
 
 Workflow produces these artifacts:
-- `playwright-report-chromium`: HTML test report
+- `playwright-report-chromium`: HTML test report (30-day retention)
 - `test-videos-chromium`: Video recordings on failure (7-day retention)
 - `dist`: Built application (5-day retention)
+
+### CI/CD Test Summary
+
+In CI/CD, the workflow:
+1. ✅ Runs **mocked E2E tests** (22 tests) - safe and fast
+2. ✅ Runs **unit tests** - verifies core logic
+3. ✅ Runs **linting** - enforces code quality
+4. ✅ Runs **build** - verifies production build
+5. ❌ Does NOT run live WordPress tests - protected by default
+6. ❌ Does NOT require WordPress credentials - mocked tests only
 
 ## Debugging Tests
 
