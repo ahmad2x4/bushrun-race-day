@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { Race, Runner, AppView } from '../../types'
 import { parseCSV, validateRunnerData } from '../../raceLogic'
 import { db } from '../../db'
+import { WordPressConfig, CSVSyncService } from '../../services'
 import PrintStartTimes from '../race/PrintStartTimes'
 
 interface SetupViewProps {
@@ -18,6 +19,80 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [, setRunners] = useState<Runner[]>([])
   const [showPrintStartTimes, setShowPrintStartTimes] = useState(false)
+
+  // WordPress auto-load state
+  const [isLoadingFromWordPress, setIsLoadingFromWordPress] = useState(false)
+  const [wordPressError, setWordPressError] = useState<string | null>(null)
+  const [wordPressSuccess, setWordPressSuccess] = useState(false)
+
+  // Create CSV sync service instance
+  const csvSync = useMemo(() => new CSVSyncService(), [])
+
+  // Auto-load CSV from WordPress on component mount
+  useEffect(() => {
+    if (currentRace) return // Already have race loaded
+
+    const autoLoadFromWordPress = async () => {
+      const wpConfig = WordPressConfig.getInstance()
+      if (!wpConfig.isEnabled()) {
+        return // WordPress not configured
+      }
+
+      setIsLoadingFromWordPress(true)
+      setWordPressError(null)
+
+      // Calculate previous month
+      const today = new Date()
+      let targetMonth = today.getMonth() // 0-11
+      let targetYear = today.getFullYear()
+
+      // Jan (0) -> load Dec (11) from previous year
+      // Feb (1) -> load Dec (11) from previous year
+      // Mar+ -> load previous month
+      if (targetMonth <= 1) {
+        targetMonth = 11
+        targetYear -= 1
+      } else {
+        targetMonth -= 1
+      }
+
+      // TODO: Get testing mode from clubConfig context
+      const useTestingMode = false
+
+      const response = await csvSync.pullCSVFromWordPress(
+        targetMonth + 1, // Convert to 1-12
+        targetYear,
+        useTestingMode
+      )
+
+      setIsLoadingFromWordPress(false)
+
+      if (response.success) {
+        // Create race from pulled runners
+        const newRace: Race = {
+          id: `race-${Date.now()}`,
+          name: `Bushrun ${new Date().toLocaleDateString()}`,
+          date: new Date().toISOString().split('T')[0],
+          status: 'setup',
+          runners: response.data.runners,
+          race_5k_active: false,
+          race_10k_active: false,
+          next_temp_number: 999,
+        }
+
+        await db.saveRace(newRace)
+        setCurrentRace(newRace)
+        setRunners(response.data.runners)
+        setWordPressSuccess(true)
+        setUploadStatus('success')
+      } else {
+        // Show error, fallback to local upload
+        setWordPressError(response.error)
+      }
+    }
+
+    autoLoadFromWordPress()
+  }, [currentRace, csvSync, setCurrentRace]) // Run on mount and when dependencies change
 
   const handleFileUpload = async (file: File) => {
     setUploadStatus('processing')
@@ -104,7 +179,37 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
           <p className="text-center text-gray-600 dark:text-gray-400">
             Upload a CSV file with runner data to configure the race.
           </p>
-          
+
+          {/* WordPress Loading Indicator */}
+          {isLoadingFromWordPress && (
+            <div className="text-center py-8">
+              <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">Loading race data from WordPress...</p>
+            </div>
+          )}
+
+          {/* WordPress Error Message */}
+          {wordPressError && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <h3 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                WordPress Connection Issue
+              </h3>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">{wordPressError}</p>
+              <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                Falling back to local CSV upload. You can still upload a CSV file below.
+              </p>
+            </div>
+          )}
+
+          {/* WordPress Success Message */}
+          {wordPressSuccess && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <p className="text-sm text-green-800 dark:text-green-200">
+                ✓ Race data loaded from WordPress successfully
+              </p>
+            </div>
+          )}
+
           {/* CSV Upload Area */}
           <div
             className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${

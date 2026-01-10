@@ -63,6 +63,7 @@ export interface ClubConfig {
   enable_time_adjustment?: boolean; // Default: true - Allow runners to adjust start delay time during check-in
   audio_enabled?: boolean; // Default: true - Enable start beep sounds
   audio_volume?: number; // Default: 0.5 - Volume level (0.0 to 1.0)
+  wordpress_testing_mode?: boolean; // Default: false - Use most recent CSV from WordPress for testing
 }
 
 export type AppView = 'setup' | 'checkin' | 'race-director' | 'results' | 'settings' | 'championship';
