@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { Race, RaceResults } from '../../types'
-import { calculateHandicaps, generateResults } from '../../raceLogic'
+import { calculateHandicaps, generateResults, generateNextRaceCSV } from '../../raceLogic'
 import { db } from '../../db'
+import { CSVSyncService } from '../../services'
 import PodiumDisplay from '../race/PodiumDisplay'
 import ResultsTable from '../race/ResultsTable'
 import ExportSection from '../race/ExportSection'
@@ -16,6 +17,9 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
   const [calculatedResults, setCalculatedResults] = useState<{fiveKm: RaceResults, tenKm: RaceResults} | null>(null)
   const [showCalculateHandicapsBtn, setShowCalculateHandicapsBtn] = useState(true)
   const [editingRunnerTime, setEditingRunnerTime] = useState<{runnerId: number, currentTime: string} | null>(null)
+
+  // Create CSV sync service instance
+  const csvSync = useMemo(() => new CSVSyncService(), [])
 
   if (!currentRace) {
     return (
@@ -39,22 +43,43 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
 
     // Calculate new handicaps with championship support
     const runnersWithNewHandicaps = calculateHandicaps(currentRace.runners, raceMonth)
-    
+
     // Generate results
     const results = generateResults(runnersWithNewHandicaps)
-    
+
     // Update race status and runners
-    const updatedRace = { 
-      ...currentRace, 
+    const updatedRace = {
+      ...currentRace,
       runners: runnersWithNewHandicaps,
       status: 'finished' as const
     }
-    
+
     // Save to database
     await db.saveRace(updatedRace)
     setCurrentRace(updatedRace)
     setCalculatedResults(results)
     setShowCalculateHandicapsBtn(false)
+
+    // Automatically upload to WordPress after calculating positions
+    try {
+      const csvContent = generateNextRaceCSV(runnersWithNewHandicaps)
+      const today = new Date()
+      const raceYear = today.getFullYear()
+      const raceDate = today.toISOString().split('T')[0]
+
+      await csvSync.pushCSVToWordPress(
+        csvContent,
+        'Next Race',
+        raceDate,
+        raceMonth,
+        raceYear,
+        false
+      )
+      console.log('WordPress sync completed successfully after position calculation')
+    } catch (error) {
+      console.error('WordPress sync failed after position calculation:', error)
+      // Don't throw - sync failure shouldn't block results display
+    }
   }
 
   const handleTimeAdjustment = async (runnerId: number, newTimeStr: string) => {
@@ -63,16 +88,16 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
     // Parse the time string (MM:SS.ss format)
     const timePattern = /^(\d{1,2}):(\d{2})\.(\d{1,2})$/
     const match = newTimeStr.match(timePattern)
-    
+
     if (!match) {
       alert('Invalid time format. Please use MM:SS.ss (e.g., 25:34.5)')
       return
     }
 
     const minutes = parseInt(match[1])
-    const seconds = parseInt(match[2]) 
+    const seconds = parseInt(match[2])
     const centiseconds = parseInt(match[3].padEnd(2, '0'))
-    
+
     if (seconds >= 60 || centiseconds >= 100) {
       alert('Invalid time values. Seconds must be 0-59, centiseconds 0-99')
       return
@@ -93,13 +118,13 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
 
     // Recalculate handicaps and positions with championship support
     const runnersWithNewHandicaps = calculateHandicaps(updatedRunners, raceMonth)
-    
+
     // Update race
-    const updatedRace = { 
-      ...currentRace, 
+    const updatedRace = {
+      ...currentRace,
       runners: runnersWithNewHandicaps
     }
-    
+
     // Save to database
     await db.saveRace(updatedRace)
     setCurrentRace(updatedRace)
@@ -109,6 +134,27 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
     if (currentRace.status === 'finished') {
       const results = generateResults(runnersWithNewHandicaps)
       setCalculatedResults(results)
+
+      // Automatically upload updated data to WordPress after time adjustment
+      try {
+        const csvContent = generateNextRaceCSV(runnersWithNewHandicaps)
+        const today = new Date()
+        const raceYear = today.getFullYear()
+        const raceDate = today.toISOString().split('T')[0]
+
+        await csvSync.pushCSVToWordPress(
+          csvContent,
+          'Next Race',
+          raceDate,
+          raceMonth,
+          raceYear,
+          false
+        )
+        console.log('WordPress sync completed successfully after time adjustment')
+      } catch (error) {
+        console.error('WordPress sync failed after time adjustment:', error)
+        // Don't throw - sync failure shouldn't block results display
+      }
     }
   }
 
