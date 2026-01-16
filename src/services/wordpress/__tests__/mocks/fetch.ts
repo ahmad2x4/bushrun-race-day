@@ -118,25 +118,18 @@ export const setupConditionalFetchMock = (): Mock => {
  * Reset fetch mock
  */
 export const resetFetchMock = (): void => {
-  if (global.fetch) {
-    vi.resetAllMocks();
-  }
+  vi.resetAllMocks();
 };
 
 /**
- * Assert fetch was called with specific arguments
+ * Get fetch call arguments for assertion
  */
-export const assertFetchCalled = (
+export const getFetchCall = (
   mockFetch: Mock,
-  url: string,
-  init?: RequestInit,
   callIndex = 0
-): void => {
+): [unknown, RequestInit | undefined] => {
   const calls = mockFetch.mock.calls;
-  expect(calls[callIndex]?.[0]).toBe(url);
-  if (init) {
-    expect(calls[callIndex]?.[1]).toMatchObject(init);
-  }
+  return [calls[callIndex]?.[0], calls[callIndex]?.[1]];
 };
 
 /**

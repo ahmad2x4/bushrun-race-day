@@ -169,7 +169,7 @@ export class CSVSyncService {
    */
   async generateAndPushNextRaceCSV(race: Race): Promise<ServiceResponse<MediaItem>> {
     try {
-      const csvContent = generateNextRaceCSV(race);
+      const csvContent = generateNextRaceCSV(race.runners);
 
       const today = new Date();
       const raceDate = today.toISOString().split('T')[0];
@@ -201,7 +201,7 @@ export class CSVSyncService {
     race: Race
   ): Promise<ServiceResponse<MediaItem>> {
     try {
-      const csvContent = generateSeasonRolloverCSV(race);
+      const csvContent = generateSeasonRolloverCSV(race.runners);
 
       const today = new Date();
       const raceDate = today.toISOString().split('T')[0];
@@ -239,23 +239,23 @@ export class CSVSyncService {
         return csvResponse;
       }
 
-      const parseResult = parseCSV(csvResponse.data);
-
-      if (!parseResult.valid) {
+      let runners: Runner[];
+      try {
+        runners = parseCSV(csvResponse.data);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return {
           success: false,
-          error: `Invalid CSV format: ${parseResult.errors?.join(', ') || 'Unknown error'}`,
+          error: `Invalid CSV format: ${errorMessage}`,
         };
       }
-
-      const runners: Runner[] = parseResult.runners || [];
 
       // Try to extract metadata from filename
       const filename = media.title.rendered || '';
       const parsed = parseCSVFilename(filename);
 
       const metadata: CSVMetadata = {
-        race_name: media.description || 'Race',
+        race_name: media.meta?.race_name || 'Race',
         race_date: media.date,
         race_month: parsed?.month || 1,
         race_year: parsed?.year || new Date().getFullYear(),
