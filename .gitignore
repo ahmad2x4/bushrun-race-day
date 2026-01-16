@@ -17,6 +17,9 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Obfuscated credentials (generated at build time, contains sensitive data)
+src/services/wordpress/obfuscation/obfuscated-credentials.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

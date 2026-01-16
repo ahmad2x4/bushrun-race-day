@@ -42,13 +42,13 @@ export class WordPressClient {
       });
 
       if (!response.ok) {
-        return this.handleErrorResponse(response);
+        return this.handleErrorResponse(response) as ServiceResponse<T>;
       }
 
       const data = await response.json();
-      return { success: true, data };
+      return { success: true, data } as ServiceResponse<T>;
     } catch (error) {
-      return this.handleError(error);
+      return this.handleError(error) as ServiceResponse<T>;
     }
   }
 
@@ -82,13 +82,13 @@ export class WordPressClient {
       const response = await this.fetchWithTimeout(url, requestInit);
 
       if (!response.ok) {
-        return this.handleErrorResponse(response);
+        return this.handleErrorResponse(response) as ServiceResponse<T>;
       }
 
       const data = await response.json();
-      return { success: true, data };
+      return { success: true, data } as ServiceResponse<T>;
     } catch (error) {
-      return this.handleError(error);
+      return this.handleError(error) as ServiceResponse<T>;
     }
   }
 
