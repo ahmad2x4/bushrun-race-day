@@ -129,7 +129,7 @@ function shuffleArray<T>(array: T[], indices: number[]): T[] {
  * Encode to Base64 and reverse the string
  * Layer 3 encoding: shuffled array → JSON string → Base64 → reverse
  */
-function encodeLayer3(shuffledArray: number[][], key: number): string {
+function encodeLayer3(shuffledArray: number[][]): string {
   // Convert to JSON string
   const jsonString = JSON.stringify(shuffledArray);
 
@@ -186,7 +186,7 @@ function obfuscate(plaintext: string, key: number): ObfuscatedData {
     const shuffledLayer2 = shuffleArray(encodedLayer1, shuffleIndices);
 
     // Layer 3: Base64 encode and reverse
-    const reversedLayer3 = encodeLayer3(shuffledLayer2, key);
+    const reversedLayer3 = encodeLayer3(shuffledLayer2);
 
     // Layer 4: Interleave with padding
     const interleavedLayer4 = encodeLayer4(reversedLayer3, key);
