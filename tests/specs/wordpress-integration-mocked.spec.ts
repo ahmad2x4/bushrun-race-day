@@ -5,6 +5,7 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
+import type { MediaItem } from '../../src/services/wordpress/types';
 import { SetupPage } from '../pages/SetupPage';
 import { ResultsPage } from '../pages/ResultsPage';
 import {
@@ -524,7 +525,7 @@ test.describe('Mocked Response Structure', () => {
     if (Array.isArray(capturedMediaItems)) {
       expect(capturedMediaItems.length).toBeGreaterThan(0);
 
-      capturedMediaItems.forEach((item: any) => {
+      capturedMediaItems.forEach((item: MediaItem) => {
         expect(item).toHaveProperty('id');
         expect(item).toHaveProperty('title');
         expect(item).toHaveProperty('mime_type');
@@ -558,7 +559,7 @@ test.describe('Mocked Response Structure', () => {
 
       // Check captured response
       if (capturedUploadResponse) {
-        const item = capturedUploadResponse as any;
+        const item = capturedUploadResponse as MediaItem;
         expect(item).toHaveProperty('id');
         expect(item).toHaveProperty('title');
         expect(item).toHaveProperty('source_url');

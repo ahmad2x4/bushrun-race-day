@@ -3,6 +3,7 @@
  * Handles interactions with the Setup view for WordPress integration testing
  */
 
+import { readFileSync } from 'fs';
 import { Page, Locator } from '@playwright/test';
 
 export class SetupPage {
@@ -167,7 +168,7 @@ export class SetupPage {
    */
   async uploadCSVViaDragDrop(filePath: string): Promise<void> {
     // Create a temporary file for drag-drop
-    const buffer = require('fs').readFileSync(filePath);
+    const buffer = readFileSync(filePath);
     const dataTransfer = await this.page.evaluateHandle((data) => {
       const dt = new DataTransfer();
       const file = new File([data], 'test.csv', { type: 'text/csv' });
