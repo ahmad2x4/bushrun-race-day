@@ -5,6 +5,11 @@
 
 import type { ObfuscatedData, ObfuscatedCredentials } from './types';
 
+// Extend globalThis to support storing obfuscated credentials
+declare global {
+  var __OBFUSCATED_CREDENTIALS__: ObfuscatedCredentials | undefined;
+}
+
 /**
  * Layer 4 Reversal: Remove interleaving and padding
  * Extracts the actual data from interleaved string by using XOR with position
@@ -140,7 +145,7 @@ export function getObfuscatedCredentials(): {
   try {
     // For synchronous loading (needed for constructor), we use global scope storage
     // The obfuscated-credentials.ts file stores credentials in globalThis
-    const credentials = (globalThis as any).__OBFUSCATED_CREDENTIALS__;
+    const credentials = globalThis.__OBFUSCATED_CREDENTIALS__;
 
     if (!credentials || !credentials.meta) {
       throw new Error('Obfuscated credentials not available');
@@ -164,5 +169,5 @@ export function getObfuscatedCredentials(): {
  * Called from the generated obfuscated-credentials.ts file
  */
 export function storeObfuscatedCredentials(credentials: ObfuscatedCredentials): void {
-  (globalThis as any).__OBFUSCATED_CREDENTIALS__ = credentials;
+  globalThis.__OBFUSCATED_CREDENTIALS__ = credentials;
 }

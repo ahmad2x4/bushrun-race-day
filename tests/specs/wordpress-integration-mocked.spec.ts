@@ -175,7 +175,7 @@ test.describe('Upload Next Race CSV (Mocked)', () => {
     }
   });
 
-  test('should generate correct filename for next race upload', async ({ page }) => {
+  test('should generate correct filename for next race upload', async () => {
     // Verify expected filename format
     const expectedFilename = getExpectedNextRaceFilename();
 
@@ -250,7 +250,7 @@ test.describe('Upload Season Rollover CSV (Mocked)', () => {
     }
   });
 
-  test('should include rollover suffix in season rollover filename', async ({ page }) => {
+  test('should include rollover suffix in season rollover filename', async () => {
     const expectedFilename = getExpectedSeasonRolloverFilename();
 
     // Should include -rollover suffix

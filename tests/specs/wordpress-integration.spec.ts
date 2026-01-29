@@ -12,19 +12,14 @@
  * integration testing with a real WordPress environment.
  */
 
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { SetupPage } from '../pages/SetupPage';
 import { ResultsPage } from '../pages/ResultsPage';
 import {
   setupWordPressMocks,
   clearWordPressMocks,
-  isWordPressConfigured,
   getExpectedNextRaceFilename,
   getExpectedSeasonRolloverFilename,
-  mockCSVDownload,
-  validCSVContent,
-  nextRaceTestData,
-  seasonRolloverTestData,
 } from '../fixtures/wordpress-fixtures';
 
 // Skip all tests in this suite by default - use mocked tests instead

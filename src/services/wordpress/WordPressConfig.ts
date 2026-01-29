@@ -8,6 +8,7 @@
  */
 
 import type { WordPressConfigType } from './types';
+import { getObfuscatedCredentials as getObfuscatedCredsImpl } from './obfuscation/deobfuscator';
 
 export class WordPressConfig {
   private static instance: WordPressConfig;
@@ -98,11 +99,9 @@ export class WordPressConfig {
    * Deobfuscates the credentials that were obfuscated at build time
    */
   private loadFromObfuscated(): void {
-    // Dynamically import deobfuscator to keep it out of dev builds
-    const { getObfuscatedCredentials } = require('./obfuscation/deobfuscator');
-
     try {
-      const credentials = getObfuscatedCredentials();
+      // Get credentials from global store (populated by obfuscated-credentials.ts at module load)
+      const credentials = getObfuscatedCredsImpl();
 
       // Validate HTTPS requirement
       if (!credentials.url.startsWith('https://')) {
