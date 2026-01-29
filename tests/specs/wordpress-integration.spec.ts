@@ -18,7 +18,6 @@ import { ResultsPage } from '../pages/ResultsPage';
 import {
   setupWordPressMocks,
   clearWordPressMocks,
-  getExpectedNextRaceFilename,
   getExpectedSeasonRolloverFilename,
 } from '../fixtures/wordpress-fixtures';
 
@@ -245,9 +244,6 @@ test.describe('Upload Next Race CSV to WordPress (Live)', () => {
       await resultsPage.generateNextRaceCSV();
       await resultsPage.uploadNextRaceToWordPress();
       await resultsPage.waitForUploadComplete();
-
-      // Get expected filename
-      const expectedFilename = getExpectedNextRaceFilename();
 
       // Success message should contain reference to the upload
       const successMessage = await resultsPage.getUploadSuccessMessage();
