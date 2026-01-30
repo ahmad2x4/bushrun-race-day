@@ -104,7 +104,7 @@ This document outlines the complete Championship System implementation for the B
 ### New Season CSV Generation
 - **Task**: Annual rollover functionality
 - **Details**:
-  - Annual handicap rollover (10km: -30s, 5km: -15s)
+  - Annual handicap rollover (10km: -30s, 5km: -15s) per [BBR Official Rules](https://berowrabushrunners.com/handicap-2/rules/)
   - Clear championship_races_5k/10k (empty race history)
   - Reset championship_points_5k/10k to zero
   - Maintain is_official_5k/10k status for continuing members
