@@ -12,6 +12,7 @@ A comprehensive offline-first Progressive Web Application for managing monthly h
 - [PWA Configuration](#pwa-configuration)
 - [Development Setup](#development-setup)
 - [Export Functionality](#export-functionality)
+- [Official References](#official-references)
 
 ---
 
@@ -184,7 +185,7 @@ export function formatFinishTime(ms: number): string {
 - **Official handicaps** for current financial BBR members who have participated in 2+ handicaps
 - **Provisional handicaps** for new runners (adjusted over first 2 runs, becomes official on 3rd)
 - Provisional handicap holders do not earn championship points
-- Annual rollover: 10km reduced by 30s, 5km reduced by 15s
+- Annual rollover: 10km reduced by 30s, 5km reduced by 15s (per [BBR Official Rules](https://berowrabushrunners.com/handicap-2/rules/))
 
 **Starter/Timekeeper Duties:**
 - Voluntary positions open to all non-junior members
@@ -597,6 +598,18 @@ export function downloadCSV(filename: string, csvContent: string): void {
 - Input sanitization for CSV data
 - XSS prevention in dynamic content
 - Data validation at all layers
+
+---
+
+## Official References
+
+This application implements rules and procedures from the official Berowra Bushrunners organization:
+
+- **BBR Handicap Rules**: https://berowrabushrunners.com/handicap-2/rules/
+  - Annual handicap rollover: 10km reduced by 30s, 5km reduced by 15s
+  - Official vs. Provisional handicap criteria
+  - Championship eligibility requirements
+  - Start time protocols and race procedures
 
 ---
 
