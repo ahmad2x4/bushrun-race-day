@@ -8,9 +8,10 @@ import type { ParsedCSVFilename } from '../wordpress/types';
 /**
  * Parse Bushrun CSV filename to extract year, month, and rollover status
  * Expects format: bushrun-next-race-YYYY-MM.csv or bushrun-next-race-YYYY-MM-rollover.csv
+ * Also matches WordPress title field without .csv extension: bushrun-next-race-YYYY-MM
  */
 export function parseCSVFilename(filename: string): ParsedCSVFilename | null {
-  const regex = /bushrun-next-race-(\d{4})-(\d{2})(?:-rollover)?\.csv/i;
+  const regex = /bushrun-next-race-(\d{4})-(\d{2})(?:-rollover)?(?:\.csv)?/i;
   const match = filename.match(regex);
 
   if (!match) {

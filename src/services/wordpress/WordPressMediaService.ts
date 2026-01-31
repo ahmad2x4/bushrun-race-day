@@ -15,11 +15,12 @@ export class WordPressMediaService {
 
   /**
    * List all CSV files in WordPress Media Library
+   * Note: We don't filter by mime_type since manually uploaded CSVs may have different MIME types
+   * (text/plain, application/octet-stream, etc.). Instead, we rely on filename pattern matching.
    */
   async listAllCSVs(): Promise<ServiceResponse<MediaItem[]>> {
     try {
       const response = await this.client.get<MediaItem[]>('/media', {
-        mime_type: 'text/csv',
         per_page: '100',
       });
 
@@ -50,6 +51,7 @@ export class WordPressMediaService {
    * Query CSVs by metadata (race_month and race_year)
    * Since WordPress REST API doesn't expose custom meta fields,
    * we rely on filename parsing (e.g., bushrun-next-race-2026-01.csv)
+   * Note: We don't filter by mime_type to support manually uploaded CSVs with various MIME types.
    */
   async queryCSVsByMetadata(
     month: number,
@@ -57,7 +59,6 @@ export class WordPressMediaService {
   ): Promise<ServiceResponse<MediaItem | null>> {
     try {
       const response = await this.client.get<MediaItem[]>('/media', {
-        mime_type: 'text/csv',
         per_page: '100',
       });
 
