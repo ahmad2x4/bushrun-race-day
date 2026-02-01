@@ -23,14 +23,34 @@ export default function ResultsTable({
   const [inputTime, setInputTime] = useState('')
 
   // Include all processed runners (finished, DNF, Early Start)
-  const processedRunners = currentRace.runners.filter(r => 
+  const processedRunners = currentRace.runners.filter(r =>
     r.finish_time !== undefined || r.status === 'dnf' || r.status === 'early_start'
   )
-  
-  const filteredRunners = processedRunners.filter(r => 
+
+  const filteredRunners = processedRunners.filter(r =>
     (filterDistance === 'all' || r.distance === filterDistance) &&
     (searchQuery === '' || r.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
   )
+
+  // Get official position list to assign unofficial runners positions for display
+  const getDisplayPosition = (runner: Runner): number | null => {
+    if (runner.finish_position) {
+      return runner.finish_position // Official position
+    }
+    if (runner.finish_time !== undefined && runner.status !== 'dnf' && runner.status !== 'early_start') {
+      // Unofficial runner - find their position among all finishers of same distance
+      const sameDistanceFinishers = filteredRunners.filter(r =>
+        r.distance === runner.distance &&
+        r.finish_time !== undefined &&
+        r.status !== 'dnf' &&
+        r.status !== 'early_start'
+      ).sort((a, b) => a.finish_time! - b.finish_time!)
+
+      const displayPos = sameDistanceFinishers.findIndex(r => r.member_number === runner.member_number) + 1
+      return displayPos > 0 ? displayPos : null
+    }
+    return null
+  }
 
   // Sort: finished runners by position first, then DNF/Early Start at end
   const sortedRunners = [...filteredRunners].sort((a, b) => {
@@ -39,7 +59,10 @@ export default function ResultsTable({
     }
     if (a.finish_position && !b.finish_position) return -1
     if (!a.finish_position && b.finish_position) return 1
-    // Both are DNF/Early Start, sort by member number
+    // Both DNF/Early Start or both unofficial - sort by finish time, then member number
+    if (a.finish_time !== undefined && b.finish_time !== undefined) {
+      return a.finish_time - b.finish_time
+    }
     return a.member_number - b.member_number
   })
 
@@ -141,7 +164,7 @@ export default function ResultsTable({
                     {runner.status === 'dnf' && '❌'}
                     {runner.status === 'early_start' && '⚠️'}
                     <span className="text-lg sm:text-xl">
-                      {runner.finish_position || (runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'Early Start' : '-')}
+                      {runner.finish_position ? runner.finish_position : (runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'Early Start' : getDisplayPosition(runner) || '-')}
                     </span>
                   </div>
                   <div className="font-mono font-bold text-blue-600 dark:text-blue-400">
@@ -167,6 +190,17 @@ export default function ResultsTable({
                       {runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? <span><span className="hidden sm:inline">Early </span>Start</span> : ''}
                     </span>
                   )}
+
+                  {/* Unofficial badge */}
+                  {(() => {
+                    const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k
+                    if (isOfficial !== false || runner.status === 'dnf' || runner.status === 'early_start') return null
+                    return (
+                      <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
+                        UO
+                      </span>
+                    )
+                  })()}
 
                   {/* Championship points badge (if official runner) */}
                   {(() => {

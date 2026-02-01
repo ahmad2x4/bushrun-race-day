@@ -258,8 +258,19 @@ export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runne
     const distanceRunners = results
       .filter(r => r.distance === distance && r.finish_time !== undefined && (!r.status || r.status === 'finished'))
       .sort((a, b) => a.finish_time! - b.finish_time!);
-    
-    distanceRunners.forEach((runner, index) => {
+
+    // Separate official and unofficial finishers
+    const officialRunners = distanceRunners.filter(r => {
+      const isOfficial = distance === '5km' ? r.is_official_5k : r.is_official_10k;
+      return isOfficial !== false; // Default to true if undefined
+    });
+    const unofficialRunners = distanceRunners.filter(r => {
+      const isOfficial = distance === '5km' ? r.is_official_5k : r.is_official_10k;
+      return isOfficial === false;
+    });
+
+    // Assign official positions only to official runners
+    officialRunners.forEach((runner, index) => {
       const position = index + 1;
       const handicapKey = distance === '5km' ? 'current_handicap_5k' : 'current_handicap_10k';
       const currentHandicap = runner[handicapKey];
@@ -318,6 +329,46 @@ export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runne
       runner.new_handicap = msToTimeString(newHandicapMs);
       runner.finish_position = position;
     });
+
+    // Process unofficial runners - no official positions, but still apply handicap adjustments
+    unofficialRunners.forEach((runner) => {
+      const handicapKey = distance === '5km' ? 'current_handicap_5k' : 'current_handicap_10k';
+      const currentHandicap = runner[handicapKey];
+
+      if (!currentHandicap) {
+        return;
+      }
+
+      const currentHandicapMs = timeStringToMs(currentHandicap);
+      const targetFinishTimeMs = distance === '5km' ? TARGET_5KM_MS : TARGET_10KM_MS;
+      const timeDifferenceMs = runner.finish_time! - targetFinishTimeMs;
+
+      let handicapAdjustmentMs = 0;
+
+      if (distance === '10km') {
+        // Apply same rules as official runners for handicap adjustment
+        if (timeDifferenceMs < 0) { // Beat target time
+          const minimumAdjustment = 60000; // 1 minute minimum
+          const timeBasedAdjustment = -timeDifferenceMs;
+          handicapAdjustmentMs = roundToNext5Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
+        } else {
+          handicapAdjustmentMs = -30000; // Penalty reduction
+        }
+      } else {
+        // 5km
+        if (timeDifferenceMs < 0) { // Beat target time
+          const minimumAdjustment = 30000; // 30 seconds minimum
+          const timeBasedAdjustment = -timeDifferenceMs;
+          handicapAdjustmentMs = roundToNext5Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
+        } else {
+          handicapAdjustmentMs = -15000; // Penalty reduction
+        }
+      }
+
+      const newHandicapMs = Math.max(0, currentHandicapMs + handicapAdjustmentMs);
+      runner.new_handicap = msToTimeString(newHandicapMs);
+      // Do NOT set finish_position for unofficial runners
+    });
   });
 
   // Update championship data if raceMonth is provided
@@ -347,27 +398,31 @@ export function generateResults(runners: Runner[]): { fiveKm: RaceResults; tenKm
   const fiveKmRunners = runners
     .filter(r => r.distance === '5km' && r.finish_time !== undefined)
     .sort((a, b) => a.finish_time! - b.finish_time!);
-  
+
   const tenKmRunners = runners
     .filter(r => r.distance === '10km' && r.finish_time !== undefined)
     .sort((a, b) => a.finish_time! - b.finish_time!);
-  
+
+  // Filter for official runners only for podium (those with finish_position)
+  const fiveKmOfficial = fiveKmRunners.filter(r => r.finish_position !== undefined);
+  const tenKmOfficial = tenKmRunners.filter(r => r.finish_position !== undefined);
+
   return {
     fiveKm: {
       distance: '5km',
       podium: {
-        first: fiveKmRunners[0],
-        second: fiveKmRunners[1],
-        third: fiveKmRunners[2],
+        first: fiveKmOfficial[0],
+        second: fiveKmOfficial[1],
+        third: fiveKmOfficial[2],
       },
       all_finishers: fiveKmRunners,
     },
     tenKm: {
       distance: '10km',
       podium: {
-        first: tenKmRunners[0],
-        second: tenKmRunners[1],
-        third: tenKmRunners[2],
+        first: tenKmOfficial[0],
+        second: tenKmOfficial[1],
+        third: tenKmOfficial[2],
       },
       all_finishers: tenKmRunners,
     },
