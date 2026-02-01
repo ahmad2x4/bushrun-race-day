@@ -599,14 +599,13 @@ export function appendRaceToHistory(
 /**
  * Update runner's championship data after race completion
  * Called after race results are finalized
+ *
+ * For OFFICIAL runners: Records position and points earned
+ * For UNOFFICIAL runners: Records as position "0" with 0 points, but gun time is captured
+ * This allows tracking participation history even for unofficial/family pace runners
  */
 export function updateChampionshipData(runner: Runner, currentMonth: number): Runner {
-  // Only update if runner is official for their distance
   const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k;
-  if (!isOfficial) {
-    console.debug(`[Championship] ${runner.full_name} (${runner.distance}) - Not official, skipping`);
-    return runner;
-  }
 
   // Only update if runner actually participated (finished, DNF, early start, or starter/timekeeper)
   if (!runner.finish_position && !runner.status) {
@@ -615,12 +614,14 @@ export function updateChampionshipData(runner: Runner, currentMonth: number): Ru
   }
 
   // Get championship points for this race
-  const pointsEarned = getChampionshipPoints(runner.finish_position ?? null, runner.status);
+  // Official runners get points based on position, unofficial runners get 0
+  const pointsEarned = isOfficial ? getChampionshipPoints(runner.finish_position ?? null, runner.status) : 0;
 
   // Debug: Log what's being calculated
   if (runner.finish_position !== undefined || runner.status) {
-    const posStr = runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'ES' : runner.finish_position || '?';
-    console.debug(`[Championship] ${runner.full_name} (${runner.distance}): Position ${posStr} = ${pointsEarned} pts`);
+    const statusLabel = isOfficial ? 'Official' : 'Unofficial';
+    const posStr = runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'ES' : runner.status === 'starter_timekeeper' ? 'ST' : runner.finish_position ? (isOfficial ? runner.finish_position : '0 (UO)') : '?';
+    console.debug(`[Championship] ${runner.full_name} (${runner.distance}, ${statusLabel}): Position ${posStr} = ${pointsEarned} pts`);
   }
 
   // Get finish time in seconds (convert from milliseconds)
@@ -634,6 +635,9 @@ export function updateChampionshipData(runner: Runner, currentMonth: number): Ru
     positionStr = 'DNF';
   } else if (runner.status === 'early_start') {
     positionStr = 'ES';
+  } else if (!isOfficial && runner.finish_position) {
+    // Unofficial finisher - record as 0 position but track gun time
+    positionStr = '0';
   } else {
     positionStr = String(runner.finish_position || 0);
   }

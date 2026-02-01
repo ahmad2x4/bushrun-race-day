@@ -3,6 +3,7 @@ import type { Race, RaceResults } from '../../types'
 import { calculateHandicaps, generateResults, generateNextRaceCSV } from '../../raceLogic'
 import { db } from '../../db'
 import { CSVSyncService } from '../../services'
+import { getMonthAEST, getYearAEST, getCurrentDateAEST } from '../../timeUtils'
 import PodiumDisplay from '../race/PodiumDisplay'
 import ResultsTable from '../race/ResultsTable'
 import ExportSection from '../race/ExportSection'
@@ -38,8 +39,8 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
   const handleCalculateHandicaps = async () => {
     if (!currentRace) return
 
-    // Extract race month from race date (1-12)
-    const raceMonth = new Date(currentRace.date).getMonth() + 1
+    // Extract race month from race date in AEST (Sydney timezone) (1-12)
+    const raceMonth = getMonthAEST(currentRace.date)
 
     // Calculate new handicaps with championship support
     const runnersWithNewHandicaps = calculateHandicaps(currentRace.runners, raceMonth)
@@ -63,9 +64,8 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
     // Automatically upload to WordPress after calculating positions
     try {
       const csvContent = generateNextRaceCSV(runnersWithNewHandicaps)
-      const today = new Date()
-      const raceYear = today.getFullYear()
-      const raceDate = today.toISOString().split('T')[0]
+      const raceDate = getCurrentDateAEST()
+      const raceYear = getYearAEST(currentRace.date)
 
       await csvSync.pushCSVToWordPress(
         csvContent,
@@ -113,8 +113,8 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
       return runner
     })
 
-    // Extract race month for championship updates
-    const raceMonth = new Date(currentRace.date).getMonth() + 1
+    // Extract race month in AEST (Sydney timezone) for championship updates
+    const raceMonth = getMonthAEST(currentRace.date)
 
     // Recalculate handicaps and positions with championship support
     const runnersWithNewHandicaps = calculateHandicaps(updatedRunners, raceMonth)
@@ -138,9 +138,8 @@ function ResultsView({ currentRace, setCurrentRace }: ResultsViewProps) {
       // Automatically upload updated data to WordPress after time adjustment
       try {
         const csvContent = generateNextRaceCSV(runnersWithNewHandicaps)
-        const today = new Date()
-        const raceYear = today.getFullYear()
-        const raceDate = today.toISOString().split('T')[0]
+        const raceDate = getCurrentDateAEST()
+        const raceYear = getYearAEST(currentRace.date)
 
         await csvSync.pushCSVToWordPress(
           csvContent,

@@ -40,6 +40,32 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showNewMemberDialog, setShowNewMemberDialog] = useState(false)
 
+  // Helper function to get current official status based on selected distance
+  const getCurrentOfficialStatus = (): boolean => {
+    if (!foundRunner) return true
+    return selectedDistance === '5km'
+      ? (foundRunner.is_official_5k ?? true)
+      : (foundRunner.is_official_10k ?? true)
+  }
+
+  // Helper function to toggle official status
+  const handleOfficialStatusToggle = async () => {
+    if (!foundRunner || !currentRace) return
+
+    const newOfficialStatus = !getCurrentOfficialStatus()
+
+    if (selectedDistance === '5km') {
+      foundRunner.is_official_5k = newOfficialStatus
+    } else {
+      foundRunner.is_official_10k = newOfficialStatus
+    }
+
+    // Persist to database
+    const updatedRace = { ...currentRace, runners: [...currentRace.runners] }
+    await db.saveRace(updatedRace)
+    setCurrentRace(updatedRace)
+  }
+
   // Helper function for time adjustment
   const handleTimeAdjustment = async (adjustment: number) => {
     if (!foundRunner || !currentRace) return
@@ -393,6 +419,27 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
                   {selectedDistance === '5km' ? foundRunner.current_handicap_5k || '00:00' : foundRunner.current_handicap_10k || '00:00'}
                 </div>
               )}
+
+              {/* Official Status Checkbox */}
+              <div className="my-4 flex items-center gap-3 p-3 bg-white dark:bg-gray-700 rounded-lg border border-blue-200 dark:border-blue-600">
+                <input
+                  type="checkbox"
+                  id="official-status"
+                  checked={getCurrentOfficialStatus()}
+                  onChange={handleOfficialStatusToggle}
+                  className="w-5 h-5 cursor-pointer accent-blue-600"
+                />
+                <label htmlFor="official-status" className="flex-1 cursor-pointer">
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    {getCurrentOfficialStatus() ? '✓' : '○'} Official Runner
+                  </span>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {getCurrentOfficialStatus()
+                      ? 'Running at official handicap time'
+                      : 'Running unofficially (family/other pace)'}
+                  </p>
+                </label>
+              </div>
 
               <div className="text-base font-semibold text-blue-700 dark:text-blue-300 mb-2">
                 You will start <span className="font-black">{selectedDistance === '5km' ? foundRunner.current_handicap_5k || '00:00' : foundRunner.current_handicap_10k || '00:00'}</span> after the race begins
