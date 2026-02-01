@@ -1170,7 +1170,7 @@ describe('Championship System', () => {
   });
 
   describe('updateChampionshipData', () => {
-    it('should not update non-official runner', () => {
+    it('should update non-official runner with 0 position and 0 points', () => {
       const runner: Runner = {
         member_number: 1,
         full_name: 'Test',
@@ -1178,12 +1178,14 @@ describe('Championship System', () => {
         distance: '5km',
         is_official_5k: false,
         finish_position: 1,
-        finish_time: 895000
+        finish_time: 895000,
+        current_handicap_5k: '02:00'
       };
 
       const result = updateChampionshipData(runner, 2);
-      expect(result.championship_races_5k).toBeUndefined();
-      expect(result.championship_points_5k).toBeUndefined();
+      // Unofficial runners are tracked with position "0", 0 points, but gun time recorded
+      expect(result.championship_races_5k).toBe('2;0;0;14:55');
+      expect(result.championship_points_5k).toBe(0);
     });
 
     it('should update official 5k runner', () => {
