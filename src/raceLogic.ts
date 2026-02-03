@@ -258,8 +258,19 @@ export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runne
     const distanceRunners = results
       .filter(r => r.distance === distance && r.finish_time !== undefined && (!r.status || r.status === 'finished'))
       .sort((a, b) => a.finish_time! - b.finish_time!);
-    
-    distanceRunners.forEach((runner, index) => {
+
+    // Separate official and unofficial finishers
+    const officialRunners = distanceRunners.filter(r => {
+      const isOfficial = distance === '5km' ? r.is_official_5k : r.is_official_10k;
+      return isOfficial !== false; // Default to true if undefined
+    });
+    const unofficialRunners = distanceRunners.filter(r => {
+      const isOfficial = distance === '5km' ? r.is_official_5k : r.is_official_10k;
+      return isOfficial === false;
+    });
+
+    // Assign official positions only to official runners
+    officialRunners.forEach((runner, index) => {
       const position = index + 1;
       const handicapKey = distance === '5km' ? 'current_handicap_5k' : 'current_handicap_10k';
       const currentHandicap = runner[handicapKey];
@@ -318,6 +329,46 @@ export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runne
       runner.new_handicap = msToTimeString(newHandicapMs);
       runner.finish_position = position;
     });
+
+    // Process unofficial runners - no official positions, but still apply handicap adjustments
+    unofficialRunners.forEach((runner) => {
+      const handicapKey = distance === '5km' ? 'current_handicap_5k' : 'current_handicap_10k';
+      const currentHandicap = runner[handicapKey];
+
+      if (!currentHandicap) {
+        return;
+      }
+
+      const currentHandicapMs = timeStringToMs(currentHandicap);
+      const targetFinishTimeMs = distance === '5km' ? TARGET_5KM_MS : TARGET_10KM_MS;
+      const timeDifferenceMs = runner.finish_time! - targetFinishTimeMs;
+
+      let handicapAdjustmentMs = 0;
+
+      if (distance === '10km') {
+        // Apply same rules as official runners for handicap adjustment
+        if (timeDifferenceMs < 0) { // Beat target time
+          const minimumAdjustment = 60000; // 1 minute minimum
+          const timeBasedAdjustment = -timeDifferenceMs;
+          handicapAdjustmentMs = roundToNext5Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
+        } else {
+          handicapAdjustmentMs = -30000; // Penalty reduction
+        }
+      } else {
+        // 5km
+        if (timeDifferenceMs < 0) { // Beat target time
+          const minimumAdjustment = 30000; // 30 seconds minimum
+          const timeBasedAdjustment = -timeDifferenceMs;
+          handicapAdjustmentMs = roundToNext5Seconds(Math.max(minimumAdjustment, timeBasedAdjustment));
+        } else {
+          handicapAdjustmentMs = -15000; // Penalty reduction
+        }
+      }
+
+      const newHandicapMs = Math.max(0, currentHandicapMs + handicapAdjustmentMs);
+      runner.new_handicap = msToTimeString(newHandicapMs);
+      // Do NOT set finish_position for unofficial runners
+    });
   });
 
   // Update championship data if raceMonth is provided
@@ -347,27 +398,31 @@ export function generateResults(runners: Runner[]): { fiveKm: RaceResults; tenKm
   const fiveKmRunners = runners
     .filter(r => r.distance === '5km' && r.finish_time !== undefined)
     .sort((a, b) => a.finish_time! - b.finish_time!);
-  
+
   const tenKmRunners = runners
     .filter(r => r.distance === '10km' && r.finish_time !== undefined)
     .sort((a, b) => a.finish_time! - b.finish_time!);
-  
+
+  // Filter for official runners only for podium (those with finish_position)
+  const fiveKmOfficial = fiveKmRunners.filter(r => r.finish_position !== undefined);
+  const tenKmOfficial = tenKmRunners.filter(r => r.finish_position !== undefined);
+
   return {
     fiveKm: {
       distance: '5km',
       podium: {
-        first: fiveKmRunners[0],
-        second: fiveKmRunners[1],
-        third: fiveKmRunners[2],
+        first: fiveKmOfficial[0],
+        second: fiveKmOfficial[1],
+        third: fiveKmOfficial[2],
       },
       all_finishers: fiveKmRunners,
     },
     tenKm: {
       distance: '10km',
       podium: {
-        first: tenKmRunners[0],
-        second: tenKmRunners[1],
-        third: tenKmRunners[2],
+        first: tenKmOfficial[0],
+        second: tenKmOfficial[1],
+        third: tenKmOfficial[2],
       },
       all_finishers: tenKmRunners,
     },
@@ -544,14 +599,13 @@ export function appendRaceToHistory(
 /**
  * Update runner's championship data after race completion
  * Called after race results are finalized
+ *
+ * For OFFICIAL runners: Records position and points earned
+ * For UNOFFICIAL runners: Records as position "0" with 0 points, but gun time is captured
+ * This allows tracking participation history even for unofficial/family pace runners
  */
 export function updateChampionshipData(runner: Runner, currentMonth: number): Runner {
-  // Only update if runner is official for their distance
   const isOfficial = runner.distance === '5km' ? runner.is_official_5k : runner.is_official_10k;
-  if (!isOfficial) {
-    console.debug(`[Championship] ${runner.full_name} (${runner.distance}) - Not official, skipping`);
-    return runner;
-  }
 
   // Only update if runner actually participated (finished, DNF, early start, or starter/timekeeper)
   if (!runner.finish_position && !runner.status) {
@@ -560,12 +614,14 @@ export function updateChampionshipData(runner: Runner, currentMonth: number): Ru
   }
 
   // Get championship points for this race
-  const pointsEarned = getChampionshipPoints(runner.finish_position ?? null, runner.status);
+  // Official runners get points based on position, unofficial runners get 0
+  const pointsEarned = isOfficial ? getChampionshipPoints(runner.finish_position ?? null, runner.status) : 0;
 
   // Debug: Log what's being calculated
   if (runner.finish_position !== undefined || runner.status) {
-    const posStr = runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'ES' : runner.finish_position || '?';
-    console.debug(`[Championship] ${runner.full_name} (${runner.distance}): Position ${posStr} = ${pointsEarned} pts`);
+    const statusLabel = isOfficial ? 'Official' : 'Unofficial';
+    const posStr = runner.status === 'dnf' ? 'DNF' : runner.status === 'early_start' ? 'ES' : runner.status === 'starter_timekeeper' ? 'ST' : runner.finish_position ? (isOfficial ? runner.finish_position : '0 (UO)') : '?';
+    console.debug(`[Championship] ${runner.full_name} (${runner.distance}, ${statusLabel}): Position ${posStr} = ${pointsEarned} pts`);
   }
 
   // Get finish time in seconds (convert from milliseconds)
@@ -579,6 +635,9 @@ export function updateChampionshipData(runner: Runner, currentMonth: number): Ru
     positionStr = 'DNF';
   } else if (runner.status === 'early_start') {
     positionStr = 'ES';
+  } else if (!isOfficial && runner.finish_position) {
+    // Unofficial finisher - record as 0 position but track gun time
+    positionStr = '0';
   } else {
     positionStr = String(runner.finish_position || 0);
   }
