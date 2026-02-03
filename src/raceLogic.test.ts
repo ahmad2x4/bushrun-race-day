@@ -413,23 +413,25 @@ describe('Handicap calculation engine', () => {
 describe('Results generation', () => {
   it('should generate podium results correctly', () => {
     const runners: Runner[] = [
-      { member_number: 1, full_name: 'Alice', distance: '5km', finish_time: 30000, is_financial_member: true },
-      { member_number: 2, full_name: 'Bob', distance: '5km', finish_time: 32000, is_financial_member: true },
-      { member_number: 3, full_name: 'Charlie', distance: '5km', finish_time: 35000, is_financial_member: true },
-      { member_number: 4, full_name: 'David', distance: '10km', finish_time: 60000, is_financial_member: true },
-      { member_number: 5, full_name: 'Eve', distance: '10km', finish_time: 65000, is_financial_member: true },
+      { member_number: 1, full_name: 'Alice', distance: '5km', finish_time: 30000, is_financial_member: true, is_official_5k: true, current_handicap_5k: '02:00' },
+      { member_number: 2, full_name: 'Bob', distance: '5km', finish_time: 32000, is_financial_member: true, is_official_5k: true, current_handicap_5k: '02:00' },
+      { member_number: 3, full_name: 'Charlie', distance: '5km', finish_time: 35000, is_financial_member: true, is_official_5k: true, current_handicap_5k: '02:00' },
+      { member_number: 4, full_name: 'David', distance: '10km', finish_time: 60000, is_financial_member: true, is_official_10k: true, current_handicap_10k: '05:00' },
+      { member_number: 5, full_name: 'Eve', distance: '10km', finish_time: 65000, is_financial_member: true, is_official_10k: true, current_handicap_10k: '05:00' },
     ];
 
-    const results = generateResults(runners);
-    
+    // Need to run calculateHandicaps to set finish_position for official runners
+    const processedRunners = calculateHandicaps(runners);
+    const results = generateResults(processedRunners);
+
     expect(results.fiveKm.podium.first?.full_name).toBe('Alice');
     expect(results.fiveKm.podium.second?.full_name).toBe('Bob');
     expect(results.fiveKm.podium.third?.full_name).toBe('Charlie');
-    
+
     expect(results.tenKm.podium.first?.full_name).toBe('David');
     expect(results.tenKm.podium.second?.full_name).toBe('Eve');
     expect(results.tenKm.podium.third).toBeUndefined();
-    
+
     expect(results.fiveKm.all_finishers).toHaveLength(3);
     expect(results.tenKm.all_finishers).toHaveLength(2);
   });
@@ -1168,7 +1170,7 @@ describe('Championship System', () => {
   });
 
   describe('updateChampionshipData', () => {
-    it('should not update non-official runner', () => {
+    it('should update non-official runner with 0 position and 0 points', () => {
       const runner: Runner = {
         member_number: 1,
         full_name: 'Test',
@@ -1176,12 +1178,14 @@ describe('Championship System', () => {
         distance: '5km',
         is_official_5k: false,
         finish_position: 1,
-        finish_time: 895000
+        finish_time: 895000,
+        current_handicap_5k: '02:00'
       };
 
       const result = updateChampionshipData(runner, 2);
-      expect(result.championship_races_5k).toBeUndefined();
-      expect(result.championship_points_5k).toBeUndefined();
+      // Unofficial runners are tracked with position "0", 0 points, but gun time recorded
+      expect(result.championship_races_5k).toBe('2;0;0;14:55');
+      expect(result.championship_points_5k).toBe(0);
     });
 
     it('should update official 5k runner', () => {

@@ -7,6 +7,7 @@
 import { WordPressMediaService } from '../wordpress/WordPressMediaService';
 import { parseCSVFilename } from './filenameParser';
 import { parseCSV, generateNextRaceCSV, generateSeasonRolloverCSV } from '../../raceLogic';
+import { getCurrentMonthAEST, getCurrentDateAEST, getYearAEST } from '../../timeUtils';
 import type { Race, Runner } from '../../types';
 import type {
   ServiceResponse,
@@ -171,10 +172,10 @@ export class CSVSyncService {
     try {
       const csvContent = generateNextRaceCSV(race.runners);
 
-      const today = new Date();
-      const raceDate = today.toISOString().split('T')[0];
-      const raceMonth = today.getMonth() + 1; // 1-12
-      const raceYear = today.getFullYear();
+      // Use AEST (Sydney timezone) for consistency
+      const raceDate = getCurrentDateAEST();
+      const raceMonth = getCurrentMonthAEST(); // 1-12 in AEST
+      const raceYear = getYearAEST(raceDate);
 
       return await this.pushCSVToWordPress(
         csvContent,
@@ -203,10 +204,10 @@ export class CSVSyncService {
     try {
       const csvContent = generateSeasonRolloverCSV(race.runners);
 
-      const today = new Date();
-      const raceDate = today.toISOString().split('T')[0];
-      const raceMonth = today.getMonth() + 1; // 1-12
-      const raceYear = today.getFullYear();
+      // Use AEST (Sydney timezone) for consistency
+      const raceDate = getCurrentDateAEST();
+      const raceMonth = getCurrentMonthAEST(); // 1-12 in AEST
+      const raceYear = getYearAEST(raceDate);
 
       return await this.pushCSVToWordPress(
         csvContent,

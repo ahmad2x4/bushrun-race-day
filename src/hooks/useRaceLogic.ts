@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import type { Race, Runner } from '../types'
-import { 
-  calculateHandicaps, 
+import {
+  calculateHandicaps,
   timeStringToMs,
   generateResultsCSV,
   generateNextRaceCSV,
   downloadCSV
 } from '../raceLogic'
+import { getMonthAEST } from '../timeUtils'
 
 export function useHandicapCalculations() {
   const [isCalculating, setIsCalculating] = useState(false)
@@ -16,8 +17,8 @@ export function useHandicapCalculations() {
     try {
       const finishedRunners = race.runners.filter(r => r.finish_time !== undefined)
 
-      // Extract race month for championship updates
-      const raceMonth = new Date(race.date).getMonth() + 1
+      // Extract race month in AEST (Sydney timezone) for championship updates
+      const raceMonth = getMonthAEST(race.date)
 
       // Calculate handicaps with championship support
       const updatedRunners = calculateHandicaps(finishedRunners, raceMonth)
@@ -60,8 +61,8 @@ export function useTimeAdjustment() {
           : runner
       )
 
-      // Extract race month for championship updates
-      const raceMonth = new Date(race.date).getMonth() + 1
+      // Extract race month in AEST (Sydney timezone) for championship updates
+      const raceMonth = getMonthAEST(race.date)
 
       // Recalculate positions and handicaps with championship support
       const finishedRunners = updatedRunners.filter(r => r.finish_time !== undefined)
