@@ -5,6 +5,7 @@ import { db } from '../../db'
 import StaggeredStartQueue from '../race/StaggeredStartQueue'
 import FinishLineRegistration from '../race/FinishLineRegistration'
 import WakeLockIndicator from '../ui/WakeLockIndicator'
+import TimekeeperModal from '../race/TimekeeperModal'
 
 interface RaceDirectorViewProps {
   currentRace: Race | null
@@ -39,6 +40,8 @@ function RaceDirectorView({
       return false
     }
   })
+
+  const [isTimekeeperModalOpen, setIsTimekeeperModalOpen] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('raceDirectorFocusMode', JSON.stringify(isFocusMode))
@@ -112,7 +115,7 @@ function RaceDirectorView({
 
   const handleRunnerRemoved = useCallback(async (runnerId: number) => {
     if (!currentRace || !setCurrentRace) return
-    
+
     try {
       // Find and clear runner's finish time
       const runnerIndex = currentRace.runners.findIndex(r => r.member_number === runnerId)
@@ -133,6 +136,56 @@ function RaceDirectorView({
       setCurrentRace(updatedRace)
     } catch (error) {
       console.error('Error removing runner:', error)
+    }
+  }, [currentRace, setCurrentRace])
+
+  const handleAddTimekeeper = useCallback(async (runnerNumber: number) => {
+    if (!currentRace || !setCurrentRace) return
+
+    try {
+      const runnerIndex = currentRace.runners.findIndex(r => r.member_number === runnerNumber)
+      if (runnerIndex === -1) {
+        console.error(`Runner with number ${runnerNumber} not found`)
+        return
+      }
+
+      const updatedRunners = [...currentRace.runners]
+      updatedRunners[runnerIndex] = {
+        ...updatedRunners[runnerIndex],
+        status: 'starter_timekeeper',
+        finish_time: undefined,
+        finish_position: undefined
+      }
+
+      const updatedRace = { ...currentRace, runners: updatedRunners }
+      await db.saveRace(updatedRace)
+      setCurrentRace(updatedRace)
+    } catch (error) {
+      console.error('Error adding timekeeper:', error)
+    }
+  }, [currentRace, setCurrentRace])
+
+  const handleRemoveTimekeeper = useCallback(async (runnerNumber: number) => {
+    if (!currentRace || !setCurrentRace) return
+
+    try {
+      const runnerIndex = currentRace.runners.findIndex(r => r.member_number === runnerNumber)
+      if (runnerIndex === -1) {
+        console.error(`Runner with number ${runnerNumber} not found`)
+        return
+      }
+
+      const updatedRunners = [...currentRace.runners]
+      updatedRunners[runnerIndex] = {
+        ...updatedRunners[runnerIndex],
+        status: undefined
+      }
+
+      const updatedRace = { ...currentRace, runners: updatedRunners }
+      await db.saveRace(updatedRace)
+      setCurrentRace(updatedRace)
+    } catch (error) {
+      console.error('Error removing timekeeper:', error)
     }
   }, [currentRace, setCurrentRace])
 
@@ -205,18 +258,27 @@ function RaceDirectorView({
           <span className="uppercase tracking-wide font-semibold">
             {isFocusMode ? 'Focus mode enabled' : isActiveRaceState ? 'Active race controls' : 'Focus mode available once race starts'}
           </span>
-          <button
-            type="button"
-            onClick={() => setIsFocusMode((prev: boolean) => !prev)}
-            disabled={!isActiveRaceState && !isFocusMode}
-            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs sm:text-sm font-medium transition ${
-              isFocusMode
-                ? 'border-yellow-400 bg-yellow-50 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-200'
-                : 'border-blue-300 text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-700 dark:text-blue-200'
-            }`}
-          >
-            {isFocusMode ? 'Exit Focus Mode' : 'Enter Focus Mode'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsTimekeeperModalOpen(true)}
+              className="inline-flex items-center gap-1 rounded-full border border-purple-300 px-3 py-1 text-xs sm:text-sm font-medium text-purple-700 hover:bg-purple-50 transition dark:border-purple-700 dark:text-purple-200 dark:hover:bg-purple-900/20"
+            >
+              ⏱️ {currentRace.runners.filter(r => r.status === 'starter_timekeeper').length}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFocusMode((prev: boolean) => !prev)}
+              disabled={!isActiveRaceState && !isFocusMode}
+              className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs sm:text-sm font-medium transition ${
+                isFocusMode
+                  ? 'border-yellow-400 bg-yellow-50 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-200'
+                  : 'border-blue-300 text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-blue-700 dark:text-blue-200'
+              }`}
+            >
+              {isFocusMode ? 'Exit Focus Mode' : 'Enter Focus Mode'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -329,6 +391,15 @@ function RaceDirectorView({
           )
         })()}
       </div>
+
+      {/* Timekeeper Management Modal */}
+      <TimekeeperModal
+        isOpen={isTimekeeperModalOpen}
+        onClose={() => setIsTimekeeperModalOpen(false)}
+        runners={currentRace.runners}
+        onAddTimekeeper={handleAddTimekeeper}
+        onRemoveTimekeeper={handleRemoveTimekeeper}
+      />
     </div>
   )
 }
