@@ -110,8 +110,9 @@ export class WordPressMediaService {
         };
       }
 
-      // Fetch the CSV file
-      const csvResponse = await fetch(url);
+      // Fetch the CSV file with cache-busting to always get fresh content
+      const cacheBustUrl = `${url}?t=${Date.now()}`;
+      const csvResponse = await fetch(cacheBustUrl);
       if (!csvResponse.ok) {
         return {
           success: false,
