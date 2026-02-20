@@ -229,8 +229,9 @@ export class CSVSyncService {
 
   /**
    * Download and parse CSV file
+   * Public method to allow direct download of a specific CSV file
    */
-  private async downloadAndParseCSV(
+  async downloadAndParseCSV(
     media: MediaItem
   ): Promise<ServiceResponse<PullCSVResponse>> {
     try {
@@ -310,5 +311,137 @@ export class CSVSyncService {
    */
   async getMostRecentCSV(): Promise<ServiceResponse<MediaItem | null>> {
     return await this.mediaService.getMostRecentCSV();
+  }
+
+  /**
+   * Find matching CSV file without downloading it
+   * Returns the MediaItem if found, to show in confirmation dialog
+   * Uses the same hybrid matching strategy as pullCSVFromWordPress
+   */
+  async findMatchingCSV(
+    targetMonth: number,
+    targetYear: number,
+    testingMode: boolean = false
+  ): Promise<ServiceResponse<MediaItem | null>> {
+    try {
+      // Testing mode: return most recent CSV
+      if (testingMode) {
+        return await this.mediaService.getMostRecentCSV();
+      }
+
+      // Try metadata matching first
+      let matchedMedia = await this.mediaService.queryCSVsByMetadata(
+        targetMonth,
+        targetYear
+      );
+
+      if (matchedMedia.success && matchedMedia.data) {
+        return matchedMedia;
+      }
+
+      // Try filename parsing (fallback)
+      const csvList = await this.mediaService.listAllCSVs();
+      if (csvList.success && csvList.data) {
+        const mediaByFilename = this.findByFilename(
+          csvList.data,
+          targetMonth,
+          targetYear
+        );
+
+        if (mediaByFilename) {
+          return {
+            success: true,
+            data: mediaByFilename,
+          };
+        }
+      }
+
+      // Backward search (up to 12 months)
+      for (let i = 1; i <= 12; i++) {
+        let searchMonth = targetMonth - i;
+        let searchYear = targetYear;
+
+        // Handle year boundaries
+        if (searchMonth < 1) {
+          searchMonth += 12;
+          searchYear -= 1;
+        }
+
+        // Try metadata matching
+        matchedMedia = await this.mediaService.queryCSVsByMetadata(
+          searchMonth,
+          searchYear
+        );
+
+        if (matchedMedia.success && matchedMedia.data) {
+          return matchedMedia;
+        }
+
+        // Try filename parsing
+        if (csvList.success && csvList.data) {
+          const mediaByFilename = this.findByFilename(
+            csvList.data,
+            searchMonth,
+            searchYear
+          );
+
+          if (mediaByFilename) {
+            return {
+              success: true,
+              data: mediaByFilename,
+            };
+          }
+        }
+      }
+
+      return {
+        success: true,
+        data: null,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        success: false,
+        error: `Failed to find matching CSV: ${errorMessage}`,
+      };
+    }
+  }
+
+  /**
+   * Get the most recent CSV files for user selection
+   * Returns up to 2 most recent CSV files sorted by date (newest first)
+   */
+  async getRecentCSVsForSelection(): Promise<ServiceResponse<MediaItem[]>> {
+    try {
+      const csvList = await this.mediaService.listAllCSVs();
+
+      if (!csvList.success) {
+        return csvList;
+      }
+
+      const items = csvList.data || [];
+
+      if (items.length === 0) {
+        return {
+          success: true,
+          data: [],
+        };
+      }
+
+      // Items are already sorted by date descending in listAllCSVs
+      // Return top 2 most recent
+      return {
+        success: true,
+        data: items.slice(0, 2),
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      return {
+        success: false,
+        error: `Failed to get recent CSVs: ${errorMessage}`,
+      };
+    }
   }
 }
