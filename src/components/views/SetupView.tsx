@@ -3,7 +3,9 @@ import type { Race, Runner, AppView } from '../../types'
 import { parseCSV, validateRunnerData } from '../../raceLogic'
 import { db } from '../../db'
 import { WordPressConfig, CSVSyncService } from '../../services'
+import type { MediaItem } from '../../services/wordpress/types'
 import PrintStartTimes from '../race/PrintStartTimes'
+import CSVLoadConfirmDialog from '../ui/CSVLoadConfirmDialog'
 
 interface SetupViewProps {
   currentRace: Race | null
@@ -21,78 +23,48 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
   const [showPrintStartTimes, setShowPrintStartTimes] = useState(false)
 
   // WordPress auto-load state
-  const [isLoadingFromWordPress, setIsLoadingFromWordPress] = useState(false)
+  const [isCheckingWordPress, setIsCheckingWordPress] = useState(false)
   const [wordPressError, setWordPressError] = useState<string | null>(null)
   const [wordPressSuccess, setWordPressSuccess] = useState(false)
+
+  // CSV confirmation dialog state
+  const [showCSVConfirm, setShowCSVConfirm] = useState(false)
+  const [matchedCSVs, setMatchedCSVs] = useState<MediaItem[]>([])
 
   // Create CSV sync service instance
   const csvSync = useMemo(() => new CSVSyncService(), [])
 
-  // Auto-load CSV from WordPress on component mount
+  // Check for recent CSVs from WordPress on component mount
   useEffect(() => {
     if (currentRace) return // Already have race loaded
 
-    const autoLoadFromWordPress = async () => {
+    const checkForWordPressCSVs = async () => {
       const wpConfig = WordPressConfig.getInstance()
       if (!wpConfig.isEnabled()) {
         return // WordPress not configured
       }
 
-      setIsLoadingFromWordPress(true)
+      setIsCheckingWordPress(true)
       setWordPressError(null)
 
-      // Calculate previous month
-      const today = new Date()
-      let targetMonth = today.getMonth() // 0-11
-      let targetYear = today.getFullYear()
+      // Get the 2 most recent CSV files
+      const response = await csvSync.getRecentCSVsForSelection()
 
-      // Jan (0) -> load Dec (11) from previous year
-      // Feb (1) -> load Dec (11) from previous year
-      // Mar+ -> load previous month
-      if (targetMonth <= 1) {
-        targetMonth = 11
-        targetYear -= 1
-      } else {
-        targetMonth -= 1
+      setIsCheckingWordPress(false)
+
+      if (response.success && response.data.length > 0) {
+        // Found CSV files - show confirmation dialog
+        setMatchedCSVs(response.data)
+        setShowCSVConfirm(true)
+      } else if (!response.success) {
+        // Error occurred
+        setWordPressError(response.error || 'Failed to check for race data')
       }
-
-      // TODO: Get testing mode from clubConfig context
-      const useTestingMode = false
-
-      const response = await csvSync.pullCSVFromWordPress(
-        targetMonth + 1, // Convert to 1-12
-        targetYear,
-        useTestingMode
-      )
-
-      setIsLoadingFromWordPress(false)
-
-      if (response.success) {
-        // Create race from pulled runners
-        const newRace: Race = {
-          id: `race-${Date.now()}`,
-          name: `Bushrun ${new Date().toLocaleDateString()}`,
-          date: new Date().toISOString().split('T')[0],
-          status: 'setup',
-          runners: response.data.runners,
-          race_5k_active: false,
-          race_10k_active: false,
-          next_temp_number: 999,
-        }
-
-        await db.saveRace(newRace)
-        setCurrentRace(newRace)
-        setRunners(response.data.runners)
-        setWordPressSuccess(true)
-        setUploadStatus('success')
-      } else {
-        // Show error, fallback to local upload
-        setWordPressError(response.error)
-      }
+      // If response.success but no data, just continue to manual upload (no error shown)
     }
 
-    autoLoadFromWordPress()
-  }, [currentRace, csvSync, setCurrentRace]) // Run on mount and when dependencies change
+    checkForWordPressCSVs()
+  }, [currentRace, csvSync]) // Run on mount and when dependencies change
 
   const handleFileUpload = async (file: File) => {
     setUploadStatus('processing')
@@ -170,6 +142,46 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
     }
   }
 
+  const handleConfirmLoadCSV = async (selectedFile: MediaItem) => {
+    setShowCSVConfirm(false)
+    setIsCheckingWordPress(true)
+    setWordPressError(null)
+
+    // Download and parse the selected CSV file
+    const response = await csvSync.downloadAndParseCSV(selectedFile)
+
+    setIsCheckingWordPress(false)
+
+    if (response.success) {
+      // Create race from pulled runners
+      const newRace: Race = {
+        id: `race-${Date.now()}`,
+        name: `Bushrun ${new Date().toLocaleDateString()}`,
+        date: new Date().toISOString().split('T')[0],
+        status: 'setup',
+        runners: response.data.runners,
+        race_5k_active: false,
+        race_10k_active: false,
+        next_temp_number: 999,
+      }
+
+      await db.saveRace(newRace)
+      setCurrentRace(newRace)
+      setRunners(response.data.runners)
+      setWordPressSuccess(true)
+      setUploadStatus('success')
+    } else {
+      // Show error, fallback to local upload
+      setWordPressError(response.error)
+    }
+  }
+
+  const handleCancelLoadCSV = () => {
+    setShowCSVConfirm(false)
+    setMatchedCSVs([])
+    // User will now see the manual upload screen
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <h2 className="text-3xl font-bold mb-6 text-center">Race Setup</h2>
@@ -181,10 +193,12 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
           </p>
 
           {/* WordPress Loading Indicator */}
-          {isLoadingFromWordPress && (
+          {isCheckingWordPress && (
             <div className="text-center py-8">
               <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">Loading race data from WordPress...</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                {showCSVConfirm ? 'Loading race data from WordPress...' : 'Checking for race data in WordPress...'}
+              </p>
             </div>
           )}
 
@@ -454,6 +468,15 @@ function SetupView({ currentRace, setCurrentRace, setCurrentView, setShowResetCo
           </div>
         </div>
       )}
+
+      {/* CSV Load Confirmation Dialog */}
+      <CSVLoadConfirmDialog
+        isOpen={showCSVConfirm}
+        onClose={handleCancelLoadCSV}
+        onConfirm={handleConfirmLoadCSV}
+        csvFiles={matchedCSVs}
+      />
+
       {currentRace && (
         <PrintStartTimes
           race={currentRace}
