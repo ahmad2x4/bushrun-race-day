@@ -6,9 +6,10 @@ interface NumberPadProps {
   disabled: boolean
   buttonText?: string
   onNewMember?: () => void // Optional callback for new member registration
+  onSearch?: () => void // Optional callback for member search
 }
 
-function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, buttonText = "Check In Runner", onNewMember }: NumberPadProps) {
+function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, buttonText = "Check In Runner", onNewMember, onSearch }: NumberPadProps) {
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 
   return (
@@ -59,6 +60,18 @@ function NumberPad({ onNumberClick, onBackspace, onClear, onCheckin, disabled, b
           >
             +
           </button>
+          {/* Search Member Button - Compact (only show if onSearch is provided) */}
+          {onSearch && (
+            <button
+              onClick={onSearch}
+              aria-label="Search member by name"
+              className="w-14 sm:w-16 md:w-18 h-14 sm:h-16 md:h-18 rounded-lg transition-colors focus:outline-none focus:ring-4 bg-purple-600 hover:bg-purple-700 text-white focus:ring-purple-200 dark:focus:ring-purple-800 flex items-center justify-center"
+            >
+              <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          )}
           {/* Find Runner Button - Takes remaining space */}
           <button
             onClick={onCheckin}
