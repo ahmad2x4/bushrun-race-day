@@ -4,6 +4,7 @@ import { db } from '../../db'
 import NumberPad from '../ui/NumberPad'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import NewMemberDialog from '../forms/NewMemberDialog'
+import MemberSearchPopup from '../ui/MemberSearchPopup'
 import { useTapAndHold } from '../../hooks'
 import { getHandicapForDistance } from '../../raceLogic'
 
@@ -39,6 +40,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
   const [isCalculatedHandicap, setIsCalculatedHandicap] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showNewMemberDialog, setShowNewMemberDialog] = useState(false)
+  const [showMemberSearch, setShowMemberSearch] = useState(false)
 
   // Helper function to get current official status based on selected distance
   const getCurrentOfficialStatus = (): boolean => {
@@ -137,6 +139,11 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
     setCheckinStep('member_number')
     setFoundRunner(null)
     setSelectedDistance('5km')
+  }
+
+  const handleMemberSelected = (memberNumber: string) => {
+    setMemberNumber(memberNumber)
+    setShowMemberSearch(false)
   }
 
   // Helper function to check if runner is provisional for selected distance
@@ -566,8 +573,9 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
           onClear={handleClear}
           onCheckin={handleCheckin}
           disabled={!memberNumber.trim()}
-          buttonText="Find Runner"
+          buttonText="Enter Race"
           onNewMember={() => setShowNewMemberDialog(true)}
+          onSearch={() => setShowMemberSearch(true)}
         />
       )}
 
@@ -576,6 +584,14 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
         isOpen={showNewMemberDialog}
         onClose={() => setShowNewMemberDialog(false)}
         onRegister={handleNewMemberRegistration}
+      />
+
+      {/* Member Search Popup */}
+      <MemberSearchPopup
+        isOpen={showMemberSearch}
+        onClose={() => setShowMemberSearch(false)}
+        onSelectMember={handleMemberSelected}
+        runners={currentRace.runners}
       />
 
       {/* Provisional Runner Confirmation Dialog */}
