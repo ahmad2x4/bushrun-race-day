@@ -7,5 +7,6 @@ export { WordPressConfig } from './wordpress/WordPressConfig';
 export { WordPressAuthService } from './wordpress/WordPressAuthService';
 export { WordPressClient } from './wordpress/WordPressClient';
 export { WordPressMediaService } from './wordpress/WordPressMediaService';
+export { WordPressPageService } from './wordpress/WordPressPageService';
 export { parseCSVFilename, isValidCSVFilename } from './csv/filenameParser';
 export { CSVSyncService } from './csv/CSVSyncService';
