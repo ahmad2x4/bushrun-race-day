@@ -66,7 +66,7 @@ export interface ClubConfig {
   wordpress_testing_mode?: boolean; // Default: false - Use most recent CSV from WordPress for testing
 }
 
-export type AppView = 'setup' | 'checkin' | 'race-director' | 'results' | 'settings' | 'championship';
+export type AppView = 'setup' | 'checkin' | 'race-director' | 'results' | 'settings' | 'championship' | 'update-site-results';
 
 // UI State interfaces
 export interface RaceDirectorState {
