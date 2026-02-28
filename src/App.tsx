@@ -14,6 +14,7 @@ const CheckinView = lazy(() => import('./components/views/CheckinView'))
 const RaceDirectorView = lazy(() => import('./components/views/RaceDirectorView'))
 const ResultsView = lazy(() => import('./components/views/ResultsView'))
 const ChampionshipView = lazy(() => import('./components/views/ChampionshipView'))
+const UpdateSiteResultsView = lazy(() => import('./components/views/UpdateSiteResultsView'))
 
 function App() {
   const [currentView, setCurrentView] = useState<AppView>('setup')
@@ -303,9 +304,19 @@ function App() {
             </Suspense>
           </ErrorBoundary>
         )
+      case 'update-site-results':
+        return (
+          <ErrorBoundary
+            fallback={<ViewErrorFallback viewName="Update Site Results" onNavigateHome={() => setCurrentView('setup')} />}
+          >
+            <Suspense fallback={<LoadingView />}>
+              <UpdateSiteResultsView />
+            </Suspense>
+          </ErrorBoundary>
+        )
       case 'settings':
         return (
-          <ErrorBoundary 
+          <ErrorBoundary
             fallback={<ViewErrorFallback viewName="Settings" onNavigateHome={() => setCurrentView('setup')} />}
           >
             <Suspense fallback={<LoadingView />}>
@@ -399,6 +410,16 @@ function App() {
                 }`}
               >
                 Championship
+              </button>
+              <button
+                onClick={() => setCurrentView('update-site-results')}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  currentView === 'update-site-results'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                }`}
+              >
+                Update Site
               </button>
             </nav>
 
@@ -512,6 +533,19 @@ function App() {
                 }`}
               >
                 Championship
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView('update-site-results')
+                  setIsMobileMenuOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 rounded-md text-base font-medium ${
+                  currentView === 'update-site-results'
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Update Site Results
               </button>
               <hr className="my-4 border-gray-200 dark:border-gray-600" />
               <button
