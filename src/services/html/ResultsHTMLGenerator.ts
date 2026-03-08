@@ -364,28 +364,12 @@ export class ResultsHTMLGenerator {
   }
 
   /**
-   * Get month name from race number (1-12)
-   * Race numbering: 1=Feb, 2=Mar, ..., 11=Dec, 12=Jan (next year)
+   * Get month name from month number (1-12)
+   * Uses standard calendar month numbers: 1=Jan, 2=Feb, ..., 12=Dec
    */
-  private getMonthName(raceNumber: number): string {
-    // Map race numbers to month names
-    // Race 1 = February (first race of year)
-    // Race 12 = January (last race, next calendar year)
-    const monthNames = [
-      'February',   // Race 1
-      'March',      // Race 2
-      'April',      // Race 3
-      'May',        // Race 4
-      'June',       // Race 5
-      'July',       // Race 6
-      'August',     // Race 7
-      'September',  // Race 8
-      'October',    // Race 9
-      'November',   // Race 10
-      'December',   // Race 11
-      'January',    // Race 12
-    ];
-    return monthNames[raceNumber - 1] || 'Unknown';
+  private getMonthName(month: number): string {
+    const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return monthNames[month] || 'Unknown';
   }
 
   /**
