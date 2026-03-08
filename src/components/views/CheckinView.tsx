@@ -574,7 +574,7 @@ function CheckinView({ currentRace, setCurrentRace, clubConfig }: CheckinViewPro
           onCheckin={handleCheckin}
           disabled={!memberNumber.trim()}
           buttonText="Enter Race"
-          onNewMember={() => setShowNewMemberDialog(true)}
+          onNewMember={currentRace?.status === 'active' ? undefined : () => setShowNewMemberDialog(true)}
           onSearch={() => setShowMemberSearch(true)}
         />
       )}

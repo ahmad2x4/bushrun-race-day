@@ -215,8 +215,16 @@ export function calculateHandicaps(runners: Runner[], raceMonth?: number): Runne
   const results = [...runners]; // Create copy to avoid mutation
   const distances = ['5km', '10km'] as const;
 
-  // Debug logging for championship system
+  // Debug logging and validation for championship system
   if (raceMonth !== undefined) {
+    // Validate race month is in valid range (1-12)
+    if (isNaN(raceMonth) || raceMonth < 1 || raceMonth > 12) {
+      console.error(`[Championship] ❌ Invalid raceMonth: ${raceMonth}. Must be 1-12. Championship data will NOT be updated.`);
+      console.error(`[Championship] ℹ️  Month numbers: 1=Jan, 2=Feb, 3=Mar, ..., 12=Dec. Season runs Feb-Nov (2-11).`);
+      // Recalculate without championship updates
+      return calculateHandicaps(runners);
+    }
+
     console.log(`[Championship] Calculating handicaps for month ${raceMonth}`);
     const runnersWithFinish = runners.filter(r => r.finish_time !== undefined);
     console.log(`[Championship] Runners with finish times: ${runnersWithFinish.length} of ${runners.length}`);
@@ -567,8 +575,8 @@ export function appendRaceToHistory(
   points: number,
   time: number
 ): string {
-  // Validate month is valid (1-12)
-  if (month < 1 || month > 12) {
+  // Validate month is valid (1-12). Must check isNaN explicitly — NaN < 1 and NaN > 12 are both false in JS.
+  if (isNaN(month) || month < 1 || month > 12) {
     throw new Error(`Invalid month: ${month}. Expected 1-12`);
   }
   if (points < 0 || points > 20) {
