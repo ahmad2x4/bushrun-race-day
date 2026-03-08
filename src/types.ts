@@ -2,7 +2,7 @@ export type RunnerStatus = 'finished' | 'dnf' | 'early_start' | 'starter_timekee
 
 // Championship race history entry
 export interface RaceHistoryEntry {
-  month: number; // Race month (2-11 for Feb-Nov)
+  month: number; // Race month (1-12, where 1=Jan, 2=Feb, ..., 12=Dec). Season runs Feb-Nov (months 2-11)
   position: string; // Finish position as string: "1", "2", "ST", "DNF", "ES", etc.
   points: number; // Points earned (0-20)
   time: number; // Finish time in seconds (0 for ST/DNF/ES)
