@@ -15,8 +15,7 @@ export class WordPressMediaService {
 
   /**
    * List all CSV files in WordPress Media Library
-   * Note: We don't filter by mime_type since manually uploaded CSVs may have different MIME types
-   * (text/plain, application/octet-stream, etc.). Instead, we rely on filename pattern matching.
+   * Filters by .csv file extension in source_url or text/csv mime type.
    */
   async listAllCSVs(): Promise<ServiceResponse<MediaItem[]>> {
     try {
@@ -28,8 +27,12 @@ export class WordPressMediaService {
         return response;
       }
 
-      // Ensure we have an array
-      const items = Array.isArray(response.data) ? response.data : [];
+      // Ensure we have an array and filter to only CSV files by extension or mime type
+      const allItems = Array.isArray(response.data) ? response.data : [];
+      const items = allItems.filter(item =>
+        item.source_url.toLowerCase().endsWith('.csv') ||
+        item.mime_type === 'text/csv'
+      );
 
       // Sort by date descending (most recent first)
       items.sort((a, b) => {

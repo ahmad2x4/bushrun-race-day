@@ -14,23 +14,67 @@ export function getCurrentMonthAEST(): number {
 
 /**
  * Get the month from a date in AEST (Sydney time)
- * @param date ISO date string (e.g., "2026-02-01" or "2026-01-31")
+ * @param dateString ISO date string (e.g., "2026-02-01" or "2026-01-31")
  * @returns Month number 1-12 in AEST timezone
+ * @throws Error if dateString is invalid and cannot be parsed
  */
-export function getMonthAEST(dateString: string): number {
-  // Parse the ISO date string and convert to AEST
+export function getMonthAEST(dateString: string | undefined): number {
+  // Validate input - check for undefined, null, or empty string
+  if (!dateString || dateString.trim() === '') {
+    const fallbackMonth = getCurrentMonthAEST();
+    console.error('[timeUtils] Invalid date string (empty or undefined). Using current month as fallback:', fallbackMonth);
+    return fallbackMonth;
+  }
+
+  // Parse the ISO date string
   const date = new Date(dateString);
+
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    const fallbackMonth = getCurrentMonthAEST();
+    console.error(`[timeUtils] Invalid date string: "${dateString}". Using current month as fallback:`, fallbackMonth);
+    return fallbackMonth;
+  }
+
+  // Convert to AEST
   const sydneyDate = new Date(date.toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }));
-  return sydneyDate.getMonth() + 1;
+  const month = sydneyDate.getMonth() + 1;
+
+  // Final validation - ensure month is in valid range
+  if (isNaN(month) || month < 1 || month > 12) {
+    const fallbackMonth = getCurrentMonthAEST();
+    console.error(`[timeUtils] Invalid month calculated: ${month} from date: "${dateString}". Using current month as fallback:`, fallbackMonth);
+    return fallbackMonth;
+  }
+
+  return month;
 }
 
 /**
  * Get the year from a date in AEST (Sydney time)
  * @param dateString ISO date string (e.g., "2026-02-01")
  * @returns Year in AEST timezone
+ * @throws Error if dateString is invalid and cannot be parsed
  */
-export function getYearAEST(dateString: string): number {
+export function getYearAEST(dateString: string | undefined): number {
+  // Validate input
+  if (!dateString || dateString.trim() === '') {
+    const fallbackYear = new Date(new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })).getFullYear();
+    console.error('[timeUtils] Invalid date string (empty or undefined). Using current year as fallback:', fallbackYear);
+    return fallbackYear;
+  }
+
+  // Parse the ISO date string
   const date = new Date(dateString);
+
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    const fallbackYear = new Date(new Date().toLocaleString('en-AU', { timeZone: 'Australia/Sydney' })).getFullYear();
+    console.error(`[timeUtils] Invalid date string: "${dateString}". Using current year as fallback:`, fallbackYear);
+    return fallbackYear;
+  }
+
+  // Convert to AEST
   const sydneyDate = new Date(date.toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }));
   return sydneyDate.getFullYear();
 }
