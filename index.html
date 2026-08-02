@@ -2,28 +2,227 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bushrun Race Day</title>
-    <meta name="description" content="Race day management system for running clubs with handicap timing and results tracking" />
+    <title>Bushrun Race Day — Retired, Undefeated</title>
+    <meta name="description" content="Bushrun Race Day has been retired. It was a solution to a problem we never had. Happy running!" />
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#3b82f6" />
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#16a34a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Bushrun" />
 
-    <!-- Icons for different platforms -->
-    <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png" />
-    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="./favicon/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="./favicon/favicon.svg" />
+    <link rel="apple-touch-icon" href="./favicon/apple-touch-icon.png" />
+
+    <style>
+      :root {
+        --bg: #f6f7f4;
+        --card: #ffffff;
+        --ink: #1c2118;
+        --muted: #5f6b58;
+        --accent: #16a34a;
+        --line: #e3e7dd;
+        --shadow: 0 1px 2px rgba(20, 30, 15, .06), 0 12px 40px -12px rgba(20, 30, 15, .18);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #12150f;
+          --card: #1b1f18;
+          --ink: #eef1e9;
+          --muted: #a3ae99;
+          --accent: #4ade80;
+          --line: #2b3126;
+          --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 40px -12px rgba(0, 0, 0, .6);
+        }
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 2rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--ink);
+        font: 16px/1.65 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        justify-content: center;
+      }
+
+      .wrap { width: 100%; max-width: 40rem; }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .3rem .75rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--card);
+        color: var(--muted);
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+      }
+      .dot {
+        width: .5rem; height: .5rem;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      h1 {
+        margin: 1.25rem 0 .25rem;
+        font-size: clamp(1.9rem, 6vw, 2.75rem);
+        line-height: 1.15;
+        letter-spacing: -.02em;
+      }
+
+      .sub { margin: 0 0 2rem; color: var(--muted); font-size: 1.05rem; }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.25rem;
+      }
+
+      .card p:first-child { margin-top: 0; }
+      .card p:last-child { margin-bottom: 0; }
+
+      .lede { font-size: 1.1rem; }
+
+      .gif {
+        display: block;
+        width: 100%;
+        max-width: 22rem;
+        margin: 0 auto;
+        border-radius: .75rem;
+      }
+
+      figure { margin: 0; }
+      figcaption {
+        margin-top: .85rem;
+        text-align: center;
+        color: var(--muted);
+        font-size: .9rem;
+      }
+
+      .rule {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 1.25rem 0;
+      }
+
+      .kicker {
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 .6rem;
+      }
+
+      .changelog { margin: 0; padding-left: 1.15rem; color: var(--muted); }
+      .changelog li { margin: .35rem 0; }
+
+      .signoff {
+        text-align: center;
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        margin: 2.5rem 0 .5rem;
+      }
+
+      .foot {
+        text-align: center;
+        color: var(--muted);
+        font-size: .85rem;
+      }
+
+      strong.al {
+        color: var(--ink);
+        border-bottom: 2px solid var(--accent);
+        padding-bottom: 1px;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div class="wrap">
+      <span class="badge"><span class="dot"></span>Status: Retired, Undefeated</span>
+
+      <h1>Bushrun Race Day has hung up its shoes.</h1>
+      <p class="sub">v1.1.92 — final release. No further updates planned, or needed.</p>
+
+      <div class="card">
+        <p class="lede">
+          After extensive field testing, we are thrilled to announce that we
+          successfully built a complete, handicap-aware, offline-capable,
+          installable solution&hellip; to a problem we never actually had. 🎉
+        </p>
+        <p>
+          It timed races beautifully. Nobody needed it. Honestly, a flawless
+          execution of the wrong idea — and we'd like to think that's a kind of
+          achievement too.
+        </p>
+      </div>
+
+      <div class="card">
+        <p class="kicker">For timekeeping, please refer to</p>
+        <p class="lede" style="margin-bottom:.35rem"><strong class="al">A.L.</strong></p>
+        <p style="margin:0; color:var(--muted)">
+          Battle-tested. Zero downtime. No install prompt. Never once asked
+          anyone to enable notifications.
+        </p>
+      </div>
+
+      <div class="card">
+        <p class="kicker">Final changelog</p>
+        <ul class="changelog">
+          <li>Removed: the problem</li>
+          <li>Fixed: our assumptions</li>
+          <li>Deprecated: this entire app</li>
+          <li>Added: free time on Saturday mornings</li>
+        </ul>
+        <hr class="rule" />
+        <p style="margin:0; color:var(--muted); font-size:.9rem">
+          You can safely uninstall this from your home screen. It won't be
+          offended. It's at peace.
+        </p>
+      </div>
+
+      <div class="card">
+        <figure>
+          <img
+            class="gif"
+            src="./happy-running.gif"
+            alt="An animated character cheerfully heading off on their way"
+          />
+          <figcaption>Off we go, then.</figcaption>
+        </figure>
+      </div>
+
+      <p class="signoff">Happy running! 🏃‍♀️🏃‍♂️</p>
+      <p class="foot">Berowra Bush Runners &middot; Thanks for the laps.</p>
+    </div>
+
+    <script>
+      // This used to be a PWA. Make sure anyone with it installed (or holding a
+      // cached service worker) actually sees this page rather than the old app.
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) { reg.unregister(); });
+        });
+      }
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) { caches.delete(k); });
+        });
+      }
+    </script>
   </body>
 </html>
